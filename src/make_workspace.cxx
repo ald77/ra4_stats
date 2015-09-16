@@ -17,9 +17,12 @@
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
 
+#include "RooStats/ModelConfig.h"
+
 #include "gamma_params.hpp"
 
 using namespace std;
+using namespace RooStats;
 
 int main(){
   //Define processes. Try to minimize splitting
@@ -242,6 +245,21 @@ void MakeWorkspace(const map<BinProc, GammaParams> &yields,
   RooDataSet data_obs{"data_obs", "data_obs", *w.set("observables")};
   data_obs.add(*w.set("observables"));
   w.import(data_obs);
+
+  ModelConfig model_config("ModelConfig", &w);
+  model_config.SetPdf(*w.pdf("model_s"));
+  model_config.SetParametersOfInterest(*w.set("POI"));
+  model_config.SetObservables(*w.set("observables"));
+  model_config.SetNuisanceParameters(*w.set("nuisances"));
+
+  ModelConfig model_config_bonly("ModelConfig_bonly", &w);
+  model_config_bonly.SetPdf(*w.pdf("model_b"));
+  model_config_bonly.SetParametersOfInterest(*w.set("POI"));
+  model_config_bonly.SetObservables(*w.set("observables"));
+  model_config_bonly.SetNuisanceParameters(*w.set("nuisances"));
+
+  w.import(model_config);
+  w.import(model_config_bonly);
 
   w.writeToFile("abcd.root");
   w.Print();
