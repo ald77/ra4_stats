@@ -26,38 +26,70 @@ using namespace RooStats;
 
 int main(){
   //Define processes. Try to minimize splitting
-  Process background1{"background1", {
-      {"archive/2015_08_13/small_quick_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1_MINIAODSIM_UCSB2650_v82_files20_batch1.root/tree"},
-	}};
-  Process background2{"background2", {
-      {"archive/2015_08_13/small_quick_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1_MINIAODSIM_UCSB2650_v82_files20_batch2.root/tree"},
-	}};
+  Process ttbar{"ttbar", {
+      {"archive/2015_08_13/*TTJets*.root/tree"}
+    }};
+  Process other{"other", {
+      {"archive/2015_08_13/*_ST_*.root/tree"},
+	{"archive/2015_08_13/*WJetsToLNu*.root/tree"}
+	  //{"archive/2015_08_13/*_WWTo*.root/tree"},
+	  //{"archive/2015_08_13/*ttHJetTobb*.root/tree"},
+	  //{"archive/2015_08_13/*DYJetsToLL*.root/tree"},
+	  //{"archive/2015_08_13/*QCD_Pt*.root/tree"}
+    }};
   Process signal{"signal", {
       {"archive/2015_07_22/small_quick_SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2377_v78.root/tree"}
     }};
   Process data{"data", {}};
 
   //Make list of all backgrounds. Backgrounds assumed to be orthogonal
-  vector<reference_wrapper<Process> > backgrounds{ref(background1), ref(background2)};
-  //vector<reference_wrapper<Process> > backgrounds{ref(background1)};
+  vector<reference_wrapper<Process> > backgrounds{ref(ttbar), ref(other)};
 
   //Baseline selection applied to all bins and processes
-  string baseline{"ht>500&&met>200&njets>6&&nbm>2"};
+  string baseline{"ht>500&&met>200&njets>=7&&nbm>=2"};
 
   //Declare bins
-  Bin bin_a{"a", "mt<=140&&mj<=500"};
-  Bin bin_b{"b", "mt<=140&&mj>500"};
-  Bin bin_c{"c", "mt>140&&mj<=500"};
-  Bin bin_d{"d", "mt>140&&mj>500"};
+  Bin r1_lowmet_lownb{"r1_lowmet_lownb", "mt<=140&&mj<=400&&met<=400&&nbm<=2"};
+  Bin r1_lowmet_highnb{"r1_lowmet_highnb", "mt<=140&&mj<=400&&met<=400&&nbm>2"};
+  Bin r1_highmet{"r1_highmet", "mt<=140&&mj<=400&&met>400"};
+
+  Bin r2_lowmet_lownj_lownb{"r2_lowmet_lownj_lownb", "mt<=140&&mj>400&&met<=400&&njets<=8&&nbm<=2"};
+  Bin r2_lowmet_lownj_highnb{"r2_lowmet_lownj_highnb", "mt<=140&&mj>400&&met<=400&&njets<=8&&nbm>2"};
+  Bin r2_lowmet_highnj_lownb{"r2_lowmet_highnj_lownb", "mt<=140&&mj>400&&met<=400&&njets>8&&nbm<=2"};
+  Bin r2_lowmet_highnj_highnb{"r2_lowmet_highnj_highnb", "mt<=140&&mj>400&&met<=400&&njets>8&&nbm>2"};
+  Bin r2_highmet_lownj{"r2_highmet_lownj", "mt<=140&&mj>400&&met>400&&njets<=8"};
+  Bin r2_highmet_highnj{"r2_highmet_highnj", "mt<=140&&mj>400&&met>400&&njets>8"};
+
+  Bin r3_lowmet_lownb{"r3_lowmet_lownb", "mt>140&&mj<=400&&met<=400&&nbm<=2"};
+  Bin r3_lowmet_highnb{"r3_lowmet_highnb", "mt>140&&mj<=400&&met<=400&&nbm>2"};
+  Bin r3_highmet{"r3_highmet", "mt>140&&mj<=400&&met>400"};
+
+  Bin r4_lowmet_lownj_lownb{"r4_lowmet_lownj_lownb", "mt>140&&mj>400&&met<=400&&njets<=8&&nbm<=2"};
+  Bin r4_lowmet_lownj_highnb{"r4_lowmet_lownj_highnb", "mt>140&&mj>400&&met<=400&&njets<=8&&nbm>2"};
+  Bin r4_lowmet_highnj_lownb{"r4_lowmet_highnj_lownb", "mt>140&&mj>400&&met<=400&&njets>8&&nbm<=2"};
+  Bin r4_lowmet_highnj_highnb{"r4_lowmet_highnj_highnb", "mt>140&&mj>400&&met<=400&&njets>8&&nbm>2"};
+  Bin r4_highmet_lownj{"r4_highmet_lownj", "mt>140&&mj>400&&met>400&&njets<=8"};
+  Bin r4_highmet_highnj{"r4_highmet_highnj", "mt>140&&mj>400&&met>400&&njets>8"};
 
   //Specify ABCD constraints
   vector<Block> blocks{
-    {"block", {{bin_a, bin_b}, {bin_c, bin_d}}}
+    {"lowmet_lownb", {{r1_lowmet_lownb, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb},
+	  {r3_lowmet_lownb, r4_lowmet_lownj_lownb, r4_lowmet_highnj_lownb}}},
+      {"lowmet_highnb", {{r1_lowmet_highnb, r2_lowmet_lownj_highnb, r2_lowmet_highnj_highnb},
+	    {r3_lowmet_highnb, r4_lowmet_lownj_highnb, r4_lowmet_highnj_highnb}}},
+	{"highmet", {{r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
+	      {r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
+  };
+  vector<Block> blocks2{
+    {"lowmet_lownb", {{r1_lowmet_lownb, r2_lowmet_lownj_lownb},
+	  {r3_lowmet_lownb, r4_lowmet_lownj_lownb}}},
+      {"lowmet_highnb", {{r1_lowmet_highnb, r2_lowmet_lownj_highnb},
+	    {r3_lowmet_highnb, r4_lowmet_lownj_highnb}}},
+	{"highmet", {{r1_highmet, r2_highmet_lownj},
+	      {r3_highmet, r4_highmet_lownj}}}
   };
 
-  map<BinProc, GammaParams> yields = GetYields(blocks, baseline, data,
-					       signal, backgrounds);
-  MakeWorkspace(yields, blocks, data, signal, backgrounds);
+  MakeWorkspace("method3.root", baseline, blocks, data, signal, backgrounds);
 }
 
 Bin::Bin(const string &name, const string &cut):
@@ -168,7 +200,7 @@ GammaParams GetYield(const BinProc &bp,
   cout << "Getting yields for bin " << bp.bin_.name_
        << ", process " << bp.process_.name_ << endl;
   if(bp.process_.chain_.GetEntries() == 0){
-    cout << "No entries found." << endl;
+    cout << "No entries found.\n" << endl;
     return {0., 0.};
   }
   array<string, 4> cuts;
@@ -200,7 +232,7 @@ GammaParams GetYield(const BinProc &bp,
     << ", uncertainty=" << gps.Uncertainty()
     << ", N_eff=" << gps.NEffective()
     << ", weight=" << gps.Weight()
-    << endl;
+    << "\n" << endl;
   return gps;
 }
 
@@ -216,11 +248,15 @@ void GetCountAndUncertainty(TTree &tree,
 }
 
 
-void MakeWorkspace(const map<BinProc, GammaParams> &yields,
+void MakeWorkspace(const string &file_name,
+		   const string &baseline,
 		   const vector<Block> &blocks,
 		   Process &data,
 		   Process &signal,
 		   vector<reference_wrapper<Process> > &backgrounds){
+  map<BinProc, GammaParams> yields = GetYields(blocks, baseline, data,
+					       signal, backgrounds);
+
   RooWorkspace w{"w"};
   w.cd();
   w.factory("r[1.,0.,10.]");
@@ -261,7 +297,7 @@ void MakeWorkspace(const map<BinProc, GammaParams> &yields,
   w.import(model_config);
   w.import(model_config_bonly);
 
-  w.writeToFile("abcd.root");
+  w.writeToFile(file_name.c_str());
   w.Print();
 }
 
@@ -359,21 +395,18 @@ void AddABCDParams(RooWorkspace &w,
   }
 
   double total = accumulate(row_sums.cbegin(), row_sums.cend(), 0.);
-  double norm = row_sums.at(row_sums.size()-1)
-    *col_sums.at(col_sums.size()-1)
-    /total;
 
   ostringstream oss;
   oss << "norm_BLK_" << block.name_ << flush;
   nuis_names.push_back(oss.str());
-  oss << "[" << max(norm, 1.) << ",0.," << max(5.*norm, 20.) << "]" << flush;
+  oss << "[" << max(1., total) << ",0.," << max(5.*total, 20.) << "]" << flush;
   w.factory(oss.str().c_str());
 
   for(size_t irow = 0; irow < row_sums.size() - 1; ++irow){
     oss.str("");
     oss << "ry" << (irow+1) << "_BLK_" << block.name_ << flush;
     nuis_names.push_back(oss.str());
-    oss << "[" << row_sums.at(irow)/row_sums.at(row_sums.size()-1)
+    oss << "[" << max(1.,row_sums.at(irow)/row_sums.at(row_sums.size()-1))
 	<< ",0.,100.]" << flush;
     w.factory(oss.str().c_str());
   }
@@ -381,7 +414,7 @@ void AddABCDParams(RooWorkspace &w,
     oss.str("");
     oss << "rx" << (icol+1) << "_BLK_" << block.name_ << flush;
     nuis_names.push_back(oss.str());
-    oss << "[" << col_sums.at(icol)/col_sums.at(col_sums.size()-1)
+    oss << "[" << max(1.,col_sums.at(icol)/col_sums.at(col_sums.size()-1))
 	<< ",0.,100.]" << flush;
     w.factory(oss.str().c_str());
   }

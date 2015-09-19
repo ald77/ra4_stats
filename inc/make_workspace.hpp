@@ -73,7 +73,8 @@ void GetCountAndUncertainty(TTree &tree,
 			       double &count,
 			       double &uncertainty);
 
-void MakeWorkspace(const std::map<BinProc, GammaParams> &yields,
+void MakeWorkspace(const std::string &file_name,
+		   const std::string &baseline,
 		   const std::vector<Block> &blocks,
 		   Process &data,
 		   Process &signal,
