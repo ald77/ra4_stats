@@ -1,6 +1,7 @@
 #include "make_workspace.hpp"
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <numeric>
 #include <algorithm>
@@ -10,6 +11,9 @@
 #include <array>
 #include <vector>
 #include <string>
+
+#include <unistd.h>
+#include <getopt.h>
 
 #include "TChain.h"
 #include "TH1D.h"
@@ -25,7 +29,12 @@
 using namespace std;
 using namespace RooStats;
 
-int main(){
+namespace{
+  double lumi = 10.;
+}
+
+int main(int argc, char *argv[]){
+  GetOptions(argc, argv);
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
       {"archive/2015_08_13/*TTJets*.root/tree"}
@@ -115,8 +124,39 @@ int main(){
                 {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
   };
 
-  MakeWorkspace("method3_100.root", baseline, blocks_m3, data, signal, backgrounds);
-  MakeWorkspace("method1_100.root", baseline, blocks_m1, data, signal, backgrounds);
+  vector<Block> blocks_test1{
+    {"lowmet_lownj", {{m1_r1_lowmet_lownj, m1_r2_lowmet_lownj},
+          {m1_r3_lowmet_lownj, m1_r4_lowmet_lownj}}}
+  };
+  vector<Block> blocks_test2{
+    {"lowmet_highnj", {{m1_r1_lowmet_highnj, m1_r2_lowmet_highnj},
+          {m1_r3_lowmet_highnj, m1_r4_lowmet_highnj}}},
+      };
+  vector<Block> blocks_test3{
+    {"highmet_lownj", {{m1_r1_highmet_lownj, m1_r2_highmet_lownj},
+          {m1_r3_highmet_lownj, m1_r4_highmet_lownj}}},
+      };
+  vector<Block> blocks_test4{
+    {"highmet_highnj", {{m1_r1_highmet_highnj, m1_r2_highmet_highnj},
+          {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
+  };
+
+  ostringstream oss;
+  oss << (10.*lumi) << flush;
+  string lumi_string = oss.str();
+  auto decimal = lumi_string.find('.');
+  while( decimal != string::npos ) {
+    lumi_string.erase(decimal,1);
+    decimal = lumi_string.find('.');
+  }
+
+  map<BinProc, GammaParams> yields;
+  MakeWorkspace("methodtest1_"+lumi_string+".root", baseline, blocks_test1, data, signal, backgrounds, yields);
+  MakeWorkspace("methodtest2_"+lumi_string+".root", baseline, blocks_test2, data, signal, backgrounds, yields);
+  MakeWorkspace("methodtest3_"+lumi_string+".root", baseline, blocks_test3, data, signal, backgrounds, yields);
+  MakeWorkspace("methodtest4_"+lumi_string+".root", baseline, blocks_test4, data, signal, backgrounds, yields);
+  MakeWorkspace("method3_"+lumi_string+".root", baseline, blocks_m3, data, signal, backgrounds, yields);
+  MakeWorkspace("method1_"+lumi_string+".root", baseline, blocks_m1, data, signal, backgrounds, yields);
 }
 
 Bin::Bin(const string &name, const string &cut):
@@ -191,12 +231,12 @@ bool BinProc::operator<(const BinProc &bp) const{
         && process_ < bp.process_);
 }
 
-map<BinProc, GammaParams> GetYields(const vector<Block> &blocks,
-                                    const string &baseline,
-                                    Process &data,
-                                    Process &signal,
-                                    vector<reference_wrapper<Process> > &backgrounds){
-  map<BinProc, GammaParams> yields;
+void GetYields(const vector<Block> &blocks,
+               const string &baseline,
+               Process &data,
+               Process &signal,
+               vector<reference_wrapper<Process> > &backgrounds,
+               map<BinProc, GammaParams> &yields){
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){
@@ -207,63 +247,75 @@ map<BinProc, GammaParams> GetYields(const vector<Block> &blocks,
           bin != vbin->cend();
           ++bin){
         BinProc bp_data{*bin, data};
-        yields[bp_data] = GetYield(bp_data, baseline);
+        StoreYield(bp_data, baseline, yields);
         BinProc bp_sig{*bin, signal};
-        yields[bp_sig] = GetYield(bp_sig, baseline);
+        StoreYield(bp_sig, baseline, yields);
         for(auto bkg = backgrounds.cbegin();
             bkg != backgrounds.cend();
             ++bkg){
           BinProc bp{*bin, *bkg};
-          yields[bp] = GetYield(bp, baseline);
+          StoreYield(bp, baseline, yields);
         }
       }
     }
   }
-  return yields;
 }
 
-GammaParams GetYield(const BinProc &bp,
-                     const string &baseline){
+void StoreYield(const BinProc &bp,
+                const string &baseline,
+                map<BinProc, GammaParams> &yields){
   cout << "Getting yields for bin " << bp.bin_.name_
        << ", process " << bp.process_.name_ << endl;
-  if(bp.process_.chain_.GetEntries() == 0){
-    cout << "No entries found.\n" << endl;
-    return {0., 0.};
-  }
-
-  string lumi = "10.*weight";
-  array<string, 5> cuts;
-  cuts.at(0) = "("+lumi+")*(("+baseline+")&&("+bp.bin_.cut_+")&&("+bp.process_.cut_+"))";
-  cuts.at(1) = "("+lumi+")*(("+baseline+")&&("+bp.process_.cut_+"))";
-  cuts.at(2) = "("+lumi+")*(&&("+bp.process_.cut_+"))";
-  cuts.at(3) = "("+lumi+")";
-  cuts.at(4) = "1";
 
   GammaParams gps;
 
-  for(size_t icut = 0;
-      icut < cuts.size() && gps.NEffective()<=0. && gps.Weight()<=0.;
-      ++icut){
-    const string &cut = cuts.at(icut);
-    cout << "Trying cut " << cut << endl;
-    double count, uncertainty;
-    GetCountAndUncertainty(bp.process_.chain_, cut, count, uncertainty);
-    GammaParams temp_gps;
-    temp_gps.SetYieldAndUncertainty(count, uncertainty);
-    if(icut == 0){
-      gps = temp_gps;
-    }else{
-      gps.SetNEffectiveAndWeight(0., temp_gps.Weight());
+  if(yields.find(bp) != yields.end()){
+    cout << "Recycling already computed yield." << endl;
+    gps = yields.at(bp);
+  }else if(bp.process_.chain_.GetEntries() == 0){
+    cout << "No entries found." << endl;
+    gps.SetNEffectiveAndWeight(0., 0.);
+  }else{
+    ostringstream oss;
+    oss << lumi << flush;
+    string lumi_string = oss.str();
+    array<string, 6> cuts;
+    cuts.at(0) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.bin_.cut_+")&&("+bp.process_.cut_+"))";
+    cuts.at(1) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.process_.cut_+"))";
+    cuts.at(2) = "("+lumi_string+"*weight)*(&&("+bp.process_.cut_+"))";
+    cuts.at(3) = "("+lumi_string+"*weight)";
+    cuts.at(4) = lumi_string;
+    cuts.at(5) = "1";
+
+    for(size_t icut = 0;
+        icut < cuts.size() && gps.Weight()<=0.;
+        ++icut){
+      if(icut > 0 && !bp.process_.count_zeros_){
+        gps.SetNEffectiveAndWeight(0., 0.);
+        break;
+      }
+      const string &cut = cuts.at(icut);
+      cout << "Trying cut " << cut << endl;
+      double count, uncertainty;
+      GetCountAndUncertainty(bp.process_.chain_, cut, count, uncertainty);
+      GammaParams temp_gps;
+      temp_gps.SetYieldAndUncertainty(count, uncertainty);
+      if(icut == 0){
+        gps = temp_gps;
+      }else{
+        gps.SetNEffectiveAndWeight(0., temp_gps.Weight());
+      }
     }
   }
 
   cout
     << "Found yield=" << gps.Yield()
-    << ", uncertainty=" << gps.Uncertainty()
+    << ", uncertainty=" << gps.CorrectedUncertainty()
+    << ", raw sqrt(n) uncertainty=" << gps.Uncertainty()
     << ", N_eff=" << gps.NEffective()
     << ", weight=" << gps.Weight()
     << "\n" << endl;
-  return gps;
+  yields[bp] =  gps;
 }
 
 void GetCountAndUncertainty(TTree &tree,
@@ -282,9 +334,10 @@ void MakeWorkspace(const string &file_name,
                    const vector<Block> &blocks,
                    Process &data,
                    Process &signal,
-                   vector<reference_wrapper<Process> > &backgrounds){
-  map<BinProc, GammaParams> yields = GetYields(blocks, baseline, data,
-                                               signal, backgrounds);
+                   vector<reference_wrapper<Process> > &backgrounds,
+                   map<BinProc, GammaParams> &yields){
+  GetYields(blocks, baseline, data,
+            signal, backgrounds, yields);
 
   RooWorkspace w{"w"};
   w.cd();
@@ -328,12 +381,7 @@ void MakeWorkspace(const string &file_name,
   w.import(model_config_bonly);
 
   w.writeToFile(file_name.c_str());
-  w.Print();
-  auto vars = w.allVars();
-  for(auto it = vars.createIterator(); it != 0 && (*(*it)) != NULL; it->Next()){
-    RooRealVar &var = *static_cast<RooRealVar*>( *(*it) );
-    var.Print();
-  }
+  PrintDiagnostics(w, blocks, data, signal, backgrounds, yields);
 }
 
 vector<double> GetBackgroundFractions(const Block &block,
@@ -424,7 +472,6 @@ void AddABCDParams(RooWorkspace &w,
           ++bkg){
         BinProc bp{block.bins_.at(irow).at(icol), *bkg};
         double yield = yields.at(bp).Yield();
-        cout << block.name_ << "::" << bp.bin_.name_ << "::" << bp.process_.name_ << " = " << yield << endl;
         row_sums.at(irow) += yield;
         col_sums.at(icol) += yield;
       }
@@ -446,7 +493,6 @@ void AddABCDParams(RooWorkspace &w,
   w.factory(oss.str().c_str());
 
   for(size_t irow = 0; irow < row_sums.size(); ++irow){
-    cout << "Row " << irow << ": " << row_sums.at(irow) << endl;
     if(irow == max_row) continue;
     oss.str("");
     oss << "ry" << (irow+1) << (max_row+1) << "_BLK_" << block.name_ << flush;
@@ -459,7 +505,6 @@ void AddABCDParams(RooWorkspace &w,
   rxss << ")" << flush;
   w.factory(rxss.str().c_str());
   for(size_t icol = 0; icol < col_sums.size(); ++icol){
-    cout << "Col " << icol << ": " << col_sums.at(icol) << endl;
     if(icol == max_col) continue;
     oss.str("");
     oss << "rx" << (icol+1) << (max_col+1) << "_BLK_" << block.name_ << flush;
@@ -645,4 +690,95 @@ size_t MaxIndex(const vector<double> &v){
     }
   }
   return imax;
+}
+
+void PrintDiagnostics(const RooWorkspace &w,
+                      const vector<Block> &blocks,
+                      Process &data,
+                      Process &signal,
+                      vector<reference_wrapper<Process> > &backgrounds,
+                      const map<BinProc, GammaParams> &yields){
+  w.Print();
+  for(auto block = blocks.cbegin();
+      block != blocks.cend();
+      ++block){
+    for(auto vbin = block->bins_.cbegin();
+        vbin != block->bins_.cend();
+        ++vbin){
+      for(auto bin = vbin->cbegin();
+          bin != vbin->cend();
+          ++bin){
+
+        BinProc bp_data{*bin, data};
+        PrintComparison(w, *block, bp_data, yields, true);
+        BinProc bp_sig{*bin, signal};
+        PrintComparison(w, *block, bp_sig, yields);
+        for(auto bkg = backgrounds.cbegin();
+            bkg != backgrounds.cend();
+            ++bkg){
+          BinProc bp{*bin, *bkg};
+          PrintComparison(w, *block, bp, yields);
+        }
+      }
+    }
+  }
+}
+
+void PrintComparison(const RooWorkspace &w,
+                     const Block &block,
+                     BinProc &bp,
+                     const std::map<BinProc, GammaParams> &yields,
+                     bool is_data){
+  GammaParams gp = yields.at(bp);
+  ostringstream name;
+  name << (is_data ? "nobs" : "rate")
+       << "_BLK_" << block.name_
+       << "_BIN_" << bp.bin_.name_;
+  if(!is_data){
+    name << "_PRC_" << bp.process_.name_;
+  }
+  name << flush;
+
+  cout << fixed << setprecision(2);
+  cout << setw(64) << name.str() << ": "
+       << setw(8) << gp.Yield()
+       << " +- " << setw(8) << gp.CorrectedUncertainty()
+       << " => ";
+  RooAbsReal *fp = w.function(name.str().c_str());
+  if(fp){
+    cout << setw(8) << fp->getVal() << endl;
+  }else{
+    cout << "Not found" << endl;
+  }
+}
+
+void GetOptions(int argc, char *argv[]){
+  while(true){
+    static struct option long_options[] = {
+      {"lumi", required_argument, 0, 'l'},
+      {0, 0, 0, 0}
+    };
+
+    char opt = -1;
+    int option_index;
+    opt = getopt_long(argc, argv, "m:d:l:s:tv", long_options, &option_index);
+    if( opt == -1) break;
+
+    string optname;
+    switch(opt){
+    case 'l':
+      lumi = atof(optarg);
+      break;
+    case 0:
+      optname = long_options[option_index].name;
+      if(false){
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+      }
+      break;
+    default:
+      printf("Bad option! getopt_long returned character code 0%o\n", opt);
+      break;
+    }
+  }
 }

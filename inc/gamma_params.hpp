@@ -21,6 +21,8 @@ public:
   double Weight() const;
   void Weight(double weight);
 
+  double CorrectedUncertainty() const;
+
   GammaParams & operator+=(const GammaParams &gp);
 
 private:

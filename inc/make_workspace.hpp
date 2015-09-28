@@ -59,14 +59,16 @@ struct BinProc{
   Bin bin_;
 };
 
-std::map<BinProc, GammaParams> GetYields(const std::vector<Block> &blocks,
-                                         const std::string &baseline,
-                                         Process &data,
-                                         Process &signal,
-                                         std::vector<std::reference_wrapper<Process> > &backgrounds);
+void GetYields(const std::vector<Block> &blocks,
+               const std::string &baseline,
+               Process &data,
+               Process &signal,
+               std::vector<std::reference_wrapper<Process> > &backgrounds,
+               std::map<BinProc, GammaParams> &yields);
 
-GammaParams GetYield(const BinProc &bp,
-                     const std::string &baseline);
+void StoreYield(const BinProc &bp,
+                const std::string &baseline,
+                std::map<BinProc, GammaParams> &yields);
 
 void GetCountAndUncertainty(TTree &tree,
                             const std::string &cut,
@@ -78,7 +80,8 @@ void MakeWorkspace(const std::string &file_name,
                    const std::vector<Block> &blocks,
                    Process &data,
                    Process &signal,
-                   std::vector<std::reference_wrapper<Process> > &backgrounds);
+                   std::vector<std::reference_wrapper<Process> > &backgrounds,
+                   std::map<BinProc, GammaParams> &yields);
 
 std::vector<double> GetBackgroundFractions(const Block &block,
                                            std::vector<std::reference_wrapper<Process> > &backgrounds,
@@ -124,5 +127,20 @@ void AddModels(RooWorkspace &w,
                const std::vector<Block> &blocks);
 
 size_t MaxIndex(const std::vector<double> &v);
+
+void PrintDiagnostics(const RooWorkspace &w,
+                      const std::vector<Block> &blocks,
+                      Process &data,
+                      Process &signal,
+                      std::vector<std::reference_wrapper<Process> > &backgrounds,
+                      const std::map<BinProc, GammaParams> &yields);
+
+void PrintComparison(const RooWorkspace &w,
+                     const Block &block,
+                     BinProc &bp,
+                     const std::map<BinProc, GammaParams> &yields,
+                     bool is_data = false);
+
+void GetOptions(int argc, char *argv[]);
 
 #endif

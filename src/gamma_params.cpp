@@ -10,7 +10,7 @@ GammaParams::GammaParams():
 GammaParams::GammaParams(double n_effective, double weight):
   n_effective_(n_effective),
   weight_(weight){
-}
+  }
 
 void GammaParams::SetYieldAndUncertainty(double yield, double uncertainty){
   if(yield > 0.){
@@ -57,6 +57,10 @@ double GammaParams::Weight() const{
 
 void GammaParams::Weight(double weight){
   SetNEffectiveAndWeight(NEffective(), weight);
+}
+
+double GammaParams::CorrectedUncertainty() const{
+  return sqrt(n_effective_+1.)*weight_;
 }
 
 GammaParams & GammaParams::operator+=(const GammaParams &gp){
