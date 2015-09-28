@@ -24,6 +24,7 @@ int main(){
   for(int i = 0; i < bands; ++i){
     colors[i] = fi+i;
   }
+  gStyle->SetNumberContours(bands);
   gStyle->SetPalette(bands, colors);
 
   double inf = numeric_limits<double>::infinity();
