@@ -21,6 +21,7 @@
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
 #include "RooRealVar.h"
+#include "RooPoisson.h"
 
 #include "RooStats/ModelConfig.h"
 
@@ -37,18 +38,19 @@ int main(int argc, char *argv[]){
   GetOptions(argc, argv);
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
-      {"archive/2015_08_13/*TTJets*.root/tree"}
+      {"archive/2015_09_28_ana/skim/*TTJets*Lept*.root/tree"}
     }};
   Process other{"other", {
-      {"archive/2015_08_13/*_ST_*.root/tree"},
-        {"archive/2015_08_13/*WJetsToLNu*.root/tree"}
-        //{"archive/2015_08_13/*_WWTo*.root/tree"},
-        //{"archive/2015_08_13/*ttHJetTobb*.root/tree"},
-        //{"archive/2015_08_13/*DYJetsToLL*.root/tree"},
-        //{"archive/2015_08_13/*QCD_Pt*.root/tree"}
+      {"archive/2015_09_28_ana/skim/*DYJetsToLL*.root/tree"},
+        {"archive/2015_09_28_ana/skim/*QCD_Pt*.root/tree"},
+	  {"archive/2015_09_28_ana/skim/*_ST_*.root/tree"},
+	    {"archive/2015_09_28_ana/skim/*WJetsToLNu*.root/tree"},
+	      {"archive/2015_09_28_ana/skim/*_WWTo*.root/tree"},
+		{"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
+		  {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
     }};
   Process signal{"signal", {
-      {"archive/2015_07_22/small_quick_SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2377_v78.root/tree"}
+      {"archive/2015_09_28_ana/skim/*T1tttt*1500*100*.root/tree"}
     }};
   Process data{"data", {}};
 
@@ -620,7 +622,9 @@ void AddBinPdfs(RooWorkspace &w,
       alt_list += alt_name;
       w.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
       w.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
+      (static_cast<RooPoisson*>(w.pdf(("pdf_null"+bb_name).c_str())))->setNoRounding();
       w.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
+      (static_cast<RooPoisson*>(w.pdf(("pdf_alt"+bb_name).c_str())))->setNoRounding();
     }
   }
   w.factory(("PROD:pdf_null_BLK_"+block.name_+"("+null_list+")").c_str());
@@ -698,7 +702,6 @@ void PrintDiagnostics(const RooWorkspace &w,
                       Process &signal,
                       vector<reference_wrapper<Process> > &backgrounds,
                       const map<BinProc, GammaParams> &yields){
-  w.Print();
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){
