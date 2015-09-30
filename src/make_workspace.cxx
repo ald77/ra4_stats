@@ -301,7 +301,7 @@ void MakeWorkspace(const string &file_name,
     AddBackgroundFractions(w, *block, backgrounds, yields, nuis_names);
     size_t max_col, max_row;
     AddABCDParams(w, *block, backgrounds, yields, nuis_names, max_col, max_row);
-    AddDileptonSystematics(*block, baseline, backgrounds, yields);
+    if(do_syst) AddDileptonSystematics(*block, baseline, backgrounds, yields);
     AddBackgroundPreds(w, *block, backgrounds, max_col, max_row, syst_generators, nuis_names);
     AddSignalPreds(w, *block, signal, yields);
     AddBinPdfs(w, *block);
