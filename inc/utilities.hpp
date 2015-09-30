@@ -12,6 +12,8 @@ bool Contains(const std::string &str, const std::string &pat);
 
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
 
+void RmCutOn(std::string &cut, const std::string &orig, const std::string &rep="1");
+
 size_t MaxIndex(const std::vector<double> &v);
 
 void DefineSet(RooWorkspace &w,

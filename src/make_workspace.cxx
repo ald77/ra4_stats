@@ -36,6 +36,46 @@ namespace{
   double lumi = 3.;
 }
 
+void AddDileptonSystematics(Block &block,
+			    const string &baseline,
+			    vector<reference_wrapper<Process> > &backgrounds,
+			    const map<BinProc, GammaParams> &yields){
+  for(auto vbin = block.bins_.begin();
+      vbin != block.bins_.end();
+      ++vbin){
+    for(auto bin = vbin->begin();
+	bin != vbin->end();
+	++bin){
+      Bin dilep_bin = *bin;
+      string dilep_baseline = baseline;
+      MakeDileptonBin(*bin, baseline,
+		      dilep_bin, dilep_baseline);
+      GammaParams gp{0., 0.};
+      GammaParams dilep_gp{0., 0.};
+      bool found_one = false;
+      for(auto bkg = backgrounds.cbegin();
+	  bkg != backgrounds.cend();
+	  ++bkg){
+	BinProc bp{*bin, *bkg};
+	BinProc dilep_bp{dilep_bin, *bkg};
+	if(yields.find(dilep_bp) == yields.end()
+	   || yields.find(bp) == yields.end()) continue;
+	found_one = true;
+	gp += yields.at(bp);
+	dilep_gp += yields.at(dilep_bp);
+      }
+      if(!found_one) continue;
+      double syst = 1.;
+      string name = "DILEP_CLOSE_"+bin->name_;
+      if(dilep_gp.Yield()>1.){
+	syst = 1./sqrt(dilep_gp.Yield());
+      }
+      bin->systematics_.push_back(Systematic{name, syst});
+      cout << "NAME=" << name << ", SYST=" << syst << endl;
+    }
+  }
+}
+
 int main(int argc, char *argv[]){
   cout << fixed << setprecision(2);
   GetOptions(argc, argv);
@@ -186,10 +226,8 @@ void GetYields(const vector<Block> &blocks,
 				     dilep_bin, dilep_baseline);
         BinProc bp_data{*bin, data};
         StoreYield(bp_data, baseline, yields);
-	if(do_dilep) StoreYield(BinProc{dilep_bin, data}, dilep_baseline, yields);
         BinProc bp_sig{*bin, signal};
         StoreYield(bp_sig, baseline, yields);
-	if(do_dilep) StoreYield(BinProc{dilep_bin, signal}, dilep_baseline, yields);
         for(auto bkg = backgrounds.cbegin();
             bkg != backgrounds.cend();
             ++bkg){
@@ -226,11 +264,15 @@ void MakeDileptonBin(const Bin &bin, const string &baseline,
   ReplaceAll(dilep_bin.cut_, "nels+nmus==1", "nels+nmus==2");
   ReplaceAll(dilep_bin.cut_, "nmus+nels==1", "nmus+nels==2");
   ReplaceAll(dilep_bin.cut_, "nleps==1", "nleps==2");
+  RmCutOn(dilep_bin.cut_, "nbm", "nbm>=1&&nbm<=2");
+  RmCutOn(dilep_bin.cut_, "met", "met>200&&met<=400");
   ReplaceAll(dilep_baseline, "(nels+nmus)==1", "(nels+nmus)==2");
   ReplaceAll(dilep_baseline, "(nmus+nels)==1", "(nmus+nels)==2");
   ReplaceAll(dilep_baseline, "nels+nmus==1", "nels+nmus==2");
   ReplaceAll(dilep_baseline, "nmus+nels==1", "nmus+nels==2");
   ReplaceAll(dilep_baseline, "nleps==1", "nleps==2");
+  RmCutOn(dilep_baseline, "nbm", "nbm>=1&&nbm<=2");
+  RmCutOn(dilep_baseline, "met", "met>200&&met<=400");
 }
 
 void StoreYield(const BinProc &bp,
@@ -292,7 +334,7 @@ void StoreYield(const BinProc &bp,
 
 void MakeWorkspace(const string &file_name,
                    const string &baseline,
-                   const vector<Block> &blocks,
+                   vector<Block> blocks,
                    Process &data,
                    Process &signal,
                    vector<reference_wrapper<Process> > &backgrounds,
@@ -308,19 +350,21 @@ void MakeWorkspace(const string &file_name,
   w.defineSet("POI","r");
 
   vector<string> obs_names, nuis_names;
-  for(auto block = blocks.cbegin();
-      block != blocks.cend();
+  set<string> syst_generators;
+  for(auto block = blocks.begin();
+      block != blocks.end();
       ++block){
     AddData(w, *block, data, yields, obs_names);
     AddBackgroundFractions(w, *block, backgrounds, yields, nuis_names);
     size_t max_col, max_row;
     AddABCDParams(w, *block, backgrounds, yields, nuis_names, max_col, max_row);
-    AddBackgroundPreds(w, *block, backgrounds, max_col, max_row);
+    AddDileptonSystematics(*block, baseline, backgrounds, yields);
+    AddBackgroundPreds(w, *block, backgrounds, max_col, max_row, syst_generators, nuis_names);
     AddSignalPreds(w, *block, signal, yields);
     AddBinPdfs(w, *block);
   }
 
-  AddModels(w, blocks);
+  AddModels(w, blocks, syst_generators);
 
   DefineSet(w, "nuisances", nuis_names);
   DefineSet(w, "observables", obs_names);
@@ -492,19 +536,32 @@ void AddABCDParams(RooWorkspace &w,
   w.factory(oss.str().c_str());
 }
 
+void AddSystGenerator(RooWorkspace &w,
+		      set<string> &syst_generators,
+		      vector<string> &nuis_names,
+		      const string &name){
+  if(syst_generators.find(name) != syst_generators.end()) return;
+  w.factory(("RooGaussian::CONSTRAINT_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
+  nuis_names.push_back(name);
+  syst_generators.insert(name);
+}
+
 void AddBackgroundPreds(RooWorkspace &w,
                         const Block &block,
                         const vector<reference_wrapper<Process> > &backgrounds,
-                        size_t max_col, size_t max_row){
+                        size_t max_col, size_t max_row,
+			set<string> &syst_generators,
+			vector<string> &nuis_names){
   for(size_t irow = 0; irow < block.bins_.size(); ++irow){
     bool no_ry = (irow == max_row);
     for(size_t icol = 0; icol < block.bins_.at(0).size(); ++icol){
       bool no_rx = (icol == max_col );
       const Bin &bin = block.bins_.at(irow).at(icol);
+      string bb_name = "BLK_"+block.name_+"_BIN_"+bin.name_;
       vector<string> prod_list;
       for(size_t iprocess = 0; iprocess < backgrounds.size(); ++iprocess){
         const Process & bkg = backgrounds.at(iprocess);
-        string prod_name = "rate_BLK_"+block.name_+"_BIN_"+bin.name_+"_PRC_"+bkg.name_;
+        string prod_name = "rate_"+bb_name+"_PRC_"+bkg.name_;
         prod_list.push_back(prod_name);
         string fact_str = "prod::"+prod_name+"(rscale_BLK_"+block.name_;
         if(!no_rx){
@@ -520,14 +577,30 @@ void AddBackgroundPreds(RooWorkspace &w,
         fact_str += (",frac_BLK_"+block.name_+"_PRC_"+bkg.name_+")");
         w.factory(fact_str.c_str());
       }
-      string fact_str="sum::nbkg_BLK_"+block.name_+"_BIN_"+bin.name_+"(";
+      string fact_str="sum::nbkg_raw_"+bb_name+"(";
       for(size_t iprod = 0; iprod < prod_list.size(); ++iprod){
         const string &prod_name = prod_list.at(iprod);
         if(iprod != 0) fact_str += ",";
         fact_str += prod_name;
       }
       fact_str += ")";
+      w.factory(fact_str.c_str());
 
+      fact_str="prod::nbkg_"+bb_name+"("
+	+"nbkg_raw_"+bb_name;
+      for(auto syst = bin.systematics_.cbegin();
+	  syst != bin.systematics_.cend();
+	  ++syst){
+	AddSystGenerator(w, syst_generators, nuis_names, syst->base_name_);
+	string full_name = syst->base_name_ + "_" + bb_name;
+	ostringstream oss;
+	oss << "expr::" << full_name
+	    << "('exp(" << syst->multiplier_ << "*" << syst->base_name_ << ")',"
+	    << syst->base_name_ << ")" << flush;
+	w.factory(oss.str().c_str());
+	fact_str+=","+full_name;
+      }
+      fact_str+=")";
       w.factory(fact_str.c_str());
     }
   }
@@ -617,7 +690,8 @@ void AddData(RooWorkspace &w,
 }
 
 void AddModels(RooWorkspace &w,
-               const vector<Block> & blocks){
+               const vector<Block> & blocks,
+	       const set<string> &syst_generators){
   if(blocks.size() == 0){
     w.factory("RooPoisson::model_b(0,0)");
     w.factory("RooPoisson::model_s(0,0)");
@@ -627,6 +701,12 @@ void AddModels(RooWorkspace &w,
     for(size_t iblock = 1; iblock < blocks.size(); ++iblock){
       null_list += (",pdf_null_BLK_"+blocks.at(iblock).name_);
       alt_list += (",pdf_alt_BLK_"+blocks.at(iblock).name_);
+    }
+    for(auto syst = syst_generators.cbegin();
+	syst != syst_generators.cend();
+	++syst){
+      null_list += (",CONSTRAINT_"+(*syst));
+      alt_list += (",CONSTRAINT_"+(*syst));
     }
     w.factory(("PROD::model_b("+null_list+")").c_str());
     w.factory(("PROD::model_s("+alt_list+")").c_str());
@@ -639,6 +719,7 @@ void PrintDiagnostics(const RooWorkspace &w,
                       Process &signal,
                       vector<reference_wrapper<Process> > &backgrounds,
                       const map<BinProc, GammaParams> &yields){
+  w.Print();
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){

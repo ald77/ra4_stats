@@ -20,8 +20,5 @@ Bin::Bin(const string &name, const string &cut,
 bool Bin::operator<(const Bin &b) const{
   return name_ < b.name_
     || (name_ == b.name_
-        && cut_ < b.cut_)
-    || (name_ == b.name_
-	&& cut_ == b.cut_
-	&& systematics_ < b.systematics_);
+        && cut_ < b.cut_);
 }

@@ -22,6 +22,15 @@ void ReplaceAll(string &str, const string &orig, const string &rep){
   }
 }
 
+void RmCutOn(string &cut, const string &to_rm, const string &rep){
+  size_t loc = 0;
+  while ((loc = cut.find(to_rm, loc)) != string::npos) {
+    size_t end = cut.find_first_of(")&| ", loc);
+    cut.replace(loc, end-loc, rep);
+    loc += rep.length();
+  }
+}
+
 size_t MaxIndex(const vector<double> &v){
   if(v.size() == 0) return -1;
   size_t imax = 0;

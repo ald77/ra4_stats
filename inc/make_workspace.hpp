@@ -6,6 +6,7 @@
 #include <functional>
 #include <initializer_list>
 #include <map>
+#include <set>
 
 #include "RooWorkspace.h"
 
@@ -33,7 +34,7 @@ void StoreYield(const BinProc &bp,
 
 void MakeWorkspace(const std::string &file_name,
                    const std::string &baseline,
-                   const std::vector<Block> &blocks,
+                   std::vector<Block> blocks,
                    Process &data,
                    Process &signal,
                    std::vector<std::reference_wrapper<Process> > &backgrounds,
@@ -49,6 +50,11 @@ void AddBackgroundFractions(RooWorkspace &w,
                             const std::map<BinProc, GammaParams> &yields,
                             std::vector<std::string> &nuis_names);
 
+void AddDileptonSystematics(Block &block,
+			    const std::string &baseline,
+			    std::vector<std::reference_wrapper<Process> > &backgrounds,
+			    const std::map<BinProc, GammaParams> &yields);
+
 void AddABCDParams(RooWorkspace &w,
                    const Block &block,
                    std::vector<std::reference_wrapper<Process> > &backgrounds,
@@ -59,7 +65,9 @@ void AddABCDParams(RooWorkspace &w,
 void AddBackgroundPreds(RooWorkspace &w,
                         const Block &block,
                         const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                        size_t max_col, size_t max_row);
+                        size_t max_col, size_t max_row,
+			std::set<std::string> &syst_generators,
+			std::vector<std::string> &nuis_names);
 
 void AddSignalPreds(RooWorkspace &w,
                     const Block &block,
@@ -76,7 +84,8 @@ void AddData(RooWorkspace &w,
              std::vector<std::string> &obs_names);
 
 void AddModels(RooWorkspace &w,
-               const std::vector<Block> &blocks);
+               const std::vector<Block> &blocks,
+	       const std::set<std::string> &syst_generators);
 
 void PrintDiagnostics(const RooWorkspace &w,
                       const std::vector<Block> &blocks,
