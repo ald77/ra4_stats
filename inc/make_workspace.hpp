@@ -7,57 +7,13 @@
 #include <initializer_list>
 #include <map>
 
-#include "TChain.h"
-
 #include "RooWorkspace.h"
 
 #include "gamma_params.hpp"
-
-struct Bin{
-  Bin(const std::string &name, const std::string &cut);
-
-  std::string name_, cut_;
-
-  bool operator<(const Bin &b) const;
-};
-
-struct Process{
-  Process(const std::string &name,
-          const std::vector<std::string> &file_names,
-          const std::string &cut = "1",
-          bool count_zeros = true);
-  Process(const std::string &name,
-          std::initializer_list<std::string> file_names,
-          const std::string &cut = "1",
-          bool count_zeros = true);
-
-  Process(Process&& p) = delete;
-  Process(const Process &p) = delete;
-  Process& operator=(const Process &p) = delete;
-
-  bool operator<(const Process &p) const;
-
-  TChain chain_;
-  std::string name_, cut_;
-  bool count_zeros_;
-};
-
-struct Block{
-  Block(const std::string &name, const std::vector<std::vector<Bin> > &bins);
-  Block(const std::string &name, std::initializer_list<std::vector<Bin> > bins);
-
-  std::vector<std::vector<Bin> > bins_;
-  std::string name_;
-};
-
-struct BinProc{
-  BinProc(const Bin &bin, Process &process);
-
-  bool operator<(const BinProc &bp) const;
-
-  Process &process_;
-  Bin bin_;
-};
+#include "block.hpp"
+#include "bin.hpp"
+#include "process.hpp"
+#include "bin_proc.hpp"
 
 void GetYields(const std::vector<Block> &blocks,
                const std::string &baseline,
@@ -66,14 +22,14 @@ void GetYields(const std::vector<Block> &blocks,
                std::vector<std::reference_wrapper<Process> > &backgrounds,
                std::map<BinProc, GammaParams> &yields);
 
+bool NeedsDileptonBin(const Bin &bin, const std::string &baseline);
+
+void MakeDileptonBin(const Bin &bin, const std::string &baseline,
+		     Bin &dilep_bin, std::string &dilep_baseline);
+
 void StoreYield(const BinProc &bp,
                 const std::string &baseline,
                 std::map<BinProc, GammaParams> &yields);
-
-void GetCountAndUncertainty(TTree &tree,
-                            const std::string &cut,
-                            double &count,
-                            double &uncertainty);
 
 void MakeWorkspace(const std::string &file_name,
                    const std::string &baseline,
@@ -119,14 +75,8 @@ void AddData(RooWorkspace &w,
              const std::map<BinProc, GammaParams> &yields,
              std::vector<std::string> &obs_names);
 
-void DefineSet(RooWorkspace &w,
-               const std::string &set_name,
-               const std::vector<std::string> &var_names);
-
 void AddModels(RooWorkspace &w,
                const std::vector<Block> &blocks);
-
-size_t MaxIndex(const std::vector<double> &v);
 
 void PrintDiagnostics(const RooWorkspace &w,
                       const std::vector<Block> &blocks,

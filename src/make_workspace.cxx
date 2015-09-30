@@ -15,9 +15,6 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#include "TChain.h"
-#include "TH1D.h"
-
 #include "RooWorkspace.h"
 #include "RooDataSet.h"
 #include "RooRealVar.h"
@@ -26,15 +23,21 @@
 #include "RooStats/ModelConfig.h"
 
 #include "gamma_params.hpp"
+#include "bin.hpp"
+#include "process.hpp"
+#include "bin_proc.hpp"
+#include "utilities.hpp"
+#include "systematic.hpp"
 
 using namespace std;
 using namespace RooStats;
 
 namespace{
-  double lumi = 10.;
+  double lumi = 3.;
 }
 
 int main(int argc, char *argv[]){
+  cout << fixed << setprecision(2);
   GetOptions(argc, argv);
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
@@ -152,85 +155,13 @@ int main(int argc, char *argv[]){
     decimal = lumi_string.find('.');
   }
 
-  map<BinProc, GammaParams> yields;
+  map<BinProc, GammaParams> yields, dilep_yields;
   MakeWorkspace("methodtest1_"+lumi_string+".root", baseline, blocks_test1, data, signal, backgrounds, yields);
   MakeWorkspace("methodtest2_"+lumi_string+".root", baseline, blocks_test2, data, signal, backgrounds, yields);
   MakeWorkspace("methodtest3_"+lumi_string+".root", baseline, blocks_test3, data, signal, backgrounds, yields);
   MakeWorkspace("methodtest4_"+lumi_string+".root", baseline, blocks_test4, data, signal, backgrounds, yields);
   MakeWorkspace("method3_"+lumi_string+".root", baseline, blocks_m3, data, signal, backgrounds, yields);
   MakeWorkspace("method1_"+lumi_string+".root", baseline, blocks_m1, data, signal, backgrounds, yields);
-}
-
-Bin::Bin(const string &name, const string &cut):
-  name_(name),
-  cut_(cut){
-  }
-
-bool Bin::operator<(const Bin &b) const{
-  return name_ < b.name_
-    || (name_ == b.name_
-        && cut_ < b.cut_);
-}
-
-Process::Process(const string &name,
-                 const vector<string> &file_names,
-                 const string &cut,
-                 bool count_zeros):
-  chain_("tree", "tree"),
-  name_(name),
-  cut_(cut),
-  count_zeros_(count_zeros){
-  for(auto file_name = file_names.cbegin();
-      file_name != file_names.cend();
-      ++file_name){
-    chain_.Add(file_name->c_str());
-  }
-  }
-
-Process::Process(const string &name,
-                 initializer_list<string> file_names,
-                 const string &cut,
-                 bool count_zeros):
-  chain_("tree","tree"),
-  name_(name),
-  cut_(cut),
-  count_zeros_(count_zeros){
-  for(auto file_name = file_names.begin();
-      file_name != file_names.end();
-      ++file_name){
-    chain_.Add(file_name->c_str());
-  }
-  }
-
-bool Process::operator<(const Process &p) const{
-  return name_ < p.name_
-    || (name_ == p.name_
-        && (cut_ < p.cut_
-            || (cut_ == p.cut_
-                && (count_zeros_ < p.count_zeros_
-                    || (count_zeros_ == p.count_zeros_
-                        && chain_.Hash() < p.chain_.Hash())))));
-}
-
-Block::Block(const string &name, const vector<vector<Bin> > &bins):
-  bins_(bins),
-  name_(name){
-  }
-
-Block::Block(const string &name, initializer_list<vector<Bin> > bins):
-  bins_(bins),
-  name_(name){
-  }
-
-BinProc::BinProc(const Bin &bin, Process &process):
-  process_(process),
-  bin_(bin){
-  }
-
-bool BinProc::operator<(const BinProc &bp) const{
-  return bin_ < bp.bin_
-    || (!(bp.bin_ < bin_)
-        && process_ < bp.process_);
 }
 
 void GetYields(const vector<Block> &blocks,
@@ -248,19 +179,58 @@ void GetYields(const vector<Block> &blocks,
       for(auto bin = vbin->cbegin();
           bin != vbin->cend();
           ++bin){
+	Bin dilep_bin = *bin;
+	string dilep_baseline = baseline;
+	bool do_dilep = NeedsDileptonBin(*bin, baseline);
+	if(do_dilep) MakeDileptonBin(*bin, baseline,
+				     dilep_bin, dilep_baseline);
         BinProc bp_data{*bin, data};
         StoreYield(bp_data, baseline, yields);
+	if(do_dilep) StoreYield(BinProc{dilep_bin, data}, dilep_baseline, yields);
         BinProc bp_sig{*bin, signal};
         StoreYield(bp_sig, baseline, yields);
+	if(do_dilep) StoreYield(BinProc{dilep_bin, signal}, dilep_baseline, yields);
         for(auto bkg = backgrounds.cbegin();
             bkg != backgrounds.cend();
             ++bkg){
           BinProc bp{*bin, *bkg};
           StoreYield(bp, baseline, yields);
+	  if(do_dilep) StoreYield(BinProc{dilep_bin, *bkg}, dilep_baseline, yields);
         }
       }
     }
   }
+}
+
+bool NeedsDileptonBin(const Bin &bin, const string &baseline){
+  return Contains(bin.cut_, "mt>")
+    && (Contains(bin.cut_, "(nels+nmus)==1")
+	|| Contains(bin.cut_, "(nmus+nels)==1")
+	|| Contains(bin.cut_, "nels+nmus==1")
+	|| Contains(bin.cut_, "nmus+nels==1")
+	|| Contains(bin.cut_, "nleps==1")
+	|| Contains(baseline, "(nels+nmus)==1")
+	|| Contains(baseline, "(nmus+nels)==1")
+	|| Contains(baseline, "nels+nmus==1")
+	|| Contains(baseline, "nmus+nels==1")
+	|| Contains(baseline, "nleps==1"));
+}
+
+void MakeDileptonBin(const Bin &bin, const string &baseline,
+		     Bin &dilep_bin, string &dilep_baseline){
+  dilep_bin = bin;
+  dilep_bin.name_ = "DILEPTON_"+dilep_bin.name_;
+  dilep_baseline = baseline;
+  ReplaceAll(dilep_bin.cut_, "(nels+nmus)==1", "(nels+nmus)==2");
+  ReplaceAll(dilep_bin.cut_, "(nmus+nels)==1", "(nmus+nels)==2");
+  ReplaceAll(dilep_bin.cut_, "nels+nmus==1", "nels+nmus==2");
+  ReplaceAll(dilep_bin.cut_, "nmus+nels==1", "nmus+nels==2");
+  ReplaceAll(dilep_bin.cut_, "nleps==1", "nleps==2");
+  ReplaceAll(dilep_baseline, "(nels+nmus)==1", "(nels+nmus)==2");
+  ReplaceAll(dilep_baseline, "(nmus+nels)==1", "(nmus+nels)==2");
+  ReplaceAll(dilep_baseline, "nels+nmus==1", "nels+nmus==2");
+  ReplaceAll(dilep_baseline, "nmus+nels==1", "nmus+nels==2");
+  ReplaceAll(dilep_baseline, "nleps==1", "nleps==2");
 }
 
 void StoreYield(const BinProc &bp,
@@ -320,17 +290,6 @@ void StoreYield(const BinProc &bp,
   yields[bp] =  gps;
 }
 
-void GetCountAndUncertainty(TTree &tree,
-                            const string &cut,
-                            double &count,
-                            double &uncertainty){
-  const string hist_name{"temp"};
-  TH1D temp{hist_name.c_str(), "", 1, -1.0, 1.0};
-  temp.Sumw2();
-  tree.Project(hist_name.c_str(), "0.", cut.c_str());
-  count=temp.IntegralAndError(0,2,uncertainty);
-}
-
 void MakeWorkspace(const string &file_name,
                    const string &baseline,
                    const vector<Block> &blocks,
@@ -338,7 +297,9 @@ void MakeWorkspace(const string &file_name,
                    Process &signal,
                    vector<reference_wrapper<Process> > &backgrounds,
                    map<BinProc, GammaParams> &yields){
-  GetYields(blocks, baseline, data,
+  string baseline_fix = baseline;
+  ReplaceAll(baseline_fix, " ", "");
+  GetYields(blocks, baseline_fix, data,
             signal, backgrounds, yields);
 
   RooWorkspace w{"w"};
@@ -539,7 +500,7 @@ void AddBackgroundPreds(RooWorkspace &w,
     bool no_ry = (irow == max_row);
     for(size_t icol = 0; icol < block.bins_.at(0).size(); ++icol){
       bool no_rx = (icol == max_col );
-      const Bin & bin = block.bins_.at(irow).at(icol);
+      const Bin &bin = block.bins_.at(irow).at(icol);
       vector<string> prod_list;
       for(size_t iprocess = 0; iprocess < backgrounds.size(); ++iprocess){
         const Process & bkg = backgrounds.at(iprocess);
@@ -566,6 +527,7 @@ void AddBackgroundPreds(RooWorkspace &w,
         fact_str += prod_name;
       }
       fact_str += ")";
+
       w.factory(fact_str.c_str());
     }
   }
@@ -654,20 +616,6 @@ void AddData(RooWorkspace &w,
   }
 }
 
-void DefineSet(RooWorkspace &w,
-               const string &set_name,
-               const vector<string> &var_names){
-  if(var_names.size()==0){
-    w.defineSet(set_name.c_str(), "");
-  }else{
-    string cat_names = var_names.at(0);
-    for(size_t ivar = 1; ivar < var_names.size(); ++ivar){
-      cat_names += ("," + var_names.at(ivar));
-    }
-    w.defineSet(set_name.c_str(), cat_names.c_str());
-  }
-}
-
 void AddModels(RooWorkspace &w,
                const vector<Block> & blocks){
   if(blocks.size() == 0){
@@ -683,17 +631,6 @@ void AddModels(RooWorkspace &w,
     w.factory(("PROD::model_b("+null_list+")").c_str());
     w.factory(("PROD::model_s("+alt_list+")").c_str());
   }
-}
-
-size_t MaxIndex(const vector<double> &v){
-  if(v.size() == 0) return -1;
-  size_t imax = 0;
-  for(size_t i = 1; i < v.size(); ++i){
-    if(v.at(i) > v.at(imax)){
-      imax = i;
-    }
-  }
-  return imax;
 }
 
 void PrintDiagnostics(const RooWorkspace &w,
@@ -730,7 +667,7 @@ void PrintDiagnostics(const RooWorkspace &w,
 void PrintComparison(const RooWorkspace &w,
                      const Block &block,
                      BinProc &bp,
-                     const std::map<BinProc, GammaParams> &yields,
+                     const map<BinProc, GammaParams> &yields,
                      bool is_data){
   GammaParams gp = yields.at(bp);
   ostringstream name;
@@ -742,7 +679,6 @@ void PrintComparison(const RooWorkspace &w,
   }
   name << flush;
 
-  cout << fixed << setprecision(2);
   cout << setw(64) << name.str() << ": "
        << setw(8) << gp.Yield()
        << " +- " << setw(8) << gp.CorrectedUncertainty()
