@@ -34,46 +34,7 @@ using namespace RooStats;
 
 namespace{
   double lumi = 3.;
-}
-
-void AddDileptonSystematics(Block &block,
-			    const string &baseline,
-			    vector<reference_wrapper<Process> > &backgrounds,
-			    const map<BinProc, GammaParams> &yields){
-  for(auto vbin = block.bins_.begin();
-      vbin != block.bins_.end();
-      ++vbin){
-    for(auto bin = vbin->begin();
-	bin != vbin->end();
-	++bin){
-      Bin dilep_bin = *bin;
-      string dilep_baseline = baseline;
-      MakeDileptonBin(*bin, baseline,
-		      dilep_bin, dilep_baseline);
-      GammaParams gp{0., 0.};
-      GammaParams dilep_gp{0., 0.};
-      bool found_one = false;
-      for(auto bkg = backgrounds.cbegin();
-	  bkg != backgrounds.cend();
-	  ++bkg){
-	BinProc bp{*bin, *bkg};
-	BinProc dilep_bp{dilep_bin, *bkg};
-	if(yields.find(dilep_bp) == yields.end()
-	   || yields.find(bp) == yields.end()) continue;
-	found_one = true;
-	gp += yields.at(bp);
-	dilep_gp += yields.at(dilep_bp);
-      }
-      if(!found_one) continue;
-      double syst = 1.;
-      string name = "DILEP_CLOSE_"+bin->name_;
-      if(dilep_gp.Yield()>1.){
-	syst = 1./sqrt(dilep_gp.Yield());
-      }
-      bin->systematics_.push_back(Systematic{name, syst});
-      cout << "NAME=" << name << ", SYST=" << syst << endl;
-    }
-  }
+  bool do_syst = true;
 }
 
 int main(int argc, char *argv[]){
@@ -169,23 +130,6 @@ int main(int argc, char *argv[]){
                 {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
   };
 
-  vector<Block> blocks_test1{
-    {"lowmet_lownj", {{m1_r1_lowmet_lownj, m1_r2_lowmet_lownj},
-          {m1_r3_lowmet_lownj, m1_r4_lowmet_lownj}}}
-  };
-  vector<Block> blocks_test2{
-    {"lowmet_highnj", {{m1_r1_lowmet_highnj, m1_r2_lowmet_highnj},
-          {m1_r3_lowmet_highnj, m1_r4_lowmet_highnj}}},
-      };
-  vector<Block> blocks_test3{
-    {"highmet_lownj", {{m1_r1_highmet_lownj, m1_r2_highmet_lownj},
-          {m1_r3_highmet_lownj, m1_r4_highmet_lownj}}},
-      };
-  vector<Block> blocks_test4{
-    {"highmet_highnj", {{m1_r1_highmet_highnj, m1_r2_highmet_highnj},
-          {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
-  };
-
   ostringstream oss;
   oss << (10.*lumi) << flush;
   string lumi_string = oss.str();
@@ -194,14 +138,13 @@ int main(int argc, char *argv[]){
     lumi_string.erase(decimal,1);
     decimal = lumi_string.find('.');
   }
+  string no_syst = do_syst ? "" : "_nosyst";
 
   map<BinProc, GammaParams> yields, dilep_yields;
-  MakeWorkspace("methodtest1_"+lumi_string+".root", baseline, blocks_test1, data, signal, backgrounds, yields);
-  MakeWorkspace("methodtest2_"+lumi_string+".root", baseline, blocks_test2, data, signal, backgrounds, yields);
-  MakeWorkspace("methodtest3_"+lumi_string+".root", baseline, blocks_test3, data, signal, backgrounds, yields);
-  MakeWorkspace("methodtest4_"+lumi_string+".root", baseline, blocks_test4, data, signal, backgrounds, yields);
-  MakeWorkspace("method3_"+lumi_string+".root", baseline, blocks_m3, data, signal, backgrounds, yields);
-  MakeWorkspace("method1_"+lumi_string+".root", baseline, blocks_m1, data, signal, backgrounds, yields);
+  MakeWorkspace("method3_"+lumi_string+no_syst+".root",
+		baseline, blocks_m3, data, signal, backgrounds, yields);
+  MakeWorkspace("method1_"+lumi_string+no_syst+".root",
+		baseline, blocks_m1, data, signal, backgrounds, yields);
 }
 
 void GetYields(const vector<Block> &blocks,
@@ -389,6 +332,7 @@ void MakeWorkspace(const string &file_name,
 
   w.writeToFile(file_name.c_str());
   PrintDiagnostics(w, blocks, data, signal, backgrounds, yields);
+  cout << "Wrote workspace to " << file_name << "!\n" << endl;
 }
 
 vector<double> GetBackgroundFractions(const Block &block,
@@ -460,6 +404,45 @@ void AddBackgroundFractions(RooWorkspace &w,
         << static_cast<Process&>(backgrounds.back()).name_
         << "[1]" << flush;
     w.factory(oss.str().c_str());
+  }
+}
+
+void AddDileptonSystematics(Block &block,
+			    const string &baseline,
+			    vector<reference_wrapper<Process> > &backgrounds,
+			    const map<BinProc, GammaParams> &yields){
+  for(auto vbin = block.bins_.begin();
+      vbin != block.bins_.end();
+      ++vbin){
+    for(auto bin = vbin->begin();
+	bin != vbin->end();
+	++bin){
+      Bin dilep_bin = *bin;
+      string dilep_baseline = baseline;
+      MakeDileptonBin(*bin, baseline,
+		      dilep_bin, dilep_baseline);
+      GammaParams gp{0., 0.};
+      GammaParams dilep_gp{0., 0.};
+      bool found_one = false;
+      for(auto bkg = backgrounds.cbegin();
+	  bkg != backgrounds.cend();
+	  ++bkg){
+	BinProc bp{*bin, *bkg};
+	BinProc dilep_bp{dilep_bin, *bkg};
+	if(yields.find(dilep_bp) == yields.end()
+	   || yields.find(bp) == yields.end()) continue;
+	found_one = true;
+	gp += yields.at(bp);
+	dilep_gp += yields.at(dilep_bp);
+      }
+      if(!found_one) continue;
+      double syst = 1.;
+      string name = "DILEP_CLOSE_"+bin->name_;
+      if(dilep_gp.Yield()>1.){
+	syst = 1./sqrt(dilep_gp.Yield());
+      }
+      bin->systematics_.push_back(Systematic{name, syst});
+    }
   }
 }
 
@@ -702,11 +685,13 @@ void AddModels(RooWorkspace &w,
       null_list += (",pdf_null_BLK_"+blocks.at(iblock).name_);
       alt_list += (",pdf_alt_BLK_"+blocks.at(iblock).name_);
     }
-    for(auto syst = syst_generators.cbegin();
-	syst != syst_generators.cend();
-	++syst){
-      null_list += (",CONSTRAINT_"+(*syst));
-      alt_list += (",CONSTRAINT_"+(*syst));
+    if(do_syst){
+      for(auto syst = syst_generators.cbegin();
+	  syst != syst_generators.cend();
+	  ++syst){
+	null_list += (",CONSTRAINT_"+(*syst));
+	alt_list += (",CONSTRAINT_"+(*syst));
+      }
     }
     w.factory(("PROD::model_b("+null_list+")").c_str());
     w.factory(("PROD::model_s("+alt_list+")").c_str());
@@ -776,12 +761,13 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},
+      {"no_syst", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:d:l:s:tv", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -791,7 +777,8 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(false){
+      if(optname == "no_syst"){
+	do_syst = false;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
