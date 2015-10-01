@@ -34,6 +34,7 @@ using namespace RooStats;
 
 namespace{
   double lumi = 3.;
+  bool blinded = true;
   bool do_syst = true;
 }
 
@@ -168,7 +169,7 @@ void GetYields(const vector<Block> &blocks,
 	if(do_dilep) MakeDileptonBin(*bin, baseline,
 				     dilep_bin, dilep_baseline);
         BinProc bp_data{*bin, data};
-        StoreYield(bp_data, baseline, yields);
+        if(!blinded) StoreYield(bp_data, baseline, yields);
         BinProc bp_sig{*bin, signal};
         StoreYield(bp_sig, baseline, yields);
         for(auto bkg = backgrounds.cbegin();
@@ -297,7 +298,11 @@ void MakeWorkspace(const string &file_name,
   for(auto block = blocks.begin();
       block != blocks.end();
       ++block){
-    AddData(w, *block, data, yields, obs_names);
+    if(!blinded){
+      AddData(w, *block, data, yields, obs_names);
+    }else{
+      AddMockData(w, *block, backgrounds, yields, obs_names);
+    }
     AddBackgroundFractions(w, *block, backgrounds, yields, nuis_names);
     size_t max_col, max_row;
     AddABCDParams(w, *block, backgrounds, yields, nuis_names, max_col, max_row);
@@ -649,6 +654,34 @@ void AddBinPdfs(RooWorkspace &w,
   w.factory(("PROD:pdf_alt_BLK_"+block.name_+"("+alt_list+")").c_str());
 }
 
+void AddMockData(RooWorkspace &w,
+		 const Block &block,
+		 vector<reference_wrapper<Process> > &backgrounds,
+		 const map<BinProc, GammaParams> &yields,
+		 vector<string> &obs_names){
+  for(auto vbin = block.bins_.cbegin();
+      vbin != block.bins_.cend();
+      ++vbin){
+    for(auto bin = vbin->cbegin();
+        bin != vbin->cend();
+        ++bin){
+      GammaParams gp;
+      for(auto bkg = backgrounds.cbegin();
+	  bkg != backgrounds.cend();
+	  ++bkg){
+	BinProc bp{*bin, *bkg};
+	gp += yields.at(bp);
+      }
+      ostringstream oss;
+      oss << "nobs_BLK_" << block.name_
+          << "_BIN_" << bin->name_ << flush;
+      obs_names.push_back(oss.str());
+      oss << "[" << gp.Yield() << "]" << flush;
+      w.factory(oss.str().c_str());
+    }
+  }
+}
+
 void AddData(RooWorkspace &w,
              const Block &block,
              Process &data,
@@ -735,7 +768,9 @@ void PrintComparison(const RooWorkspace &w,
                      BinProc &bp,
                      const map<BinProc, GammaParams> &yields,
                      bool is_data){
-  GammaParams gp = yields.at(bp);
+  GammaParams gp{0., 0.};
+  if(yields.find(bp) != yields.end()) gp = yields.at(bp);
+
   ostringstream name;
   name << (is_data ? "nobs" : "rate")
        << "_BLK_" << block.name_
@@ -761,19 +796,23 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},
+      {"unblind", no_argument, 0, 'u'},
       {"no_syst", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
     case 'l':
       lumi = atof(optarg);
+      break;
+    case 'u':
+      blinded = false;
       break;
     case 0:
       optname = long_options[option_index].name;

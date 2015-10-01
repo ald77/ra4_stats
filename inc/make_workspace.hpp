@@ -77,6 +77,12 @@ void AddSignalPreds(RooWorkspace &w,
 void AddBinPdfs(RooWorkspace &w,
                 const Block &block);
 
+void AddMockData(RooWorkspace &w,
+		 const Block &block,
+		 std::vector<std::reference_wrapper<Process> > &backgrounds,
+		 const std::map<BinProc, GammaParams> &yields,
+		 std::vector<std::string> &obs_names);
+
 void AddData(RooWorkspace &w,
              const Block &block,
              Process &data,
