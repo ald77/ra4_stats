@@ -164,7 +164,6 @@ vector<double> GetSignificances(const vector<double> &sb_qs){
 }
 
 double FindFraction(const vector<double> &qs, double q){
-  vector<double>::const_iterator it = lower_bound(qs.begin(), qs.end(), q);
   return static_cast<double>(distance(lower_bound(qs.begin(), qs.end(), q), qs.end()))/qs.size();
 }
 
