@@ -3,7 +3,7 @@
 #include "bin.hpp"
 #include "process.hpp"
 
-BinProc::BinProc(const Bin &bin, Process &process):
+BinProc::BinProc(const Bin &bin, const Process &process):
   process_(process),
   bin_(bin){
   }

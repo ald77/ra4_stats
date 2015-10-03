@@ -18,6 +18,8 @@ Process::Process(const string &name,
   name_(name),
   cut_(cut),
   count_zeros_(count_zeros){
+  CleanName();
+  CleanCut();
   ReplaceAll(name_, " ", "");
   ReplaceAll(cut_, " ", "");
   for(auto file_name = file_names.cbegin();
@@ -35,6 +37,8 @@ Process::Process(const string &name,
   name_(name),
   cut_(cut),
   count_zeros_(count_zeros){
+  CleanName();
+  CleanCut();
   ReplaceAll(name_, " ", "");
   ReplaceAll(cut_, " ", "");
   for(auto file_name = file_names.begin();
@@ -44,12 +48,53 @@ Process::Process(const string &name,
   }
   }
 
+const string & Process::Name() const{
+  return name_;
+}
+
+Process & Process::Name(const string &name){
+  name_ = name;
+  CleanName();
+  return *this;
+}
+
+const string & Process::Cut() const{
+  return cut_;
+}
+
+Process & Process::Cut(const string &cut){
+  cut_ = cut;
+  CleanCut();
+  return *this;
+}
+
+long Process::GetEntries() const{
+  return chain_.GetEntries();
+}
+
+void Process::GetCountAndUncertainty(double &count, double &uncertainty,
+				     const std::string &cut) const{
+  return ::GetCountAndUncertainty(chain_, "("+cut+")*("+cut_+")",
+				  count, uncertainty);
+}
+
+bool Process::CountZeros() const{
+  return count_zeros_;
+}
+
+Process & Process::CountZeros(bool count_zeros){
+  count_zeros_ = count_zeros;
+  return *this;
+}
+
 bool Process::operator<(const Process &p) const{
-  return name_ < p.name_
-    || (name_ == p.name_
-        && (cut_ < p.cut_
-            || (cut_ == p.cut_
-                && (count_zeros_ < p.count_zeros_
-                    || (count_zeros_ == p.count_zeros_
-                        && chain_.Hash() < p.chain_.Hash())))));
+  return ComparisonTuple() < p.ComparisonTuple();
+}
+
+void Process::CleanName(){
+  ReplaceAll(name_, " ", "");
+}
+
+void Process::CleanCut(){
+  ReplaceAll(cut_, " ", "");
 }

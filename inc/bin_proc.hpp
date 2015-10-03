@@ -5,12 +5,12 @@
 #include "process.hpp"
 
 struct BinProc{
-  BinProc(const Bin &bin, Process &process);
+  BinProc(const Bin &bin, const Process &process);
 
   bool operator<(const BinProc &bp) const;
 
-  Process &process_;
-  Bin bin_;
+  const Process &process_;
+  const Bin &bin_;
 };
 
 #endif
