@@ -14,7 +14,7 @@
 #include "block.hpp"
 #include "bin.hpp"
 #include "process.hpp"
-#include "bin_proc.hpp"
+#include "yield_key.hpp"
 #include "cut.hpp"
 
 void GetYields(const std::vector<Block> &blocks,
@@ -22,16 +22,16 @@ void GetYields(const std::vector<Block> &blocks,
                const Process &data,
                const Process &signal,
                const std::vector<std::reference_wrapper<Process> > &backgrounds,
-               std::map<BinProc, GammaParams> &yields);
+               std::map<YieldKey, GammaParams> &yields);
 
 bool NeedsDileptonBin(const Bin &bin, const Cut &baseline);
 
 void MakeDileptonBin(const Bin &bin, const Cut &baseline,
 		     Bin &dilep_bin, Cut &dilep_baseline);
 
-void StoreYield(const BinProc &bp,
+void StoreYield(const YieldKey &bp,
                 const Cut &baseline,
-                std::map<BinProc, GammaParams> &yields);
+                std::map<YieldKey, GammaParams> &yields);
 
 void MakeWorkspace(const std::string &file_name,
                    const Cut &baseline,
@@ -39,27 +39,30 @@ void MakeWorkspace(const std::string &file_name,
                    const Process &data,
                    const Process &signal,
                    const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                   std::map<BinProc, GammaParams> &yields);
+                   std::map<YieldKey, GammaParams> &yields);
 
 std::vector<double> GetBackgroundFractions(const Block &block,
                                            const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                                           const std::map<BinProc, GammaParams> &yields);
+					   const Cut &baseline,
+                                           const std::map<YieldKey, GammaParams> &yields);
 
 void AddBackgroundFractions(RooWorkspace &w,
                             const Block &block,
                             const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                            const std::map<BinProc, GammaParams> &yields,
+			    const Cut &baseline,
+                            const std::map<YieldKey, GammaParams> &yields,
                             std::vector<std::string> &nuis_names);
 
 void AddDileptonSystematics(Block &block,
 			    const Cut &baseline,
 			    const std::vector<std::reference_wrapper<Process> > &backgrounds,
-			    const std::map<BinProc, GammaParams> &yields);
+			    const std::map<YieldKey, GammaParams> &yields);
 
 void AddABCDParams(RooWorkspace &w,
                    const Block &block,
                    const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                   const std::map<BinProc, GammaParams> &yields,
+		   const Cut &baseline,
+                   const std::map<YieldKey, GammaParams> &yields,
                    std::vector<std::string> &nuis_names,
                    size_t &max_col, size_t &max_row);
 
@@ -73,7 +76,8 @@ void AddBackgroundPreds(RooWorkspace &w,
 void AddSignalPreds(RooWorkspace &w,
                     const Block &block,
                     const Process &signal,
-                    const std::map<BinProc, GammaParams> &yields);
+		    const Cut &cut,
+                    const std::map<YieldKey, GammaParams> &yields);
 
 void AddBinPdfs(RooWorkspace &w,
                 const Block &block);
@@ -81,13 +85,15 @@ void AddBinPdfs(RooWorkspace &w,
 void AddMockData(RooWorkspace &w,
 		 const Block &block,
 		 const std::vector<std::reference_wrapper<Process> > &backgrounds,
-		 const std::map<BinProc, GammaParams> &yields,
+		 const Cut &baseline,
+		 const std::map<YieldKey, GammaParams> &yields,
 		 std::vector<std::string> &obs_names);
 
 void AddData(RooWorkspace &w,
              const Block &block,
              const Process &data,
-             const std::map<BinProc, GammaParams> &yields,
+	     const Cut &baseline,
+             const std::map<YieldKey, GammaParams> &yields,
              std::vector<std::string> &obs_names);
 
 void AddModels(RooWorkspace &w,
@@ -99,12 +105,13 @@ void PrintDiagnostics(const RooWorkspace &w,
                       const Process &data,
                       const Process &signal,
                       const std::vector<std::reference_wrapper<Process> > &backgrounds,
-                      const std::map<BinProc, GammaParams> &yields);
+		      const Cut &baseline,
+                      const std::map<YieldKey, GammaParams> &yields);
 
 void PrintComparison(const RooWorkspace &w,
                      const Block &block,
-                     const BinProc &bp,
-                     const std::map<BinProc, GammaParams> &yields,
+                     const YieldKey &bp,
+                     const std::map<YieldKey, GammaParams> &yields,
                      bool is_data = false);
 
 void GetOptions(int argc, char *argv[]);

@@ -25,10 +25,10 @@
 #include "gamma_params.hpp"
 #include "bin.hpp"
 #include "process.hpp"
-#include "bin_proc.hpp"
 #include "utilities.hpp"
 #include "systematic.hpp"
 #include "cut.hpp"
+#include "yield_key.hpp"
 
 using namespace std;
 using namespace RooStats;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
   }
   string no_syst = do_syst ? "" : "_nosyst";
 
-  map<BinProc, GammaParams> yields, dilep_yields;
+  map<YieldKey, GammaParams> yields, dilep_yields;
   MakeWorkspace("method3_"+lumi_string+no_syst+".root",
 		baseline, blocks_m3, data, signal, backgrounds, yields);
   MakeWorkspace("method1_"+lumi_string+no_syst+".root",
@@ -154,7 +154,7 @@ void GetYields(const vector<Block> &blocks,
                const Process &data,
                const Process &signal,
                const vector<reference_wrapper<Process> > &backgrounds,
-               map<BinProc, GammaParams> &yields){
+               map<YieldKey, GammaParams> &yields){
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){
@@ -169,16 +169,16 @@ void GetYields(const vector<Block> &blocks,
 	bool do_dilep = NeedsDileptonBin(*bin, baseline);
 	if(do_dilep) MakeDileptonBin(*bin, baseline,
 				     dilep_bin, dilep_baseline);
-        BinProc bp_data{*bin, data};
-        if(!blinded) StoreYield(bp_data, baseline, yields);
-        BinProc bp_sig{*bin, signal};
-        StoreYield(bp_sig, baseline, yields);
+        YieldKey yk_data{*bin, data, baseline};
+        if(!blinded) StoreYield(yk_data, baseline, yields);
+        YieldKey yk_sig{*bin, signal, baseline};
+        StoreYield(yk_sig, baseline, yields);
         for(auto bkg = backgrounds.cbegin();
             bkg != backgrounds.cend();
             ++bkg){
-          BinProc bp{*bin, *bkg};
-          StoreYield(bp, baseline, yields);
-	  if(do_dilep) StoreYield(BinProc{dilep_bin, *bkg}, dilep_baseline, yields);
+          YieldKey yk{*bin, *bkg, baseline};
+          StoreYield(yk, baseline, yields);
+	  if(do_dilep) StoreYield(YieldKey{dilep_bin, *bkg, dilep_baseline}, dilep_baseline, yields);
         }
       }
     }
@@ -222,18 +222,18 @@ void MakeDileptonBin(const Bin &bin, const Cut &baseline,
   dilep_baseline.RmCutOn( "met", "met>200&&met<=400");
 }
 
-void StoreYield(const BinProc &bp,
+void StoreYield(const YieldKey &yk,
                 const Cut &baseline,
-                map<BinProc, GammaParams> &yields){
-  cout << "Getting yields for bin " << bp.bin_.Name()
-       << ", process " << bp.process_.Name() << endl;
+                map<YieldKey, GammaParams> &yields){
+  cout << "Getting yields for bin " << GetBin(yk).Name()
+       << ", process " << GetProcess(yk).Name() << endl;
 
   GammaParams gps;
 
-  if(yields.find(bp) != yields.end()){
+  if(yields.find(yk) != yields.end()){
     cout << "Recycling already computed yield." << endl;
-    gps = yields.at(bp);
-  }else if(bp.process_.GetEntries() == 0){
+    gps = yields.at(yk);
+  }else if(GetProcess(yk).GetEntries() == 0){
     cout << "No entries found." << endl;
     gps.SetNEffectiveAndWeight(0., 0.);
   }else{
@@ -241,9 +241,9 @@ void StoreYield(const BinProc &bp,
     oss << lumi << flush;
     Cut lumi_weight = Cut(oss.str()+"*weight");
     array<Cut, 6> cuts;
-    cuts.at(0) = lumi_weight*(baseline && bp.bin_.Cut() && bp.process_.Cut());
-    cuts.at(1) = lumi_weight*(baseline && bp.process_.Cut());
-    cuts.at(2) = lumi_weight*(bp.process_.Cut());
+    cuts.at(0) = lumi_weight*(baseline && GetBin(yk).Cut() && GetProcess(yk).Cut());
+    cuts.at(1) = lumi_weight*(baseline && GetProcess(yk).Cut());
+    cuts.at(2) = lumi_weight*(GetProcess(yk).Cut());
     cuts.at(3) = lumi_weight;
     cuts.at(4) = Cut(oss.str());
     cuts.at(5) = Cut();
@@ -251,14 +251,14 @@ void StoreYield(const BinProc &bp,
     for(size_t icut = 0;
         icut < cuts.size() && gps.Weight()<=0.;
         ++icut){
-      if(icut > 0 && !bp.process_.CountZeros()){
+      if(icut > 0 && !GetProcess(yk).CountZeros()){
         gps.SetNEffectiveAndWeight(0., 0.);
         break;
       }
       const Cut &cut = cuts.at(icut);
       cout << "Trying cut " << cut << endl;
       double count, uncertainty;
-      bp.process_.GetCountAndUncertainty(count, uncertainty, cut);
+      GetProcess(yk).GetCountAndUncertainty(count, uncertainty, cut);
       GammaParams temp_gps;
       temp_gps.SetYieldAndUncertainty(count, uncertainty);
       if(icut == 0){
@@ -276,7 +276,7 @@ void StoreYield(const BinProc &bp,
     << ", N_eff=" << gps.NEffective()
     << ", weight=" << gps.Weight()
     << "\n" << endl;
-  yields[bp] =  gps;
+  yields[yk] =  gps;
 }
 
 void MakeWorkspace(const string &file_name,
@@ -285,7 +285,7 @@ void MakeWorkspace(const string &file_name,
                    const Process &data,
                    const Process &signal,
                    const vector<reference_wrapper<Process> > &backgrounds,
-                   map<BinProc, GammaParams> &yields){
+                   map<YieldKey, GammaParams> &yields){
   GetYields(blocks, baseline, data,
             signal, backgrounds, yields);
 
@@ -300,16 +300,16 @@ void MakeWorkspace(const string &file_name,
       block != blocks.end();
       ++block){
     if(!blinded){
-      AddData(w, *block, data, yields, obs_names);
+      AddData(w, *block, data, baseline, yields, obs_names);
     }else{
-      AddMockData(w, *block, backgrounds, yields, obs_names);
+      AddMockData(w, *block, backgrounds, baseline, yields, obs_names);
     }
-    AddBackgroundFractions(w, *block, backgrounds, yields, nuis_names);
+    AddBackgroundFractions(w, *block, backgrounds, baseline, yields, nuis_names);
     size_t max_col, max_row;
-    AddABCDParams(w, *block, backgrounds, yields, nuis_names, max_col, max_row);
+    AddABCDParams(w, *block, backgrounds, baseline, yields, nuis_names, max_col, max_row);
     if(do_syst) AddDileptonSystematics(*block, baseline, backgrounds, yields);
     AddBackgroundPreds(w, *block, backgrounds, max_col, max_row, syst_generators, nuis_names);
-    AddSignalPreds(w, *block, signal, yields);
+    AddSignalPreds(w, *block, signal, baseline, yields);
     AddBinPdfs(w, *block);
   }
 
@@ -337,13 +337,14 @@ void MakeWorkspace(const string &file_name,
   w.import(model_config_bonly);
 
   w.writeToFile(file_name.c_str());
-  PrintDiagnostics(w, blocks, data, signal, backgrounds, yields);
+  PrintDiagnostics(w, blocks, data, signal, backgrounds, baseline, yields);
   cout << "Wrote workspace to " << file_name << "!\n" << endl;
 }
 
 vector<double> GetBackgroundFractions(const Block &block,
                                       const vector<reference_wrapper<Process> > &backgrounds,
-                                      const map<BinProc, GammaParams> &yields){
+				      const Cut &baseline,
+                                      const map<YieldKey, GammaParams> &yields){
   vector<double> output(backgrounds.size(), 0.);
 
   for(size_t ibkg = 0; ibkg < backgrounds.size(); ++ibkg){
@@ -354,8 +355,8 @@ vector<double> GetBackgroundFractions(const Block &block,
       for(auto bin = vbin->cbegin();
           bin != vbin->cend();
           ++bin){
-        BinProc bp{*bin, bkg};
-        output.at(ibkg) += yields.at(bp).Yield();
+        YieldKey yk{*bin, bkg, baseline};
+        output.at(ibkg) += yields.at(yk).Yield();
       }
     }
   }
@@ -370,12 +371,14 @@ vector<double> GetBackgroundFractions(const Block &block,
 void AddBackgroundFractions(RooWorkspace &w,
                             const Block &block,
                             const vector<reference_wrapper<Process> > &backgrounds,
-                            const map<BinProc, GammaParams> &yields,
+			    const Cut &baseline,
+                            const map<YieldKey, GammaParams> &yields,
                             vector<string> &nuis_names){
   ostringstream oss;
   if(backgrounds.size()>1){
     vector<double> bkg_fracs = GetBackgroundFractions(block,
                                                       backgrounds,
+						      baseline,
                                                       yields);
     vector<string> list_of_names(bkg_fracs.size()-1);
     for(size_t ibkg = 0; ibkg < bkg_fracs.size()-1; ++ibkg){
@@ -416,7 +419,7 @@ void AddBackgroundFractions(RooWorkspace &w,
 void AddDileptonSystematics(Block &block,
 			    const Cut &baseline,
 			    const vector<reference_wrapper<Process> > &backgrounds,
-			    const map<BinProc, GammaParams> &yields){
+			    const map<YieldKey, GammaParams> &yields){
   for(auto vbin = block.bins_.begin();
       vbin != block.bins_.end();
       ++vbin){
@@ -427,19 +430,16 @@ void AddDileptonSystematics(Block &block,
       Cut dilep_baseline = baseline;
       MakeDileptonBin(*bin, baseline,
 		      dilep_bin, dilep_baseline);
-      GammaParams gp{0., 0.};
       GammaParams dilep_gp{0., 0.};
       bool found_one = false;
       for(auto bkg = backgrounds.cbegin();
 	  bkg != backgrounds.cend();
 	  ++bkg){
-	BinProc bp{*bin, *bkg};
-	BinProc dilep_bp{dilep_bin, *bkg};
-	if(yields.find(dilep_bp) == yields.end()
-	   || yields.find(bp) == yields.end()) continue;
+	YieldKey yk{*bin, *bkg, baseline};
+	YieldKey dilep_yk{dilep_bin, *bkg, dilep_baseline};
+	if(yields.find(dilep_yk) == yields.end()) continue;
 	found_one = true;
-	gp += yields.at(bp);
-	dilep_gp += yields.at(dilep_bp);
+	dilep_gp += yields.at(dilep_yk);
       }
       if(!found_one) continue;
       double syst = 1.;
@@ -455,7 +455,8 @@ void AddDileptonSystematics(Block &block,
 void AddABCDParams(RooWorkspace &w,
                    const Block &block,
                    const vector<reference_wrapper<Process> > &backgrounds,
-                   const map<BinProc, GammaParams> &yields,
+		   const Cut &baseline,
+                   const map<YieldKey, GammaParams> &yields,
                    vector<string> &nuis_names,
                    size_t &max_col, size_t &max_row){
   vector<double> row_sums(block.bins_.size());
@@ -466,8 +467,8 @@ void AddABCDParams(RooWorkspace &w,
       for(auto bkg = backgrounds.cbegin();
           bkg != backgrounds.cend();
           ++bkg){
-        BinProc bp{block.bins_.at(irow).at(icol), *bkg};
-        double yield = yields.at(bp).Yield();
+        YieldKey yk{block.bins_.at(irow).at(icol), *bkg, baseline};
+        double yield = yields.at(yk).Yield();
         row_sums.at(irow) += yield;
         col_sums.at(icol) += yield;
       }
@@ -598,15 +599,16 @@ void AddBackgroundPreds(RooWorkspace &w,
 void AddSignalPreds(RooWorkspace &w,
                     const Block &block,
                     const Process &signal,
-                    const map<BinProc, GammaParams> &yields){
+		    const Cut &baseline,
+                    const map<YieldKey, GammaParams> &yields){
   for(auto vbin = block.bins_.cbegin();
       vbin != block.bins_.cend();
       ++vbin){
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
         ++bin){
-      BinProc bp{*bin, signal};
-      double yield = yields.at(bp).Yield();
+      YieldKey yk{*bin, signal, baseline};
+      double yield = yields.at(yk).Yield();
       ostringstream oss;
       oss << "rate_BLK_" << block.name_
           << "_BIN_" << bin->Name()
@@ -658,7 +660,8 @@ void AddBinPdfs(RooWorkspace &w,
 void AddMockData(RooWorkspace &w,
 		 const Block &block,
 		 const vector<reference_wrapper<Process> > &backgrounds,
-		 const map<BinProc, GammaParams> &yields,
+		 const Cut &baseline,
+		 const map<YieldKey, GammaParams> &yields,
 		 vector<string> &obs_names){
   for(auto vbin = block.bins_.cbegin();
       vbin != block.bins_.cend();
@@ -670,8 +673,8 @@ void AddMockData(RooWorkspace &w,
       for(auto bkg = backgrounds.cbegin();
 	  bkg != backgrounds.cend();
 	  ++bkg){
-	BinProc bp{*bin, *bkg};
-	gp += yields.at(bp);
+	YieldKey yk{*bin, *bkg, baseline};
+	gp += yields.at(yk);
       }
       ostringstream oss;
       oss << "nobs_BLK_" << block.name_
@@ -686,7 +689,8 @@ void AddMockData(RooWorkspace &w,
 void AddData(RooWorkspace &w,
              const Block &block,
              const Process &data,
-             const map<BinProc, GammaParams> &yields,
+	     const Cut &baseline,
+             const map<YieldKey, GammaParams> &yields,
              vector<string> &obs_names){
   for(auto vbin = block.bins_.cbegin();
       vbin != block.bins_.cend();
@@ -694,8 +698,8 @@ void AddData(RooWorkspace &w,
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
         ++bin){
-      BinProc bp{*bin, data};
-      double yield = yields.at(bp).Yield();
+      YieldKey yk{*bin, data, baseline};
+      double yield = yields.at(yk).Yield();
       ostringstream oss;
       oss << "nobs_BLK_" << block.name_
           << "_BIN_" << bin->Name() << flush;
@@ -737,7 +741,8 @@ void PrintDiagnostics(const RooWorkspace &w,
                       const Process &data,
                       const Process &signal,
                       const vector<reference_wrapper<Process> > &backgrounds,
-                      const map<BinProc, GammaParams> &yields){
+		      const Cut &baseline,
+                      const map<YieldKey, GammaParams> &yields){
   w.Print();
   for(auto block = blocks.cbegin();
       block != blocks.cend();
@@ -749,15 +754,15 @@ void PrintDiagnostics(const RooWorkspace &w,
           bin != vbin->cend();
           ++bin){
 
-        BinProc bp_data{*bin, data};
-        PrintComparison(w, *block, bp_data, yields, true);
-        BinProc bp_sig{*bin, signal};
-        PrintComparison(w, *block, bp_sig, yields);
+        YieldKey yk_data{*bin, data, baseline};
+        PrintComparison(w, *block, yk_data, yields, true);
+        YieldKey yk_sig{*bin, signal, baseline};
+        PrintComparison(w, *block, yk_sig, yields);
         for(auto bkg = backgrounds.cbegin();
             bkg != backgrounds.cend();
             ++bkg){
-          BinProc bp{*bin, *bkg};
-          PrintComparison(w, *block, bp, yields);
+          YieldKey yk{*bin, *bkg, baseline};
+          PrintComparison(w, *block, yk, yields);
         }
       }
     }
@@ -766,18 +771,18 @@ void PrintDiagnostics(const RooWorkspace &w,
 
 void PrintComparison(const RooWorkspace &w,
                      const Block &block,
-                     const BinProc &bp,
-                     const map<BinProc, GammaParams> &yields,
+                     const YieldKey &yk,
+                     const map<YieldKey, GammaParams> &yields,
                      bool is_data){
   GammaParams gp{0., 0.};
-  if(yields.find(bp) != yields.end()) gp = yields.at(bp);
+  if(yields.find(yk) != yields.end()) gp = yields.at(yk);
 
   ostringstream name;
   name << (is_data ? "nobs" : "rate")
        << "_BLK_" << block.name_
-       << "_BIN_" << bp.bin_.Name();
+       << "_BIN_" << GetBin(yk).Name();
   if(!is_data){
-    name << "_PRC_" << bp.process_.Name();
+    name << "_PRC_" << GetProcess(yk).Name();
   }
   name << flush;
 
