@@ -2,15 +2,32 @@
 #define H_SYSTEMATIC
 
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <functional>
+#include <utility>
 
-struct Systematic{
-  Systematic(const std::string &base_name,
-	     double multiplier);
+class Systematic{
+public:
+  Systematic(const std::string &name,
+	     double strength);
 
-  std::string base_name_;
-  double multiplier_;
+  const std::string & Name() const;
+  Systematic & Name(const std::string &name);
 
-  bool operator<(const Systematic &s) const;
+  double Strength() const;
+  Systematic & Strength(double strength);
+
+  bool operator<(const Systematic &systematic) const;
+  bool operator==(const Systematic &systematic) const;
+
+private:
+  std::string name_;
+  double strength_;
+
+  auto ComparisonTuple() const{
+    return make_tuple(name_);
+  }
 };
 
 #endif

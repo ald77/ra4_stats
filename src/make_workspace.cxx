@@ -185,12 +185,12 @@ void GetYields(const vector<Block> &blocks,
 }
 
 bool NeedsDileptonBin(const Bin &bin, const string &baseline){
-  return Contains(bin.cut_, "mt>")
-    && (Contains(bin.cut_, "(nels+nmus)==1")
-	|| Contains(bin.cut_, "(nmus+nels)==1")
-	|| Contains(bin.cut_, "nels+nmus==1")
-	|| Contains(bin.cut_, "nmus+nels==1")
-	|| Contains(bin.cut_, "nleps==1")
+  return Contains(bin.Cut(), "mt>")
+    && (Contains(bin.Cut(), "(nels+nmus)==1")
+	|| Contains(bin.Cut(), "(nmus+nels)==1")
+	|| Contains(bin.Cut(), "nels+nmus==1")
+	|| Contains(bin.Cut(), "nmus+nels==1")
+	|| Contains(bin.Cut(), "nleps==1")
 	|| Contains(baseline, "(nels+nmus)==1")
 	|| Contains(baseline, "(nmus+nels)==1")
 	|| Contains(baseline, "nels+nmus==1")
@@ -201,15 +201,17 @@ bool NeedsDileptonBin(const Bin &bin, const string &baseline){
 void MakeDileptonBin(const Bin &bin, const string &baseline,
 		     Bin &dilep_bin, string &dilep_baseline){
   dilep_bin = bin;
-  dilep_bin.name_ = "DILEPTON_"+dilep_bin.name_;
+  dilep_bin.Name("DILEPTON_"+dilep_bin.Name());
   dilep_baseline = baseline;
-  ReplaceAll(dilep_bin.cut_, "(nels+nmus)==1", "(nels+nmus)==2");
-  ReplaceAll(dilep_bin.cut_, "(nmus+nels)==1", "(nmus+nels)==2");
-  ReplaceAll(dilep_bin.cut_, "nels+nmus==1", "nels+nmus==2");
-  ReplaceAll(dilep_bin.cut_, "nmus+nels==1", "nmus+nels==2");
-  ReplaceAll(dilep_bin.cut_, "nleps==1", "nleps==2");
-  RmCutOn(dilep_bin.cut_, "nbm", "nbm>=1&&nbm<=2");
-  RmCutOn(dilep_bin.cut_, "met", "met>200&&met<=400");
+  auto cut = dilep_bin.Cut();
+  ReplaceAll(cut, "(nels+nmus)==1", "(nels+nmus)==2");
+  ReplaceAll(cut, "(nmus+nels)==1", "(nmus+nels)==2");
+  ReplaceAll(cut, "nels+nmus==1", "nels+nmus==2");
+  ReplaceAll(cut, "nmus+nels==1", "nmus+nels==2");
+  ReplaceAll(cut, "nleps==1", "nleps==2");
+  RmCutOn(cut, "nbm", "nbm>=1&&nbm<=2");
+  RmCutOn(cut, "met", "met>200&&met<=400");
+  dilep_bin.Cut(cut);
   ReplaceAll(dilep_baseline, "(nels+nmus)==1", "(nels+nmus)==2");
   ReplaceAll(dilep_baseline, "(nmus+nels)==1", "(nmus+nels)==2");
   ReplaceAll(dilep_baseline, "nels+nmus==1", "nels+nmus==2");
@@ -222,7 +224,7 @@ void MakeDileptonBin(const Bin &bin, const string &baseline,
 void StoreYield(const BinProc &bp,
                 const string &baseline,
                 map<BinProc, GammaParams> &yields){
-  cout << "Getting yields for bin " << bp.bin_.name_
+  cout << "Getting yields for bin " << bp.bin_.Name()
        << ", process " << bp.process_.Name() << endl;
 
   GammaParams gps;
@@ -238,7 +240,7 @@ void StoreYield(const BinProc &bp,
     oss << lumi << flush;
     string lumi_string = oss.str();
     array<string, 6> cuts;
-    cuts.at(0) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.bin_.cut_+")&&("+bp.process_.Cut()+"))";
+    cuts.at(0) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.bin_.Cut()+")&&("+bp.process_.Cut()+"))";
     cuts.at(1) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.process_.Cut()+"))";
     cuts.at(2) = "("+lumi_string+"*weight)*(&&("+bp.process_.Cut()+"))";
     cuts.at(3) = "("+lumi_string+"*weight)";
@@ -442,11 +444,11 @@ void AddDileptonSystematics(Block &block,
       }
       if(!found_one) continue;
       double syst = 1.;
-      string name = "DILEP_CLOSE_"+bin->name_;
+      string name = "DILEP_CLOSE_"+bin->Name();
       if(dilep_gp.Yield()>1.){
 	syst = 1./sqrt(dilep_gp.Yield());
       }
-      bin->systematics_.push_back(Systematic{name, syst});
+      bin->AddSystematic(Systematic{name, syst});
     }
   }
 }
@@ -545,7 +547,7 @@ void AddBackgroundPreds(RooWorkspace &w,
     for(size_t icol = 0; icol < block.bins_.at(0).size(); ++icol){
       bool no_rx = (icol == max_col );
       const Bin &bin = block.bins_.at(irow).at(icol);
-      string bb_name = "BLK_"+block.name_+"_BIN_"+bin.name_;
+      string bb_name = "BLK_"+block.name_+"_BIN_"+bin.Name();
       vector<string> prod_list;
       for(size_t iprocess = 0; iprocess < backgrounds.size(); ++iprocess){
         const Process & bkg = backgrounds.at(iprocess);
@@ -576,15 +578,15 @@ void AddBackgroundPreds(RooWorkspace &w,
 
       fact_str="prod::nbkg_"+bb_name+"("
 	+"nbkg_raw_"+bb_name;
-      for(auto syst = bin.systematics_.cbegin();
-	  syst != bin.systematics_.cend();
+      for(auto syst = bin.Systematics().cbegin();
+	  syst != bin.Systematics().cend();
 	  ++syst){
-	AddSystGenerator(w, syst_generators, nuis_names, syst->base_name_);
-	string full_name = syst->base_name_ + "_" + bb_name;
+	AddSystGenerator(w, syst_generators, nuis_names, syst->Name());
+	string full_name = syst->Name() + "_" + bb_name;
 	ostringstream oss;
 	oss << "expr::" << full_name
-	    << "('exp(" << syst->multiplier_ << "*" << syst->base_name_ << ")',"
-	    << syst->base_name_ << ")" << flush;
+	    << "('exp(" << syst->Strength() << "*" << syst->Name() << ")',"
+	    << syst->Name() << ")" << flush;
 	w.factory(oss.str().c_str());
 	fact_str+=","+full_name;
       }
@@ -608,16 +610,16 @@ void AddSignalPreds(RooWorkspace &w,
       double yield = yields.at(bp).Yield();
       ostringstream oss;
       oss << "rate_BLK_" << block.name_
-          << "_BIN_" << bin->name_
+          << "_BIN_" << bin->Name()
           << "_PRC_" << signal.Name()
           << "[" << yield << "]" << flush;
       w.factory(oss.str().c_str());
       oss.str("");
       oss << "prod::nsig_BLK_" << block.name_
-          << "_BIN_" << bin->name_
+          << "_BIN_" << bin->Name()
           << "(r,"
           << "rate_BLK_" << block.name_
-          << "_BIN_" << bin->name_
+          << "_BIN_" << bin->Name()
           << "_PRC_" << signal.Name()
           << ")" << flush;
       w.factory(oss.str().c_str());
@@ -634,7 +636,7 @@ void AddBinPdfs(RooWorkspace &w,
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
         ++bin){
-      string bb_name = "_BLK_"+block.name_ +"_BIN_"+bin->name_;
+      string bb_name = "_BLK_"+block.name_ +"_BIN_"+bin->Name();
       string null_name = "pdf_null"+bb_name;
       string alt_name = "pdf_alt"+bb_name;
       if(vbin != block.bins_.cbegin() || bin != vbin->cbegin()){
@@ -674,7 +676,7 @@ void AddMockData(RooWorkspace &w,
       }
       ostringstream oss;
       oss << "nobs_BLK_" << block.name_
-          << "_BIN_" << bin->name_ << flush;
+          << "_BIN_" << bin->Name() << flush;
       obs_names.push_back(oss.str());
       oss << "[" << gp.Yield() << "]" << flush;
       w.factory(oss.str().c_str());
@@ -697,7 +699,7 @@ void AddData(RooWorkspace &w,
       double yield = yields.at(bp).Yield();
       ostringstream oss;
       oss << "nobs_BLK_" << block.name_
-          << "_BIN_" << bin->name_ << flush;
+          << "_BIN_" << bin->Name() << flush;
       obs_names.push_back(oss.str());
       oss << "[" << yield << "]" << flush;
       w.factory(oss.str().c_str());
@@ -774,7 +776,7 @@ void PrintComparison(const RooWorkspace &w,
   ostringstream name;
   name << (is_data ? "nobs" : "rate")
        << "_BLK_" << block.name_
-       << "_BIN_" << bp.bin_.name_;
+       << "_BIN_" << bp.bin_.Name();
   if(!is_data){
     name << "_PRC_" << bp.process_.Name();
   }
