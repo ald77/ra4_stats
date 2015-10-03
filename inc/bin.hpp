@@ -6,18 +6,19 @@
 #include <tuple>
 
 #include "systematic.hpp"
+#include "cut.hpp"
 
 class Bin{
   typedef std::vector<Systematic> SystCollection;
 public:
-  Bin(const std::string &name, const std::string &cut,
+  Bin(const std::string &name, const class Cut &cut,
       const SystCollection &systematics = SystCollection());
 
   const std::string Name() const;
   Bin & Name(const std::string &name);
 
-  const std::string & Cut() const;
-  Bin & Cut(const std::string &cut);
+  const class Cut & Cut() const;
+  Bin & Cut(const class Cut &cut);
 
   const SystCollection & Systematics() const;
   Bin & Systematics(const SystCollection &systematics);
@@ -31,7 +32,8 @@ public:
   bool operator<(const Bin &b) const;
 
 private:
-  std::string name_, cut_;
+  class Cut cut_;
+  std::string name_;
   SystCollection systematics_;
 
   auto ComparisonTuple() const{

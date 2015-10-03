@@ -3,9 +3,6 @@
 
 #include <string>
 #include <tuple>
-#include <type_traits>
-#include <functional>
-#include <utility>
 
 class Systematic{
 public:

@@ -12,16 +12,13 @@ using namespace std;
 
 Process::Process(const string &name,
                  const vector<string> &file_names,
-                 const string &cut,
+                 const class Cut &cut,
                  bool count_zeros):
   chain_("tree", "tree"),
-  name_(name),
   cut_(cut),
+  name_(name),
   count_zeros_(count_zeros){
   CleanName();
-  CleanCut();
-  ReplaceAll(name_, " ", "");
-  ReplaceAll(cut_, " ", "");
   for(auto file_name = file_names.cbegin();
       file_name != file_names.cend();
       ++file_name){
@@ -31,16 +28,13 @@ Process::Process(const string &name,
 
 Process::Process(const string &name,
                  initializer_list<string> file_names,
-                 const string &cut,
+                 const class Cut &cut,
                  bool count_zeros):
   chain_("tree","tree"),
-  name_(name),
   cut_(cut),
+  name_(name),
   count_zeros_(count_zeros){
   CleanName();
-  CleanCut();
-  ReplaceAll(name_, " ", "");
-  ReplaceAll(cut_, " ", "");
   for(auto file_name = file_names.begin();
       file_name != file_names.end();
       ++file_name){
@@ -58,13 +52,12 @@ Process & Process::Name(const string &name){
   return *this;
 }
 
-const string & Process::Cut() const{
+const class Cut & Process::Cut() const{
   return cut_;
 }
 
-Process & Process::Cut(const string &cut){
+Process & Process::Cut(const class Cut &cut){
   cut_ = cut;
-  CleanCut();
   return *this;
 }
 
@@ -73,8 +66,8 @@ long Process::GetEntries() const{
 }
 
 void Process::GetCountAndUncertainty(double &count, double &uncertainty,
-				     const std::string &cut) const{
-  return ::GetCountAndUncertainty(chain_, "("+cut+")*("+cut_+")",
+				     const class Cut &cut) const{
+  return ::GetCountAndUncertainty(chain_, cut*cut_,
 				  count, uncertainty);
 }
 
@@ -93,8 +86,4 @@ bool Process::operator<(const Process &p) const{
 
 void Process::CleanName(){
   ReplaceAll(name_, " ", "");
-}
-
-void Process::CleanCut(){
-  ReplaceAll(cut_, " ", "");
 }

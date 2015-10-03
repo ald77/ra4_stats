@@ -15,25 +15,26 @@
 #include "bin.hpp"
 #include "process.hpp"
 #include "bin_proc.hpp"
+#include "cut.hpp"
 
 void GetYields(const std::vector<Block> &blocks,
-               const std::string &baseline,
+               const Cut &baseline,
                const Process &data,
                const Process &signal,
                const std::vector<std::reference_wrapper<Process> > &backgrounds,
                std::map<BinProc, GammaParams> &yields);
 
-bool NeedsDileptonBin(const Bin &bin, const std::string &baseline);
+bool NeedsDileptonBin(const Bin &bin, const Cut &baseline);
 
-void MakeDileptonBin(const Bin &bin, const std::string &baseline,
-		     Bin &dilep_bin, std::string &dilep_baseline);
+void MakeDileptonBin(const Bin &bin, const Cut &baseline,
+		     Bin &dilep_bin, Cut &dilep_baseline);
 
 void StoreYield(const BinProc &bp,
-                const std::string &baseline,
+                const Cut &baseline,
                 std::map<BinProc, GammaParams> &yields);
 
 void MakeWorkspace(const std::string &file_name,
-                   const std::string &baseline,
+                   const Cut &baseline,
                    std::vector<Block> blocks,
                    const Process &data,
                    const Process &signal,
@@ -51,7 +52,7 @@ void AddBackgroundFractions(RooWorkspace &w,
                             std::vector<std::string> &nuis_names);
 
 void AddDileptonSystematics(Block &block,
-			    const std::string &baseline,
+			    const Cut &baseline,
 			    const std::vector<std::reference_wrapper<Process> > &backgrounds,
 			    const std::map<BinProc, GammaParams> &yields);
 

@@ -7,13 +7,12 @@
 
 using namespace std;
 
-Bin::Bin(const string &name, const string &cut,
+Bin::Bin(const string &name, const class Cut &cut,
 	 const vector<Systematic> &systematics):
-  name_(name),
   cut_(cut),
+  name_(name),
   systematics_(systematics){
   ReplaceAll(name_, " ", "");
-  ReplaceAll(cut_, " ", "");
   }
 
 const string Bin::Name() const{
@@ -25,11 +24,11 @@ Bin & Bin::Name(const string &name){
   return *this;
 }
 
-const string & Bin::Cut() const{
+const class Cut & Bin::Cut() const{
   return cut_;
 }
 
-Bin & Bin::Cut(const std::string &cut){
+Bin & Bin::Cut(const class Cut &cut){
   cut_ = cut;
   return *this;
 }

@@ -57,12 +57,12 @@ void DefineSet(RooWorkspace &w,
 }
 
 void GetCountAndUncertainty(TTree &tree,
-                            const string &cut,
+                            const Cut &cut,
                             double &count,
                             double &uncertainty){
   const string hist_name{"temp"};
   TH1D temp{hist_name.c_str(), "", 1, -1.0, 1.0};
   temp.Sumw2();
-  tree.Project(hist_name.c_str(), "0.", cut.c_str());
+  tree.Project(hist_name.c_str(), "0.", static_cast<const char *>(cut));
   count=temp.IntegralAndError(0,2,uncertainty);
 }

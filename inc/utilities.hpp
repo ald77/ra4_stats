@@ -8,6 +8,8 @@
 
 #include "RooWorkspace.h"
 
+#include "cut.hpp"
+
 bool Contains(const std::string &str, const std::string &pat);
 
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
@@ -21,7 +23,7 @@ void DefineSet(RooWorkspace &w,
                const std::vector<std::string> &var_names);
 
 void GetCountAndUncertainty(TTree &tree,
-                            const std::string &cut,
+                            const Cut &cut,
                             double &count,
                             double &uncertainty);
 

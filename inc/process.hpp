@@ -8,35 +8,38 @@
 
 #include "TChain.h"
 
+#include "cut.hpp"
+
 class Process{
 public:
   Process(const std::string &name,
           const std::vector<std::string> &file_names,
-          const std::string &cut = "1",
+          const Cut &cut = ::Cut(),
           bool count_zeros = true);
   Process(const std::string &name,
           std::initializer_list<std::string> file_names,
-          const std::string &cut = "1",
+          const Cut &cut = ::Cut(),
           bool count_zeros = true);
 
   const std::string & Name() const;
   Process & Name(const std::string &name);
 
-  const std::string & Cut() const;
-  Process & Cut(const std::string &cut);
+  const Cut & Cut() const;
+  Process & Cut(const class Cut &cut);
 
   bool CountZeros() const;
   Process & CountZeros(bool count_zeros);
 
   long GetEntries() const;
   void GetCountAndUncertainty(double &count, double &uncertainty,
-			      const std::string &cut = "1") const;
+			      const class Cut &cut = ::Cut("1")) const;
 
   bool operator<(const Process &p) const;
 
 private:
   mutable TChain chain_;
-  std::string name_, cut_;
+  class Cut cut_;
+  std::string name_;
   bool count_zeros_;
 
   Process(Process&& p) = delete;
@@ -44,10 +47,9 @@ private:
   Process& operator=(const Process &p) = delete;
 
   void CleanName();
-  void CleanCut();
 
   auto ComparisonTuple() const{
-    return make_tuple(cut_, chain_.Hash(), count_zeros_);
+    return std::make_tuple(cut_, chain_.Hash(), count_zeros_);
   }
 };
 

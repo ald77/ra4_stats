@@ -28,6 +28,7 @@
 #include "bin_proc.hpp"
 #include "utilities.hpp"
 #include "systematic.hpp"
+#include "cut.hpp"
 
 using namespace std;
 using namespace RooStats;
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]){
   vector<reference_wrapper<Process> > backgrounds{ref(ttbar), ref(other)};
 
   //Baseline selection applied to all bins and processes
-  string baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
+  Cut baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
 
   //Declare bins
   //Method 3
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]){
 }
 
 void GetYields(const vector<Block> &blocks,
-               const string &baseline,
+               const Cut &baseline,
                const Process &data,
                const Process &signal,
                const vector<reference_wrapper<Process> > &backgrounds,
@@ -164,7 +165,7 @@ void GetYields(const vector<Block> &blocks,
           bin != vbin->cend();
           ++bin){
 	Bin dilep_bin = *bin;
-	string dilep_baseline = baseline;
+	Cut dilep_baseline = baseline;
 	bool do_dilep = NeedsDileptonBin(*bin, baseline);
 	if(do_dilep) MakeDileptonBin(*bin, baseline,
 				     dilep_bin, dilep_baseline);
@@ -184,7 +185,7 @@ void GetYields(const vector<Block> &blocks,
   }
 }
 
-bool NeedsDileptonBin(const Bin &bin, const string &baseline){
+bool NeedsDileptonBin(const Bin &bin, const Cut &baseline){
   return Contains(bin.Cut(), "mt>")
     && (Contains(bin.Cut(), "(nels+nmus)==1")
 	|| Contains(bin.Cut(), "(nmus+nels)==1")
@@ -198,31 +199,31 @@ bool NeedsDileptonBin(const Bin &bin, const string &baseline){
 	|| Contains(baseline, "nleps==1"));
 }
 
-void MakeDileptonBin(const Bin &bin, const string &baseline,
-		     Bin &dilep_bin, string &dilep_baseline){
+void MakeDileptonBin(const Bin &bin, const Cut &baseline,
+		     Bin &dilep_bin, Cut &dilep_baseline){
   dilep_bin = bin;
   dilep_bin.Name("DILEPTON_"+dilep_bin.Name());
   dilep_baseline = baseline;
-  auto cut = dilep_bin.Cut();
-  ReplaceAll(cut, "(nels+nmus)==1", "(nels+nmus)==2");
-  ReplaceAll(cut, "(nmus+nels)==1", "(nmus+nels)==2");
-  ReplaceAll(cut, "nels+nmus==1", "nels+nmus==2");
-  ReplaceAll(cut, "nmus+nels==1", "nmus+nels==2");
-  ReplaceAll(cut, "nleps==1", "nleps==2");
-  RmCutOn(cut, "nbm", "nbm>=1&&nbm<=2");
-  RmCutOn(cut, "met", "met>200&&met<=400");
+  Cut cut = dilep_bin.Cut();
+  cut.Replace("(nels+nmus)==1", "(nels+nmus)==2");
+  cut.Replace("(nmus+nels)==1", "(nmus+nels)==2");
+  cut.Replace("nels+nmus==1", "nels+nmus==2");
+  cut.Replace("nmus+nels==1", "nmus+nels==2");
+  cut.Replace("nleps==1", "nleps==2");
+  cut.RmCutOn("nbm", "nbm>=1&&nbm<=2");
+  cut.RmCutOn("met", "met>200&&met<=400");
   dilep_bin.Cut(cut);
-  ReplaceAll(dilep_baseline, "(nels+nmus)==1", "(nels+nmus)==2");
-  ReplaceAll(dilep_baseline, "(nmus+nels)==1", "(nmus+nels)==2");
-  ReplaceAll(dilep_baseline, "nels+nmus==1", "nels+nmus==2");
-  ReplaceAll(dilep_baseline, "nmus+nels==1", "nmus+nels==2");
-  ReplaceAll(dilep_baseline, "nleps==1", "nleps==2");
-  RmCutOn(dilep_baseline, "nbm", "nbm>=1&&nbm<=2");
-  RmCutOn(dilep_baseline, "met", "met>200&&met<=400");
+  dilep_baseline.Replace("(nels+nmus)==1", "(nels+nmus)==2");
+  dilep_baseline.Replace("(nmus+nels)==1", "(nmus+nels)==2");
+  dilep_baseline.Replace("nels+nmus==1", "nels+nmus==2");
+  dilep_baseline.Replace("nmus+nels==1", "nmus+nels==2");
+  dilep_baseline.Replace("nleps==1", "nleps==2");
+  dilep_baseline.RmCutOn("nbm", "nbm>=1&&nbm<=2");
+  dilep_baseline.RmCutOn( "met", "met>200&&met<=400");
 }
 
 void StoreYield(const BinProc &bp,
-                const string &baseline,
+                const Cut &baseline,
                 map<BinProc, GammaParams> &yields){
   cout << "Getting yields for bin " << bp.bin_.Name()
        << ", process " << bp.process_.Name() << endl;
@@ -239,7 +240,7 @@ void StoreYield(const BinProc &bp,
     ostringstream oss;
     oss << lumi << flush;
     string lumi_string = oss.str();
-    array<string, 6> cuts;
+    array<Cut, 6> cuts;
     cuts.at(0) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.bin_.Cut()+")&&("+bp.process_.Cut()+"))";
     cuts.at(1) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.process_.Cut()+"))";
     cuts.at(2) = "("+lumi_string+"*weight)*(&&("+bp.process_.Cut()+"))";
@@ -254,7 +255,7 @@ void StoreYield(const BinProc &bp,
         gps.SetNEffectiveAndWeight(0., 0.);
         break;
       }
-      const string &cut = cuts.at(icut);
+      const Cut &cut = cuts.at(icut);
       cout << "Trying cut " << cut << endl;
       double count, uncertainty;
       bp.process_.GetCountAndUncertainty(count, uncertainty, cut);
@@ -279,15 +280,13 @@ void StoreYield(const BinProc &bp,
 }
 
 void MakeWorkspace(const string &file_name,
-                   const string &baseline,
+                   const Cut &baseline,
                    vector<Block> blocks,
                    const Process &data,
                    const Process &signal,
                    const vector<reference_wrapper<Process> > &backgrounds,
                    map<BinProc, GammaParams> &yields){
-  string baseline_fix = baseline;
-  ReplaceAll(baseline_fix, " ", "");
-  GetYields(blocks, baseline_fix, data,
+  GetYields(blocks, baseline, data,
             signal, backgrounds, yields);
 
   RooWorkspace w{"w"};
@@ -415,7 +414,7 @@ void AddBackgroundFractions(RooWorkspace &w,
 }
 
 void AddDileptonSystematics(Block &block,
-			    const string &baseline,
+			    const Cut &baseline,
 			    const vector<reference_wrapper<Process> > &backgrounds,
 			    const map<BinProc, GammaParams> &yields){
   for(auto vbin = block.bins_.begin();
@@ -425,7 +424,7 @@ void AddDileptonSystematics(Block &block,
 	bin != vbin->end();
 	++bin){
       Bin dilep_bin = *bin;
-      string dilep_baseline = baseline;
+      Cut dilep_baseline = baseline;
       MakeDileptonBin(*bin, baseline,
 		      dilep_bin, dilep_baseline);
       GammaParams gp{0., 0.};
