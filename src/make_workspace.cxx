@@ -239,14 +239,14 @@ void StoreYield(const BinProc &bp,
   }else{
     ostringstream oss;
     oss << lumi << flush;
-    string lumi_string = oss.str();
+    Cut lumi_weight = Cut(oss.str()+"*weight");
     array<Cut, 6> cuts;
-    cuts.at(0) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.bin_.Cut()+")&&("+bp.process_.Cut()+"))";
-    cuts.at(1) = "("+lumi_string+"*weight)*(("+baseline+")&&("+bp.process_.Cut()+"))";
-    cuts.at(2) = "("+lumi_string+"*weight)*(&&("+bp.process_.Cut()+"))";
-    cuts.at(3) = "("+lumi_string+"*weight)";
-    cuts.at(4) = lumi_string;
-    cuts.at(5) = "1";
+    cuts.at(0) = lumi_weight*(baseline && bp.bin_.Cut() && bp.process_.Cut());
+    cuts.at(1) = lumi_weight*(baseline && bp.process_.Cut());
+    cuts.at(2) = lumi_weight*(bp.process_.Cut());
+    cuts.at(3) = lumi_weight;
+    cuts.at(4) = Cut(oss.str());
+    cuts.at(5) = Cut();
 
     for(size_t icut = 0;
         icut < cuts.size() && gps.Weight()<=0.;
