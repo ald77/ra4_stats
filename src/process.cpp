@@ -14,7 +14,7 @@ Process::Process(const string &name,
                  const vector<string> &file_names,
                  const class Cut &cut,
                  bool count_zeros):
-  chain_("tree", "tree"),
+  chain_(new TChain("tree", "tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
@@ -22,7 +22,7 @@ Process::Process(const string &name,
   for(auto file_name = file_names.cbegin();
       file_name != file_names.cend();
       ++file_name){
-    chain_.Add(file_name->c_str());
+    chain_->Add(file_name->c_str());
   }
   }
 
@@ -30,7 +30,7 @@ Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
                  bool count_zeros):
-  chain_("tree","tree"),
+  chain_(new TChain("tree","tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
@@ -38,7 +38,7 @@ Process::Process(const string &name,
   for(auto file_name = file_names.begin();
       file_name != file_names.end();
       ++file_name){
-    chain_.Add(file_name->c_str());
+    chain_->Add(file_name->c_str());
   }
   }
 
@@ -62,13 +62,15 @@ Process & Process::Cut(const class Cut &cut){
 }
 
 long Process::GetEntries() const{
-  return chain_.GetEntries();
+  return chain_->GetEntries();
 }
 
-void Process::GetCountAndUncertainty(double &count, double &uncertainty,
-				     const class Cut &cut) const{
-  return ::GetCountAndUncertainty(chain_, cut*cut_,
-				  count, uncertainty);
+GammaParams Process::GetYield(const class Cut &cut) const{
+  double count, uncertainty;
+  ::GetCountAndUncertainty(*chain_, cut*cut_, count, uncertainty);
+  GammaParams gps;
+  gps.SetYieldAndUncertainty(count, uncertainty);
+  return gps;
 }
 
 bool Process::CountZeros() const{
@@ -78,6 +80,10 @@ bool Process::CountZeros() const{
 Process & Process::CountZeros(bool count_zeros){
   count_zeros_ = count_zeros;
   return *this;
+}
+
+const TChain & Process::Chain() const{
+  return *chain_;
 }
 
 bool Process::operator<(const Process &p) const{

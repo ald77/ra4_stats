@@ -158,8 +158,8 @@ void GetYields(const vector<Block> &blocks,
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){
-    for(auto vbin = block->bins_.cbegin();
-        vbin != block->bins_.cend();
+    for(auto vbin = block->Bins().cbegin();
+        vbin != block->Bins().cend();
         ++vbin){
       for(auto bin = vbin->cbegin();
           bin != vbin->cend();
@@ -257,10 +257,7 @@ void StoreYield(const YieldKey &yk,
       }
       const Cut &cut = cuts.at(icut);
       cout << "Trying cut " << cut << endl;
-      double count, uncertainty;
-      GetProcess(yk).GetCountAndUncertainty(count, uncertainty, cut);
-      GammaParams temp_gps;
-      temp_gps.SetYieldAndUncertainty(count, uncertainty);
+      GammaParams temp_gps = GetProcess(yk).GetYield(cut);
       if(icut == 0){
         gps = temp_gps;
       }else{
@@ -349,8 +346,8 @@ vector<double> GetBackgroundFractions(const Block &block,
 
   for(size_t ibkg = 0; ibkg < backgrounds.size(); ++ibkg){
     Process & bkg = backgrounds.at(ibkg);
-    for(auto vbin = block.bins_.cbegin();
-        vbin != block.bins_.cend();
+    for(auto vbin = block.Bins().cbegin();
+        vbin != block.Bins().cend();
         ++vbin){
       for(auto bin = vbin->cbegin();
           bin != vbin->cend();
@@ -383,7 +380,7 @@ void AddBackgroundFractions(RooWorkspace &w,
     vector<string> list_of_names(bkg_fracs.size()-1);
     for(size_t ibkg = 0; ibkg < bkg_fracs.size()-1; ++ibkg){
       oss.str("");
-      oss << "frac_BLK_" << block.name_
+      oss << "frac_BLK_" << block.Name()
           << "_PRC_" << static_cast<Process&>(backgrounds.at(ibkg)).Name()
           << flush;
       list_of_names.at(ibkg) = oss.str();
@@ -392,7 +389,7 @@ void AddBackgroundFractions(RooWorkspace &w,
       w.factory(oss.str().c_str());
     }
     oss.str("");
-    oss << "expr::frac_BLK_" << block.name_ << "_PRC_"
+    oss << "expr::frac_BLK_" << block.Name() << "_PRC_"
         << static_cast<Process&>(backgrounds.at(backgrounds.size()-1)).Name()
         << "('1";
     for(auto name = list_of_names.cbegin();
@@ -409,7 +406,7 @@ void AddBackgroundFractions(RooWorkspace &w,
     oss << ")" << flush;
     w.factory(oss.str().c_str());
   }else{
-    oss << "frac_BLK_" << block.name_ << "_PRC_"
+    oss << "frac_BLK_" << block.Name() << "_PRC_"
         << static_cast<Process&>(backgrounds.back()).Name()
         << "[1]" << flush;
     w.factory(oss.str().c_str());
@@ -420,8 +417,8 @@ void AddDileptonSystematics(Block &block,
 			    const Cut &baseline,
 			    const vector<reference_wrapper<Process> > &backgrounds,
 			    const map<YieldKey, GammaParams> &yields){
-  for(auto vbin = block.bins_.begin();
-      vbin != block.bins_.end();
+  for(auto vbin = block.Bins().begin();
+      vbin != block.Bins().end();
       ++vbin){
     for(auto bin = vbin->begin();
 	bin != vbin->end();
@@ -447,7 +444,8 @@ void AddDileptonSystematics(Block &block,
       if(dilep_gp.Yield()>1.){
 	syst = 1./sqrt(dilep_gp.Yield());
       }
-      bin->AddSystematic(Systematic{name, syst});
+      //QQQ bin->AddSystematic(Systematic{name, syst});QQQ
+      cout << "QQQ Need to add " << name << "::" << syst << " to systematics! QQQ" << endl;
     }
   }
 }
@@ -459,15 +457,15 @@ void AddABCDParams(RooWorkspace &w,
                    const map<YieldKey, GammaParams> &yields,
                    vector<string> &nuis_names,
                    size_t &max_col, size_t &max_row){
-  vector<double> row_sums(block.bins_.size());
-  vector<double> col_sums(block.bins_.size() ? block.bins_.at(0).size() : 0);
+  vector<double> row_sums(block.Bins().size());
+  vector<double> col_sums(block.Bins().size() ? block.Bins().at(0).size() : 0);
 
-  for(size_t irow = 0; irow < block.bins_.size(); ++irow){
-    for(size_t icol = 0; icol < block.bins_.at(0).size(); ++icol){
+  for(size_t irow = 0; irow < block.Bins().size(); ++irow){
+    for(size_t icol = 0; icol < block.Bins().at(0).size(); ++icol){
       for(auto bkg = backgrounds.cbegin();
           bkg != backgrounds.cend();
           ++bkg){
-        YieldKey yk{block.bins_.at(irow).at(icol), *bkg, baseline};
+        YieldKey yk{block.Bins().at(irow).at(icol), *bkg, baseline};
         double yield = yields.at(yk).Yield();
         row_sums.at(irow) += yield;
         col_sums.at(icol) += yield;
@@ -481,10 +479,10 @@ void AddABCDParams(RooWorkspace &w,
   double total = accumulate(row_sums.cbegin(), row_sums.cend(), 0.);
 
   ostringstream rxss, ryss;
-  rxss << "sum::rxnorm_BLK_" << block.name_ << "(1.,";
-  ryss << "sum::rynorm_BLK_" << block.name_ << "(1.,";
+  rxss << "sum::rxnorm_BLK_" << block.Name() << "(1.,";
+  ryss << "sum::rynorm_BLK_" << block.Name() << "(1.,";
   ostringstream oss;
-  oss << "norm_BLK_" << block.name_ << flush;
+  oss << "norm_BLK_" << block.Name() << flush;
   nuis_names.push_back(oss.str());
   oss << "[" << max(1., total) << ",0.," << max(5.*total, 20.) << "]" << flush;
   w.factory(oss.str().c_str());
@@ -492,7 +490,7 @@ void AddABCDParams(RooWorkspace &w,
   for(size_t irow = 0; irow < row_sums.size(); ++irow){
     if(irow == max_row) continue;
     oss.str("");
-    oss << "ry" << (irow+1) << (max_row+1) << "_BLK_" << block.name_ << flush;
+    oss << "ry" << (irow+1) << (max_row+1) << "_BLK_" << block.Name() << flush;
     rxss << "," << oss.str();
     nuis_names.push_back(oss.str());
     oss << "[" << row_sums.at(irow)/row_sums.at(max_row)
@@ -504,7 +502,7 @@ void AddABCDParams(RooWorkspace &w,
   for(size_t icol = 0; icol < col_sums.size(); ++icol){
     if(icol == max_col) continue;
     oss.str("");
-    oss << "rx" << (icol+1) << (max_col+1) << "_BLK_" << block.name_ << flush;
+    oss << "rx" << (icol+1) << (max_col+1) << "_BLK_" << block.Name() << flush;
     ryss << "," << oss.str();
     nuis_names.push_back(oss.str());
     oss << "[" << col_sums.at(icol)/col_sums.at(max_col)
@@ -514,15 +512,15 @@ void AddABCDParams(RooWorkspace &w,
   ryss << ")" << flush;
   w.factory(ryss.str().c_str());
   oss.str("");
-  oss << "prod::rnorm_BLK_" << block.name_
-      << "(rxnorm_BLK_" << block.name_
-      << ",rynorm_BLK_" << block.name_ << ")" << flush;
+  oss << "prod::rnorm_BLK_" << block.Name()
+      << "(rxnorm_BLK_" << block.Name()
+      << ",rynorm_BLK_" << block.Name() << ")" << flush;
   w.factory(oss.str().c_str());
   oss.str("");
-  oss << "expr::rscale_BLK_" << block.name_
-      << "('norm_BLK_" << block.name_ << "/rnorm_BLK_" << block.name_
-      << "',norm_BLK_" << block.name_
-      << ",rnorm_BLK_" << block.name_ << ")" << flush;
+  oss << "expr::rscale_BLK_" << block.Name()
+      << "('norm_BLK_" << block.Name() << "/rnorm_BLK_" << block.Name()
+      << "',norm_BLK_" << block.Name()
+      << ",rnorm_BLK_" << block.Name() << ")" << flush;
   w.factory(oss.str().c_str());
 }
 
@@ -542,29 +540,29 @@ void AddBackgroundPreds(RooWorkspace &w,
                         size_t max_col, size_t max_row,
 			set<string> &syst_generators,
 			vector<string> &nuis_names){
-  for(size_t irow = 0; irow < block.bins_.size(); ++irow){
+  for(size_t irow = 0; irow < block.Bins().size(); ++irow){
     bool no_ry = (irow == max_row);
-    for(size_t icol = 0; icol < block.bins_.at(0).size(); ++icol){
+    for(size_t icol = 0; icol < block.Bins().at(0).size(); ++icol){
       bool no_rx = (icol == max_col );
-      const Bin &bin = block.bins_.at(irow).at(icol);
-      string bb_name = "BLK_"+block.name_+"_BIN_"+bin.Name();
+      const Bin &bin = block.Bins().at(irow).at(icol);
+      string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
       vector<string> prod_list;
       for(size_t iprocess = 0; iprocess < backgrounds.size(); ++iprocess){
         const Process & bkg = backgrounds.at(iprocess);
         string prod_name = "rate_"+bb_name+"_PRC_"+bkg.Name();
         prod_list.push_back(prod_name);
-        string fact_str = "prod::"+prod_name+"(rscale_BLK_"+block.name_;
+        string fact_str = "prod::"+prod_name+"(rscale_BLK_"+block.Name();
         if(!no_rx){
           ostringstream oss;
-          oss << ",rx" << (icol+1) << (max_col+1) << "_BLK_" << block.name_ << flush;
+          oss << ",rx" << (icol+1) << (max_col+1) << "_BLK_" << block.Name() << flush;
           fact_str += oss.str();
         }
         if(!no_ry){
           ostringstream oss;
-          oss << ",ry" << (irow+1) << (max_row+1) << "_BLK_" << block.name_ << flush;
+          oss << ",ry" << (irow+1) << (max_row+1) << "_BLK_" << block.Name() << flush;
           fact_str += oss.str();
         }
-        fact_str += (",frac_BLK_"+block.name_+"_PRC_"+bkg.Name()+")");
+        fact_str += (",frac_BLK_"+block.Name()+"_PRC_"+bkg.Name()+")");
         w.factory(fact_str.c_str());
       }
       string fact_str="sum::nbkg_raw_"+bb_name+"(";
@@ -601,8 +599,8 @@ void AddSignalPreds(RooWorkspace &w,
                     const Process &signal,
 		    const Cut &baseline,
                     const map<YieldKey, GammaParams> &yields){
-  for(auto vbin = block.bins_.cbegin();
-      vbin != block.bins_.cend();
+  for(auto vbin = block.Bins().cbegin();
+      vbin != block.Bins().cend();
       ++vbin){
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
@@ -610,16 +608,16 @@ void AddSignalPreds(RooWorkspace &w,
       YieldKey yk{*bin, signal, baseline};
       double yield = yields.at(yk).Yield();
       ostringstream oss;
-      oss << "rate_BLK_" << block.name_
+      oss << "rate_BLK_" << block.Name()
           << "_BIN_" << bin->Name()
           << "_PRC_" << signal.Name()
           << "[" << yield << "]" << flush;
       w.factory(oss.str().c_str());
       oss.str("");
-      oss << "prod::nsig_BLK_" << block.name_
+      oss << "prod::nsig_BLK_" << block.Name()
           << "_BIN_" << bin->Name()
           << "(r,"
-          << "rate_BLK_" << block.name_
+          << "rate_BLK_" << block.Name()
           << "_BIN_" << bin->Name()
           << "_PRC_" << signal.Name()
           << ")" << flush;
@@ -631,16 +629,16 @@ void AddSignalPreds(RooWorkspace &w,
 void AddBinPdfs(RooWorkspace &w,
                 const Block &block){
   string null_list{""}, alt_list{""};
-  for(auto vbin = block.bins_.cbegin();
-      vbin != block.bins_.cend();
+  for(auto vbin = block.Bins().cbegin();
+      vbin != block.Bins().cend();
       ++vbin){
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
         ++bin){
-      string bb_name = "_BLK_"+block.name_ +"_BIN_"+bin->Name();
+      string bb_name = "_BLK_"+block.Name() +"_BIN_"+bin->Name();
       string null_name = "pdf_null"+bb_name;
       string alt_name = "pdf_alt"+bb_name;
-      if(vbin != block.bins_.cbegin() || bin != vbin->cbegin()){
+      if(vbin != block.Bins().cbegin() || bin != vbin->cbegin()){
         null_list += ",";
         alt_list += ",";
       }
@@ -653,8 +651,8 @@ void AddBinPdfs(RooWorkspace &w,
       (static_cast<RooPoisson*>(w.pdf(("pdf_alt"+bb_name).c_str())))->setNoRounding();
     }
   }
-  w.factory(("PROD:pdf_null_BLK_"+block.name_+"("+null_list+")").c_str());
-  w.factory(("PROD:pdf_alt_BLK_"+block.name_+"("+alt_list+")").c_str());
+  w.factory(("PROD:pdf_null_BLK_"+block.Name()+"("+null_list+")").c_str());
+  w.factory(("PROD:pdf_alt_BLK_"+block.Name()+"("+alt_list+")").c_str());
 }
 
 void AddMockData(RooWorkspace &w,
@@ -663,8 +661,8 @@ void AddMockData(RooWorkspace &w,
 		 const Cut &baseline,
 		 const map<YieldKey, GammaParams> &yields,
 		 vector<string> &obs_names){
-  for(auto vbin = block.bins_.cbegin();
-      vbin != block.bins_.cend();
+  for(auto vbin = block.Bins().cbegin();
+      vbin != block.Bins().cend();
       ++vbin){
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
@@ -677,7 +675,7 @@ void AddMockData(RooWorkspace &w,
 	gp += yields.at(yk);
       }
       ostringstream oss;
-      oss << "nobs_BLK_" << block.name_
+      oss << "nobs_BLK_" << block.Name()
           << "_BIN_" << bin->Name() << flush;
       obs_names.push_back(oss.str());
       oss << "[" << gp.Yield() << "]" << flush;
@@ -692,8 +690,8 @@ void AddData(RooWorkspace &w,
 	     const Cut &baseline,
              const map<YieldKey, GammaParams> &yields,
              vector<string> &obs_names){
-  for(auto vbin = block.bins_.cbegin();
-      vbin != block.bins_.cend();
+  for(auto vbin = block.Bins().cbegin();
+      vbin != block.Bins().cend();
       ++vbin){
     for(auto bin = vbin->cbegin();
         bin != vbin->cend();
@@ -701,7 +699,7 @@ void AddData(RooWorkspace &w,
       YieldKey yk{*bin, data, baseline};
       double yield = yields.at(yk).Yield();
       ostringstream oss;
-      oss << "nobs_BLK_" << block.name_
+      oss << "nobs_BLK_" << block.Name()
           << "_BIN_" << bin->Name() << flush;
       obs_names.push_back(oss.str());
       oss << "[" << yield << "]" << flush;
@@ -717,11 +715,11 @@ void AddModels(RooWorkspace &w,
     w.factory("RooPoisson::model_b(0,0)");
     w.factory("RooPoisson::model_s(0,0)");
   }else{
-    string null_list = "pdf_null_BLK_"+blocks.at(0).name_;
-    string alt_list = "pdf_alt_BLK_"+blocks.at(0).name_;
+    string null_list = "pdf_null_BLK_"+blocks.at(0).Name();
+    string alt_list = "pdf_alt_BLK_"+blocks.at(0).Name();
     for(size_t iblock = 1; iblock < blocks.size(); ++iblock){
-      null_list += (",pdf_null_BLK_"+blocks.at(iblock).name_);
-      alt_list += (",pdf_alt_BLK_"+blocks.at(iblock).name_);
+      null_list += (",pdf_null_BLK_"+blocks.at(iblock).Name());
+      alt_list += (",pdf_alt_BLK_"+blocks.at(iblock).Name());
     }
     if(do_syst){
       for(auto syst = syst_generators.cbegin();
@@ -747,8 +745,8 @@ void PrintDiagnostics(const RooWorkspace &w,
   for(auto block = blocks.cbegin();
       block != blocks.cend();
       ++block){
-    for(auto vbin = block->bins_.cbegin();
-        vbin != block->bins_.cend();
+    for(auto vbin = block->Bins().cbegin();
+        vbin != block->Bins().cend();
         ++vbin){
       for(auto bin = vbin->cbegin();
           bin != vbin->cend();
@@ -779,7 +777,7 @@ void PrintComparison(const RooWorkspace &w,
 
   ostringstream name;
   name << (is_data ? "nobs" : "rate")
-       << "_BLK_" << block.name_
+       << "_BLK_" << block.Name()
        << "_BIN_" << GetBin(yk).Name();
   if(!is_data){
     name << "_PRC_" << GetProcess(yk).Name();

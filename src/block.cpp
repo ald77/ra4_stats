@@ -15,3 +15,25 @@ Block::Block(const string &name, initializer_list<vector<Bin> > bins):
   bins_(bins),
   name_(name){
   }
+
+const string & Block::Name() const{
+  return name_;
+}
+
+Block & Block::Name(const std::string &name){
+  name_ = name;
+  return *this;
+}
+
+const vector<vector<Bin> > & Block::Bins() const{
+  return bins_;
+}
+
+Block & Block::Bins(const std::vector<std::vector<Bin> > &bins){
+  bins_ = bins;
+  return *this;
+}
+
+bool Block::operator<(const Block &b) const{
+  return ComparisonTuple() < b.ComparisonTuple();
+}

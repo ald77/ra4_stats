@@ -5,10 +5,12 @@
 #include <vector>
 #include <initializer_list>
 #include <tuple>
+#include <memory>
 
 #include "TChain.h"
 
 #include "cut.hpp"
+#include "gamma_params.hpp"
 
 class Process{
 public:
@@ -31,25 +33,22 @@ public:
   Process & CountZeros(bool count_zeros);
 
   long GetEntries() const;
-  void GetCountAndUncertainty(double &count, double &uncertainty,
-			      const class Cut &cut = ::Cut("1")) const;
+  GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
+
+  const TChain & Chain() const;
 
   bool operator<(const Process &p) const;
 
 private:
-  mutable TChain chain_;
+  mutable std::shared_ptr<TChain> chain_;
   class Cut cut_;
   std::string name_;
   bool count_zeros_;
 
-  Process(Process&& p) = delete;
-  Process(const Process &p) = delete;
-  Process& operator=(const Process &p) = delete;
-
   void CleanName();
 
   auto ComparisonTuple() const{
-    return std::make_tuple(cut_, chain_.Hash(), count_zeros_);
+    return std::make_tuple(cut_, chain_->Hash(), count_zeros_);
   }
 };
 

@@ -4,15 +4,30 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
+#include <tuple>
 
 #include "bin.hpp"
 
-struct Block{
+class Block{
+public:
   Block(const std::string &name, const std::vector<std::vector<Bin> > &bins);
   Block(const std::string &name, std::initializer_list<std::vector<Bin> > bins);
 
+  const std::string & Name() const;
+  Block & Name(const std::string &name);
+
+  const std::vector<std::vector<Bin> > & Bins() const;
+  Block & Bins(const std::vector<std::vector<Bin> > &bins);
+
+  bool operator<(const Block &b) const;
+
+private:
   std::vector<std::vector<Bin> > bins_;
   std::string name_;
+
+  auto ComparisonTuple() const{
+    return std::make_tuple(bins_);
+  }
 };
 
 #endif
