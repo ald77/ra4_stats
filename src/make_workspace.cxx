@@ -30,6 +30,8 @@
 #include "cut.hpp"
 #include "yield_key.hpp"
 
+#include "workspace_generator.hpp"
+
 using namespace std;
 using namespace RooStats;
 
@@ -61,7 +63,7 @@ int main(int argc, char *argv[]){
   Process data{"data", {}};
 
   //Make list of all backgrounds. Backgrounds assumed to be orthogonal
-  vector<reference_wrapper<Process> > backgrounds{ref(ttbar), ref(other)};
+  set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
   Cut baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
@@ -112,7 +114,7 @@ int main(int argc, char *argv[]){
   Bin m1_r4_highmet_highnj{"m1_r4_highmet_highnj", "mt>140&&mj>600&&met>400&&njets>8"};
 
   //Specify ABCD constraints
-  vector<Block> blocks_m3{
+  set<Block> blocks_m3{
     {"lowmet_lownb", {{r1_lowmet_lownb, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb},
           {r3_lowmet_lownb, r4_lowmet_lownj_lownb, r4_lowmet_highnj_lownb}}},
       {"lowmet_highnb", {{r1_lowmet_highnb, r2_lowmet_lownj_highnb, r2_lowmet_highnj_highnb},
@@ -121,7 +123,7 @@ int main(int argc, char *argv[]){
               {r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
   };
 
-  vector<Block> blocks_m1{
+  set<Block> blocks_m1{
     {"lowmet_lownj", {{m1_r1_lowmet_lownj, m1_r2_lowmet_lownj},
           {m1_r3_lowmet_lownj, m1_r4_lowmet_lownj}}},
       {"lowmet_highnj", {{m1_r1_lowmet_highnj, m1_r2_lowmet_highnj},
@@ -142,11 +144,10 @@ int main(int argc, char *argv[]){
   }
   string no_syst = do_syst ? "" : "_nosyst";
 
-  map<YieldKey, GammaParams> yields, dilep_yields;
-  MakeWorkspace("method3_"+lumi_string+no_syst+".root",
-		baseline, blocks_m3, data, signal, backgrounds, yields);
-  MakeWorkspace("method1_"+lumi_string+no_syst+".root",
-		baseline, blocks_m1, data, signal, backgrounds, yields);
+  WorkspaceGenerator wg3(baseline, blocks_m3, backgrounds, signal, data);
+  wg3.WriteToFile("test_3.root");
+  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal, data);
+  wg1.WriteToFile("test_1.root");
 }
 
 void GetYields(const vector<Block> &blocks,

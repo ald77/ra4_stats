@@ -27,7 +27,7 @@ public:
   GammaParams Total() const;
 
 private:
-  std::vector<std::vector<GammaParams> > &gps_;
+  std::vector<std::vector<GammaParams> > gps_;
 };
 
 #endif

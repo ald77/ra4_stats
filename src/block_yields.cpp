@@ -1,13 +1,17 @@
 #include "block_yields.hpp"
 
-#include "utility.hpp"
+#include "utilities.hpp"
 
-BlockYields(const Block &block,
-	    const set<Process> &processes,
-	    const Cut &cut,
-	    const map<YieldKey, GammaParams> &yields):
+using namespace std;
+
+BlockYields::BlockYields(const Block &block,
+			 const set<Process> &processes,
+			 const Cut &cut,
+			 const map<YieldKey, GammaParams> &yields):
   gps_(block.Bins().size(), 
-       block.Bins().size() ? block.Bins().at(0).size() : 0){
+       block.Bins().size()
+       ? vector<GammaParams>(block.Bins().at(0).size())
+       : vector<GammaParams>(0)){
   size_t irow = 0, icol = 0;
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
@@ -44,11 +48,29 @@ vector<GammaParams> BlockYields::ColSums() const{
 }
 
 size_t BlockYields::MaxRow() const{
-  return MaxIndex(RowSums());
+  vector<GammaParams> gps = RowSums();
+  if(gps.size() == 0) return -1;
+  size_t imax = 0;
+  double yield_max = gps.at(0).Yield();
+  for(size_t i = 1; i < gps.size(); ++i){
+    if(gps.at(i).Yield() > yield_max){
+      yield_max = gps.at(i).Yield();
+    }
+  }
+  return imax;
 }
 
 size_t BlockYields::MaxCol() const{
-  return MaxIndex(ColSums());
+  vector<GammaParams> gps = ColSums();
+  if(gps.size() == 0) return -1;
+  size_t imax = 0;
+  double yield_max = gps.at(0).Yield();
+  for(size_t i = 1; i < gps.size(); ++i){
+    if(gps.at(i).Yield() > yield_max){
+      yield_max = gps.at(i).Yield();
+    }
+  }
+  return imax;
 }
 
 GammaParams BlockYields::Total() const{
