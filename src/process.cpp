@@ -14,7 +14,7 @@ Process::Process(const string &name,
                  const vector<string> &file_names,
                  const class Cut &cut,
                  bool count_zeros):
-  chain_(new TChain("tree", "tree")),
+  chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
@@ -30,7 +30,7 @@ Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
                  bool count_zeros):
-  chain_(new TChain("tree","tree")),
+  chain_(make_shared<TChain>("tree","tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
@@ -80,10 +80,6 @@ bool Process::CountZeros() const{
 Process & Process::CountZeros(bool count_zeros){
   count_zeros_ = count_zeros;
   return *this;
-}
-
-const TChain & Process::Chain() const{
-  return *chain_;
 }
 
 bool Process::operator<(const Process &p) const{

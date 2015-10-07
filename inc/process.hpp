@@ -35,8 +35,6 @@ public:
   long GetEntries() const;
   GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
 
-  const TChain & Chain() const;
-
   bool operator<(const Process &p) const;
 
 private:
@@ -48,7 +46,7 @@ private:
   void CleanName();
 
   auto ComparisonTuple() const{
-    return std::make_tuple(cut_, chain_->Hash(), count_zeros_);
+    return std::make_tuple(cut_, chain_, count_zeros_);
   }
 };
 
