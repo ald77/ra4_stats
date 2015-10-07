@@ -14,6 +14,7 @@
 #include "RooStats/ModelConfig.h"
 
 #include "yield_key.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 
@@ -44,6 +45,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 void WorkspaceGenerator::WriteToFile(const string &file_name){
   GetYields();
   AddPOI();
+  AddDileptonSystematic();
   AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
@@ -130,6 +132,100 @@ void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process) cons
 void WorkspaceGenerator::AddPOI(){
   w_.factory("r[1.,0.,20.]");
   poi_.insert(poi_.end(), "r");
+}
+
+void WorkspaceGenerator::AddDileptonSystematic(){
+  StoreDileptonYields();
+  return;
+  set<Block> new_blocks;
+  for(const auto &block: blocks_){
+    Block new_block = block;
+    for(auto &vbin: new_block.Bins()){
+      for(auto &bin: vbin){
+	Bin dilep_bin = bin;
+	Cut dilep_baseline = baseline_;
+	MakeDileptonBin(bin, dilep_bin, dilep_baseline);
+	GammaParams dilep_gp(0., 0.);
+	bool found_dilep_bin = false;
+	if(blinded){
+	  for(const auto &bkg: backgrounds_){
+	    YieldKey dilep_key(dilep_bin, bkg, dilep_baseline);
+	    if(yields_.find(dilep_key) != yields_.end()) continue;
+	    found_dilep_bin = true;
+	    dilep_gp += yields_.at(dilep_key);
+	  }
+	}else{
+	  YieldKey dilep_key(dilep_bin, data_, dilep_baseline);
+	  if(yields_.find(dilep_key) != yields_.end()){
+	    found_dilep_bin = true;
+	    dilep_gp = yields_.at(dilep_key);
+	  }	  
+	}
+	if(!found_dilep_bin) continue;
+	double strength = 1.;
+	string name = "dilep_"+bin.Name();
+	if(dilep_gp.Yield()>1.){
+	  strength = 1./sqrt(dilep_gp.Yield());
+	}
+	Systematic syst(name, strength);
+	bin.AddSystematic(syst);
+	new_blocks.insert(new_blocks.end(), new_block);
+      }
+    }
+  }
+  blocks_ = new_blocks;
+}
+
+void WorkspaceGenerator::StoreDileptonYields() const{
+  for(const auto &block: blocks_){
+    for(const auto &vbin: block.Bins()){
+      for(const auto &bin: vbin){
+	if(!NeedsDileptonBin(bin)) continue;
+	Bin dilep_bin = bin;
+	Cut dilep_baseline = baseline_;
+	MakeDileptonBin(bin, dilep_bin, dilep_baseline);
+	StoreYield(dilep_bin, data_);
+	StoreYield(dilep_bin, signal_);
+	for(const auto &bkg: backgrounds_){
+	  StoreYield(dilep_bin, bkg);
+	}
+      }
+    }
+  }
+}
+
+bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
+  return Contains(bin.Cut(), "mt>")
+    && (Contains(bin.Cut(), "(nels+nmus)==1")
+	|| Contains(bin.Cut(), "(nmus+nels)==1")
+	|| Contains(bin.Cut(), "nels+nmus==1")
+	|| Contains(bin.Cut(), "nmus+nels==1")
+	|| Contains(bin.Cut(), "nleps==1")
+	|| Contains(baseline_, "(nels+nmus)==1")
+	|| Contains(baseline_, "(nmus+nels)==1")
+	|| Contains(baseline_, "nels+nmus==1")
+	|| Contains(baseline_, "nmus+nels==1")
+	|| Contains(baseline_, "nleps==1"));
+}
+
+void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const{
+  dilep_bin = bin;
+  dilep_bin.Name("dilep_"+dilep_bin.Name());
+  dilep_cut = baseline_;
+  dilep_bin.Cut().Replace("(nels+nmus)==1", "(nels+nmus)==2");
+  dilep_bin.Cut().Replace("(nmus+nels)==1", "(nmus+nels)==2");
+  dilep_bin.Cut().Replace("nels+nmus==1", "nels+nmus==2");
+  dilep_bin.Cut().Replace("nmus+nels==1", "nmus+nels==2");
+  dilep_bin.Cut().Replace("nleps==1", "nleps==2");
+  dilep_bin.Cut().RmCutOn("nbm", "nbm>=1&&nbm<=2");
+  dilep_bin.Cut().RmCutOn("met", "met>200&&met<=400");
+  dilep_cut.Replace("(nels+nmus)==1", "(nels+nmus)==2");
+  dilep_cut.Replace("(nmus+nels)==1", "(nmus+nels)==2");
+  dilep_cut.Replace("nels+nmus==1", "nels+nmus==2");
+  dilep_cut.Replace("nmus+nels==1", "nmus+nels==2");
+  dilep_cut.Replace("nleps==1", "nleps==2");
+  dilep_cut.RmCutOn("nbm", "nbm>=1&&nbm<=2");
+  dilep_cut.RmCutOn( "met", "met>200&&met<=400");
 }
 
 void WorkspaceGenerator::AddSystematicsGenerators(){

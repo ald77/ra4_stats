@@ -40,6 +40,10 @@ private:
   void GetYields() const;
   void StoreYield(const Bin &bin, const Process &process) const;
   void AddPOI();
+  void AddDileptonSystematic();
+  void StoreDileptonYields() const;
+  bool NeedsDileptonBin(const Bin &bin) const;
+  void MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const;
   void AddSystematicsGenerators();
   void AddSystematicGenerator(const std::string &name);
   void AddData(const Block &block);

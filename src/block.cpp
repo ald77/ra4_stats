@@ -29,9 +29,8 @@ const vector<vector<Bin> > & Block::Bins() const{
   return bins_;
 }
 
-Block & Block::Bins(const std::vector<std::vector<Bin> > &bins){
-  bins_ = bins;
-  return *this;
+vector<vector<Bin> > & Block::Bins(){
+  return bins_;
 }
 
 bool Block::operator<(const Block &b) const{

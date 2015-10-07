@@ -12,8 +12,8 @@ public:
   const std::string & Name() const;
   Systematic & Name(const std::string &name);
 
-  double Strength() const;
-  Systematic & Strength(double strength);
+  const double & Strength() const;
+  double & Strength();
 
   bool operator<(const Systematic &systematic) const;
   bool operator==(const Systematic &systematic) const;
@@ -22,8 +22,9 @@ private:
   std::string name_;
   double strength_;
 
-  auto ComparisonTuple() const{
-    return make_tuple(name_);
+  using CompType = std::tuple<const std::string &>;
+  CompType ComparisonTuple() const{
+    return CompType(name_);
   }
 };
 

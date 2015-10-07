@@ -56,9 +56,8 @@ const class Cut & Process::Cut() const{
   return cut_;
 }
 
-Process & Process::Cut(const class Cut &cut){
-  cut_ = cut;
-  return *this;
+class Cut & Process::Cut(){
+  return cut_;
 }
 
 long Process::GetEntries() const{
@@ -73,13 +72,12 @@ GammaParams Process::GetYield(const class Cut &cut) const{
   return gps;
 }
 
-bool Process::CountZeros() const{
+const bool & Process::CountZeros() const{
   return count_zeros_;
 }
 
-Process & Process::CountZeros(bool count_zeros){
-  count_zeros_ = count_zeros;
-  return *this;
+bool & Process::CountZeros(){
+  return count_zeros_;
 }
 
 bool Process::operator<(const Process &p) const{

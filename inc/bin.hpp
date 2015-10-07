@@ -2,14 +2,14 @@
 #define H_BIN
 
 #include <string>
-#include <vector>
+#include <set>
 #include <tuple>
 
 #include "systematic.hpp"
 #include "cut.hpp"
 
 class Bin{
-  typedef std::vector<Systematic> SystCollection;
+  typedef std::set<Systematic> SystCollection;
 public:
   Bin(const std::string &name, const class Cut &cut,
       const SystCollection &systematics = SystCollection());
@@ -18,7 +18,7 @@ public:
   Bin & Name(const std::string &name);
 
   const class Cut & Cut() const;
-  Bin & Cut(const class Cut &cut);
+  class Cut & Cut();
 
   const SystCollection & Systematics() const;
   Bin & Systematics(const SystCollection &systematics);
@@ -36,8 +36,9 @@ private:
   std::string name_;
   SystCollection systematics_;
 
-  auto ComparisonTuple() const{
-    return make_tuple(cut_, systematics_);
+  using CompType = std::tuple<const class Cut&, const SystCollection&>;
+  CompType ComparisonTuple() const{
+    return CompType(cut_, systematics_);
   }
 };
 

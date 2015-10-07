@@ -8,7 +8,7 @@
 using namespace std;
 
 Bin::Bin(const string &name, const class Cut &cut,
-	 const vector<Systematic> &systematics):
+	 const SystCollection &systematics):
   cut_(cut),
   name_(name),
   systematics_(systematics){
@@ -28,9 +28,8 @@ const class Cut & Bin::Cut() const{
   return cut_;
 }
 
-Bin & Bin::Cut(const class Cut &cut){
-  cut_ = cut;
-  return *this;
+class Cut & Bin::Cut(){
+  return cut_;
 }
 
 const Bin::SystCollection & Bin::Systematics() const{
@@ -76,10 +75,13 @@ Bin & Bin::RemoveSystematics(){
 
 Bin & Bin::SetSystematicStrength(const std::string &name, double strength){
   bool found_it = false;
-  for(auto &systematic: systematics_){
-    if(systematic.Name() == name){
-      systematic.Strength(strength);
+  for(auto systematic = systematics_.cbegin(); systematic != systematics_.cend(); ++systematic){
+    if(systematic->Name() == name){
+      Systematic new_syst = *systematic;
+      new_syst.Strength() = strength;
       found_it = true;
+      systematics_.erase(systematic);
+      systematics_.insert(systematics_.end(), new_syst);
     }
   }
   if(!found_it){

@@ -27,10 +27,10 @@ public:
   Process & Name(const std::string &name);
 
   const class Cut & Cut() const;
-  Process & Cut(const class Cut &cut);
-
-  bool CountZeros() const;
-  Process & CountZeros(bool count_zeros);
+  class Cut & Cut();
+  
+  const bool & CountZeros() const;
+  bool & CountZeros();
 
   long GetEntries() const;
   GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
@@ -45,8 +45,9 @@ private:
 
   void CleanName();
 
-  auto ComparisonTuple() const{
-    return std::make_tuple(cut_, chain_, count_zeros_);
+  using CompType = std::tuple<const class Cut&, const std::shared_ptr<TChain> &, const bool &>;
+  CompType ComparisonTuple() const{
+    return CompType(cut_, chain_, count_zeros_);
   }
 };
 

@@ -19,13 +19,12 @@ Systematic & Systematic::Name(const std::string &name){
   return *this;
 }
 
-double Systematic::Strength() const{
+const double & Systematic::Strength() const{
   return strength_;
 }
 
-Systematic & Systematic::Strength(double strength){
-  strength_ = strength;
-  return *this;
+double & Systematic::Strength(){
+  return strength_;
 }
 
 bool Systematic::operator<(const Systematic &systematic) const{

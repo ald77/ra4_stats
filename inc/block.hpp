@@ -17,7 +17,7 @@ public:
   Block & Name(const std::string &name);
 
   const std::vector<std::vector<Bin> > & Bins() const;
-  Block & Bins(const std::vector<std::vector<Bin> > &bins);
+  std::vector<std::vector<Bin> > & Bins();
 
   bool operator<(const Block &b) const;
 
@@ -25,8 +25,9 @@ private:
   std::vector<std::vector<Bin> > bins_;
   std::string name_;
 
-  auto ComparisonTuple() const{
-    return std::make_tuple(bins_);
+  using CompType = std::tuple<const std::vector<std::vector<Bin> > &>;
+  CompType ComparisonTuple() const{
+    return CompType(bins_);
   }
 };
 
