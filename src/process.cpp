@@ -1,7 +1,7 @@
 #include "process.hpp"
 
 #include <string>
-#include <vector>
+#include <set>
 #include <initializer_list>
 
 #include "TChain.h"
@@ -11,35 +11,29 @@
 using namespace std;
 
 Process::Process(const string &name,
-                 const vector<string> &file_names,
+                 const set<string> &file_names,
                  const class Cut &cut,
                  bool count_zeros):
+  file_names_(file_names),
   chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
   CleanName();
-  for(auto file_name = file_names.cbegin();
-      file_name != file_names.cend();
-      ++file_name){
-    chain_->Add(file_name->c_str());
-  }
+  AddFiles();
   }
 
 Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
                  bool count_zeros):
-  chain_(make_shared<TChain>("tree","tree")),
+  file_names_(file_names),
+  chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
   count_zeros_(count_zeros){
   CleanName();
-  for(auto file_name = file_names.begin();
-      file_name != file_names.end();
-      ++file_name){
-    chain_->Add(file_name->c_str());
-  }
+  AddFiles();
   }
 
 const string & Process::Name() const{
@@ -86,4 +80,10 @@ bool Process::operator<(const Process &p) const{
 
 void Process::CleanName(){
   ReplaceAll(name_, " ", "");
+}
+
+void Process::AddFiles(){
+  for(const auto &file_name: file_names_){
+    chain_->Add(file_name.c_str());
+  }
 }

@@ -2,7 +2,7 @@
 #define H_PROCESS
 
 #include <string>
-#include <vector>
+#include <set>
 #include <initializer_list>
 #include <tuple>
 #include <memory>
@@ -15,7 +15,7 @@
 class Process{
 public:
   Process(const std::string &name,
-          const std::vector<std::string> &file_names,
+          const std::set<std::string> &file_names,
           const Cut &cut = ::Cut(),
           bool count_zeros = true);
   Process(const std::string &name,
@@ -38,16 +38,18 @@ public:
   bool operator<(const Process &p) const;
 
 private:
+  std::set<std::string> file_names_;
   mutable std::shared_ptr<TChain> chain_;
   class Cut cut_;
   std::string name_;
   bool count_zeros_;
 
   void CleanName();
+  void AddFiles();
 
-  using CompType = std::tuple<const class Cut&, const std::shared_ptr<TChain> &, const bool &>;
+  using CompType = std::tuple<const class Cut&, const std::set<std::string> &, const bool &>;
   CompType ComparisonTuple() const{
-    return CompType(cut_, chain_, count_zeros_);
+    return CompType(cut_, file_names_, count_zeros_);
   }
 };
 
