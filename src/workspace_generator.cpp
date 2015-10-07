@@ -1,3 +1,4 @@
+
 #include "workspace_generator.hpp"
 
 #include <iostream>
@@ -413,6 +414,7 @@ void WorkspaceGenerator::AddParameterSets(){
   DefineParameterSet("observables", observables_);
   RooDataSet data_obs{"data_obs", "data_obs", *w_.set("observables")};
   data_obs.add(*w_.set("observables"));
+  w_.import(data_obs);
 }
 
 void WorkspaceGenerator::DefineParameterSet(const string &set_name,
