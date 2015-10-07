@@ -12,8 +12,9 @@ BlockYields::BlockYields(const Block &block,
        block.Bins().size()
        ? vector<GammaParams>(block.Bins().at(0).size())
        : vector<GammaParams>(0)){
-  size_t irow = 0, icol = 0;
+  size_t irow = 0;
   for(const auto &vbin: block.Bins()){
+    size_t icol = 0;
     for(const auto &bin: vbin){
       GammaParams &gps = gps_.at(irow).at(icol);
       gps = GammaParams(0., 0.);

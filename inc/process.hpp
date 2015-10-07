@@ -26,7 +26,7 @@ public:
   const std::string & Name() const;
   Process & Name(const std::string &name);
 
-  const Cut & Cut() const;
+  const class Cut & Cut() const;
   Process & Cut(const class Cut &cut);
 
   bool CountZeros() const;

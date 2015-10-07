@@ -59,6 +59,7 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
   AddModels();
 
   cout << *this << endl;
+  w_.writeToFile(file_name.c_str());
   cout << "Wrote workspace to file " << file_name << endl;
 }
 
@@ -198,9 +199,11 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
     }
     oss.str("");
     oss << "expr::frac_BLK_" << block.Name() << "_PRC_"
-        << backgrounds_.cend()->Name()
-        << "('";
+        << backgrounds_.cbegin()->Name()
+        << "('1";
     for(const auto &name: names) oss << "-" << name;
+    oss << "'";
+    for(const auto &name: names) oss << "," << name;
     oss << ")" << flush;
     w_.factory(oss.str().c_str());
   }else{
@@ -241,7 +244,6 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
   oss << "[" << max(1., by.Total().Yield()) << ",0.,"
       << max(5.*by.Total().Yield(), 20.) << "]" << flush;
   w_.factory(oss.str().c_str());
-
   for(size_t irow = 0; irow < by.RowSums().size(); ++irow){
     if(irow == by.MaxRow()) continue;
     oss.str("");
@@ -406,6 +408,7 @@ void WorkspaceGenerator::AddFullPdf(){
 }
 
 void WorkspaceGenerator::AddParameterSets(){
+  DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
   RooDataSet data_obs{"data_obs", "data_obs", *w_.set("observables")};
@@ -444,6 +447,6 @@ void WorkspaceGenerator::AddModels(){
 }
 
 ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
-  stream << wg.signal_.Name() << endl;
+  if(false && (&wg)!=nullptr){}
   return stream;
 }
