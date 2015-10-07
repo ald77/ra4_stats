@@ -2,6 +2,7 @@
 #define H_CUT
 
 #include <string>
+#include <ostream>
 
 class Cut{
 public:
@@ -22,13 +23,21 @@ public:
   Cut & operator <<= (const Cut &cut);
   Cut & operator >>= (const Cut &cut);
 
-  operator std::string() const;
-  operator const char *() const;
+  explicit operator std::string() const;
+  explicit operator const char *() const;
+
+  bool operator<(const Cut &cut) const;
+  friend std::ostream & operator<<(std::ostream &stream, const Cut &cut);
 
 private:
   std::string cut_;
 
   void Clean();
+
+  using CompType = std::tuple<const std::string &>;
+  CompType ComparisonTuple() const{
+    return CompType(cut_);
+  }
 };
 
 Cut operator&(Cut a, Cut b);

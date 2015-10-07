@@ -45,7 +45,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 void WorkspaceGenerator::WriteToFile(const string &file_name){
   GetYields();
   AddPOI();
-  AddDileptonSystematic();
+  //AddDileptonSystematic();
   AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
@@ -195,17 +195,17 @@ void WorkspaceGenerator::StoreDileptonYields() const{
 }
 
 bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
-  return Contains(bin.Cut(), "mt>")
-    && (Contains(bin.Cut(), "(nels+nmus)==1")
-	|| Contains(bin.Cut(), "(nmus+nels)==1")
-	|| Contains(bin.Cut(), "nels+nmus==1")
-	|| Contains(bin.Cut(), "nmus+nels==1")
-	|| Contains(bin.Cut(), "nleps==1")
-	|| Contains(baseline_, "(nels+nmus)==1")
-	|| Contains(baseline_, "(nmus+nels)==1")
-	|| Contains(baseline_, "nels+nmus==1")
-	|| Contains(baseline_, "nmus+nels==1")
-	|| Contains(baseline_, "nleps==1"));
+  return Contains(static_cast<string>(bin.Cut()), "mt>")
+    && (Contains(static_cast<string>(bin.Cut()), "(nels+nmus)==1")
+	|| Contains(static_cast<string>(bin.Cut()), "(nmus+nels)==1")
+	|| Contains(static_cast<string>(bin.Cut()), "nels+nmus==1")
+	|| Contains(static_cast<string>(bin.Cut()), "nmus+nels==1")
+	|| Contains(static_cast<string>(bin.Cut()), "nleps==1")
+	|| Contains(static_cast<string>(baseline_), "(nels+nmus)==1")
+	|| Contains(static_cast<string>(baseline_), "(nmus+nels)==1")
+	|| Contains(static_cast<string>(baseline_), "nels+nmus==1")
+	|| Contains(static_cast<string>(baseline_), "nmus+nels==1")
+	|| Contains(static_cast<string>(baseline_), "nleps==1"));
 }
 
 void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const{

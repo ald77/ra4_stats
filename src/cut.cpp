@@ -92,6 +92,10 @@ Cut::operator const char*() const{
   return cut_.c_str();
 }
 
+bool Cut::operator<(const Cut &cut) const{
+  return ComparisonTuple() < cut.ComparisonTuple();
+}
+
 void Cut::Clean(){
   ReplaceAll(cut_, " ", "");
 }
@@ -142,4 +146,9 @@ Cut operator<< (Cut a, Cut b){
 
 Cut operator>> (Cut a, Cut b){
   return (a>>=b);
+}
+
+ostream & operator<<(ostream &stream, const Cut &cut){
+  stream << cut.cut_;
+  return stream;
 }

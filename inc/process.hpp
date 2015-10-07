@@ -32,6 +32,8 @@ public:
   const bool & CountZeros() const;
   bool & CountZeros();
 
+  const std::set<std::string> & FileNames() const;
+
   long GetEntries() const;
   GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
 

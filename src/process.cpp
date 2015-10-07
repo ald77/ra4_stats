@@ -54,6 +54,10 @@ class Cut & Process::Cut(){
   return cut_;
 }
 
+const set<string> & Process::FileNames() const{
+  return file_names_;
+}
+
 long Process::GetEntries() const{
   return chain_->GetEntries();
 }
