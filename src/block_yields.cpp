@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "block_yields.hpp"
 
 #include "utilities.hpp"
@@ -31,7 +33,7 @@ BlockYields::BlockYields(const Block &block,
 vector<GammaParams> BlockYields::RowSums() const{
   vector<GammaParams> sums(gps_.size(), GammaParams(0., 0.));
   for(size_t irow = 0; irow < gps_.size(); ++irow){
-    for(size_t icol = 0; icol < gps_.size(); ++icol){
+    for(size_t icol = 0; icol < gps_.at(irow).size(); ++icol){
       sums.at(irow) += gps_.at(irow).at(icol);
     }
   }
@@ -41,7 +43,7 @@ vector<GammaParams> BlockYields::RowSums() const{
 vector<GammaParams> BlockYields::ColSums() const{
   vector<GammaParams> sums(gps_.size() ? gps_.at(0).size() : 0, GammaParams(0., 0.));
   for(size_t irow = 0; irow < gps_.size(); ++irow){
-    for(size_t icol = 0; icol < gps_.size(); ++icol){
+    for(size_t icol = 0; icol < gps_.at(irow).size(); ++icol){
       sums.at(icol) += gps_.at(irow).at(icol);
     }
   }

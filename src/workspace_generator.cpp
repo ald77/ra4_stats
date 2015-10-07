@@ -1,6 +1,7 @@
 #include "workspace_generator.hpp"
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <array>
 #include <algorithm>
@@ -58,7 +59,6 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
   AddParameterSets();
   AddModels();
 
-  cout << *this << endl;
   w_.writeToFile(file_name.c_str());
   cout << "Wrote workspace to file " << file_name << endl;
 }
@@ -224,17 +224,17 @@ map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &blo
       }
     }
   }
-  double scale = accumulate(output.cbegin(), output.cend(), 0.,
-                            [](double result, map<Process, double>::value_type x){return result+x.second;});
+  double scale = 0.;
+  for(const auto &process_value: output) scale += process_value.second;
   scale = 1./scale;
-  for_each(output.begin(), output.end(),
-           [scale](map<Process, double>::value_type x){x.second*=scale;});
+  for(auto &process_value: output) process_value.second *= scale;
 
   return output;
 }
 
 void WorkspaceGenerator::AddABCDParameters(const Block &block){
   BlockYields by(block, backgrounds_, baseline_, yields_);
+
   ostringstream rxss, ryss;
   rxss << "sum::rxnorm_BLK_" << block.Name() << "(1.,";
   ryss << "sum::rynorm_BLK_" << block.Name() << "(1.,";
@@ -337,8 +337,8 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 void WorkspaceGenerator::AddSignalPredictions(const Block &block){
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
-      YieldKey yk(bin, signal_, baseline_);
-      double yield = yields_.at(yk).Yield();
+      YieldKey key(bin, signal_, baseline_);
+      double yield = yields_.at(key).Yield();
       ostringstream oss;
       oss << "rate_BLK_" << block.Name()
           << "_BIN_" << bin.Name()
@@ -447,6 +447,45 @@ void WorkspaceGenerator::AddModels(){
 }
 
 ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
-  if(false && (&wg)!=nullptr){}
+  for(const auto &block: wg.blocks_){
+    for(const auto &vbin: block.Bins()){
+      for(const auto &bin: vbin){
+        YieldKey key_data(bin, wg.data_, wg.baseline_);
+        wg.PrintComparison(stream, key_data, block, true);
+        YieldKey key_signal(bin, wg.signal_, wg.baseline_);
+        wg.PrintComparison(stream, key_signal, block, false);
+        for(const auto &bkg: wg.backgrounds_){
+          YieldKey key(bin, bkg, wg.baseline_);
+          wg.PrintComparison(stream, key, block, false);
+        }
+      }
+    }
+  }
   return stream;
+}
+
+void WorkspaceGenerator::PrintComparison(ostream &stream, const YieldKey &key,
+					 const Block &block, bool is_data) const{
+  GammaParams gp(0., 0.);
+  if(yields_.find(key) != yields_.end()) gp = yields_.at(key);
+
+  ostringstream name;
+  name << (is_data ? "nobs" : "rate")
+       << "_BLK_" << block.Name()
+       << "_BIN_" << GetBin(key).Name();
+  if(!is_data){
+    name << "_PRC_" << GetProcess(key).Name();
+  }
+  name << flush;
+
+  stream << setw(64) << name.str() << ": "
+         << setw(8) << gp.Yield()
+         << " +- " << setw(8) << gp.CorrectedUncertainty()
+         << " => ";
+  RooAbsReal *fp = w_.function(name.str().c_str());
+  if(fp){
+    stream << setw(8) << fp->getVal() << endl;
+  }else{
+    stream << "Not found" << endl;
+  }
 }

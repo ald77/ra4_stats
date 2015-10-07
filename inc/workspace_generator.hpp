@@ -55,6 +55,8 @@ private:
   void DefineParameterSet(const std::string &cat_name,
                           const std::set<std::string> &var_names);
   void AddModels();
+  void PrintComparison(std::ostream &stream, const YieldKey &yk,
+		       const Block &block, bool is_data) const;
 };
 
 #endif
