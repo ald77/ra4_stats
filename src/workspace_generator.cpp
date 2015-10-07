@@ -1,4 +1,3 @@
-
 #include "workspace_generator.hpp"
 
 #include <iostream>
@@ -43,9 +42,9 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 }
 
 void WorkspaceGenerator::WriteToFile(const string &file_name){
+  AddDileptonSystematic();
   GetYields();
   AddPOI();
-  //AddDileptonSystematic();
   AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
@@ -81,11 +80,16 @@ void WorkspaceGenerator::GetYields() const{
 }
 
 void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process) const{
-  cout << "Getting yields for bin " << bin.Name()
-       << ", process " << process.Name() << endl;
+  StoreYield(bin, process, baseline_);
+}
+
+void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
+				    const Cut &temp_baseline) const{
+  cout << "Getting yields for bin " << bin.Name() << "(" << bin.Cut() << ")"
+       << ", process " << process.Name() << "(" << process.Cut() << ")" << endl;
 
   GammaParams gps;
-  YieldKey key(bin, process, baseline_);
+  YieldKey key(bin, process, temp_baseline);
 
   if(yields_.find(key) != yields_.end()){
     cout << "Recycling already computed yield." << endl;
@@ -99,8 +103,8 @@ void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process) cons
     Cut lumi_weight = Cut(oss.str()+"*weight");
 
     array<Cut, 6> cuts;
-    cuts.at(0) = lumi_weight*(baseline_ && bin.Cut() && process.Cut());
-    cuts.at(1) = lumi_weight*(baseline_ && process.Cut());
+    cuts.at(0) = lumi_weight*(temp_baseline && bin.Cut() && process.Cut());
+    cuts.at(1) = lumi_weight*(temp_baseline && process.Cut());
     cuts.at(2) = lumi_weight*(process.Cut());
     cuts.at(3) = lumi_weight;
     cuts.at(4) = Cut(oss.str());
@@ -184,10 +188,10 @@ void WorkspaceGenerator::StoreDileptonYields() const{
 	Bin dilep_bin = bin;
 	Cut dilep_baseline = baseline_;
 	MakeDileptonBin(bin, dilep_bin, dilep_baseline);
-	StoreYield(dilep_bin, data_);
-	StoreYield(dilep_bin, signal_);
+	StoreYield(dilep_bin, data_, dilep_baseline);
+	StoreYield(dilep_bin, signal_, dilep_baseline);
 	for(const auto &bkg: backgrounds_){
-	  StoreYield(dilep_bin, bkg);
+	  StoreYield(dilep_bin, bkg, dilep_baseline);
 	}
       }
     }
@@ -265,7 +269,7 @@ void WorkspaceGenerator::AddData(const Block &block){
       }else{
         for(const auto &bkg: backgrounds_){
           YieldKey key(bin, bkg, baseline_);
-          gps += yields_.at(key);
+	  gps += yields_.at(key);
         }
       }
       ostringstream oss;

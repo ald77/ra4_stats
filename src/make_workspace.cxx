@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <sstream>
 #include <initializer_list>
-#include <map>
 #include <vector>
 #include <string>
 
@@ -16,7 +15,6 @@
 #include "utilities.hpp"
 #include "systematic.hpp"
 #include "cut.hpp"
-#include "yield_key.hpp"
 
 #include "workspace_generator.hpp"
 

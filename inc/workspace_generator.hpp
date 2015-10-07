@@ -39,6 +39,8 @@ private:
 
   void GetYields() const;
   void StoreYield(const Bin &bin, const Process &process) const;
+  void StoreYield(const Bin &bin, const Process &process,
+		  const Cut &temp_baseline) const;
   void AddPOI();
   void AddDileptonSystematic();
   void StoreDileptonYields() const;
