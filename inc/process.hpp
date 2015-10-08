@@ -39,6 +39,7 @@ public:
   GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
 
   bool operator<(const Process &p) const;
+  bool operator==(const Process &p) const;
 
 private:
   std::set<std::string> file_names_;

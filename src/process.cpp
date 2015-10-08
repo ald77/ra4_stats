@@ -82,6 +82,10 @@ bool Process::operator<(const Process &p) const{
   return tie(cut_, file_names_, count_zeros_) < tie(p.cut_, p.file_names_, p.count_zeros_);
 }
 
+bool Process::operator==(const Process &p) const{
+  return tie(cut_, file_names_, count_zeros_) == tie(p.cut_, p.file_names_, p.count_zeros_);
+}
+
 void Process::CleanName(){
   ReplaceAll(name_, " ", "");
 }

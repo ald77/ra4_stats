@@ -140,7 +140,7 @@ void WorkspaceGenerator::AddPOI(){
 void WorkspaceGenerator::AddDileptonSystematic(){
   if(debug) cout << "AddDileptonSystematic()" << endl;
   StoreDileptonYields();
-  return;
+
   set<Block> new_blocks;
   for(const auto &block: blocks_){
     Block new_block = block;
@@ -154,7 +154,9 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 	if(blinded){
 	  for(const auto &bkg: backgrounds_){
 	    YieldKey dilep_key(dilep_bin, bkg, dilep_baseline);
-	    if(yields_.find(dilep_key) != yields_.end()) continue;
+	    cout << dilep_key << endl;
+	    if(yields_.find(dilep_key) == yields_.end()) continue;
+	    cout << yields_.find(dilep_key)->first << endl;
 	    found_dilep_bin = true;
 	    dilep_gp += yields_.at(dilep_key);
 	  }
@@ -173,9 +175,9 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 	}
 	Systematic syst(name, strength);
 	bin.AddSystematic(syst);
-	new_blocks.insert(new_blocks.end(), new_block);
       }
     }
+    new_blocks.insert(new_blocks.end(), new_block);
   }
   blocks_ = new_blocks;
 }
@@ -246,6 +248,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
           ostringstream oss;
           oss << "strength_" << full_name << "[" << syst.Strength() << "]" << flush;
           w_.factory(oss.str().c_str());
+	  oss.str("");
           oss << "expr::" << full_name
               << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
               << "strength_" << full_name << "," << syst.Name() << ")" << flush;
@@ -534,7 +537,7 @@ void WorkspaceGenerator::AddParameterSets(){
 
 void WorkspaceGenerator::DefineParameterSet(const string &set_name,
                                             const set<string> &var_names){
-  if(debug) cout << "DefineParameterSet()" << endl;
+  if(debug) cout << "DefineParameterSet(" << set_name << ",[var_names])" << endl;
   if(var_names.size()==0){
     w_.defineSet(set_name.c_str(), "");
   }else{

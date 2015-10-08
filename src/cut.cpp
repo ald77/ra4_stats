@@ -96,6 +96,10 @@ bool Cut::operator<(const Cut &cut) const{
   return cut_ < cut.cut_;
 }
 
+bool Cut::operator==(const Cut &cut) const{
+  return cut_ == cut.cut_;
+}
+
 void Cut::Clean(){
   ReplaceAll(cut_, " ", "");
 }

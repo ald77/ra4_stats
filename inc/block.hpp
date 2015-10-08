@@ -21,6 +21,7 @@ public:
   std::vector<std::vector<Bin> > & Bins();
 
   bool operator<(const Block &b) const;
+  bool operator==(const Block &b) const;
 
 private:
   std::vector<std::vector<Bin> > bins_;

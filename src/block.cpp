@@ -37,6 +37,10 @@ bool Block::operator<(const Block &b) const{
   return bins_ < b.bins_;
 }
 
+bool Block::operator==(const Block &b) const{
+  return bins_ == b.bins_;
+}
+
 ostream & operator<<(ostream &stream, const Block &block){
   stream << "Block::" << block.Name();
   return stream;

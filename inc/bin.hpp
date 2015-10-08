@@ -31,6 +31,7 @@ public:
   Bin & SetSystematicStrength(const std::string &name, double strength);
 
   bool operator<(const Bin &b) const;
+  bool operator==(const Bin &b) const;
 
 private:
   class Cut cut_;

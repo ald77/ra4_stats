@@ -94,6 +94,10 @@ bool Bin::operator<(const Bin &b) const{
   return tie(cut_, systematics_) < tie(b.cut_, b.systematics_);
 }
 
+bool Bin::operator==(const Bin &b) const{
+  return tie(cut_, systematics_) == tie(b.cut_, b.systematics_);
+}
+
 ostream & operator<<(ostream &stream, const Bin &bin){
   stream << "Bin::" << bin.Name()
 	 << "(cut=" << bin.Cut()

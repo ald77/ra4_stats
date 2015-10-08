@@ -28,6 +28,7 @@ public:
   explicit operator const char *() const;
 
   bool operator<(const Cut &cut) const;
+  bool operator==(const Cut &cut) const;
 
 private:
   std::string cut_;
