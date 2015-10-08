@@ -75,3 +75,9 @@ GammaParams & GammaParams::operator+=(const GammaParams &gp){
 GammaParams operator+(GammaParams gp1, GammaParams gp2){
   return (gp1 += gp2);
 }
+
+std::ostream & operator<<(std::ostream &stream, const GammaParams &gp){
+  stream << gp.Yield() << "+-" << gp.CorrectedUncertainty()
+	 << " (N=" << gp.NEffective() << ", w=" << gp.Weight() << ")";
+  return stream;
+}

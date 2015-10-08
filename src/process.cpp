@@ -1,7 +1,7 @@
 #include "process.hpp"
 
 #include <string>
-#include <vector>
+#include <set>
 #include <initializer_list>
 
 #include "TChain.h"
@@ -11,45 +11,95 @@
 using namespace std;
 
 Process::Process(const string &name,
-                 const vector<string> &file_names,
-                 const string &cut,
+                 const set<string> &file_names,
+                 const class Cut &cut,
                  bool count_zeros):
-  chain_("tree", "tree"),
-  name_(name),
+  file_names_(file_names),
+  chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
+  name_(name),
   count_zeros_(count_zeros){
-  ReplaceAll(name_, " ", "");
-  ReplaceAll(cut_, " ", "");
-  for(auto file_name = file_names.cbegin();
-      file_name != file_names.cend();
-      ++file_name){
-    chain_.Add(file_name->c_str());
-  }
+  CleanName();
+  AddFiles();
   }
 
 Process::Process(const string &name,
                  initializer_list<string> file_names,
-                 const string &cut,
+                 const class Cut &cut,
                  bool count_zeros):
-  chain_("tree","tree"),
-  name_(name),
+  file_names_(file_names),
+  chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
+  name_(name),
   count_zeros_(count_zeros){
-  ReplaceAll(name_, " ", "");
-  ReplaceAll(cut_, " ", "");
-  for(auto file_name = file_names.begin();
-      file_name != file_names.end();
-      ++file_name){
-    chain_.Add(file_name->c_str());
-  }
+  CleanName();
+  AddFiles();
   }
 
+const string & Process::Name() const{
+  return name_;
+}
+
+Process & Process::Name(const string &name){
+  name_ = name;
+  CleanName();
+  return *this;
+}
+
+const class Cut & Process::Cut() const{
+  return cut_;
+}
+
+class Cut & Process::Cut(){
+  return cut_;
+}
+
+const set<string> & Process::FileNames() const{
+  return file_names_;
+}
+
+long Process::GetEntries() const{
+  return chain_->GetEntries();
+}
+
+GammaParams Process::GetYield(const class Cut &cut) const{
+  double count, uncertainty;
+  ::GetCountAndUncertainty(*chain_, cut*cut_, count, uncertainty);
+  GammaParams gps;
+  gps.SetYieldAndUncertainty(count, uncertainty);
+  return gps;
+}
+
+const bool & Process::CountZeros() const{
+  return count_zeros_;
+}
+
+bool & Process::CountZeros(){
+  return count_zeros_;
+}
+
 bool Process::operator<(const Process &p) const{
-  return name_ < p.name_
-    || (name_ == p.name_
-        && (cut_ < p.cut_
-            || (cut_ == p.cut_
-                && (count_zeros_ < p.count_zeros_
-                    || (count_zeros_ == p.count_zeros_
-                        && chain_.Hash() < p.chain_.Hash())))));
+  return tie(cut_, file_names_, count_zeros_) < tie(p.cut_, p.file_names_, p.count_zeros_);
+}
+
+bool Process::operator==(const Process &p) const{
+  return tie(cut_, file_names_, count_zeros_) == tie(p.cut_, p.file_names_, p.count_zeros_);
+}
+
+void Process::CleanName(){
+  ReplaceAll(name_, " ", "");
+}
+
+void Process::AddFiles(){
+  for(const auto &file_name: file_names_){
+    chain_->Add(file_name.c_str());
+  }
+}
+
+ostream & operator<<(ostream &stream, const Process &proc){
+  stream << "Process::" << proc.Name()
+	 << "(cut=" << proc.Cut()
+	 << ",count_zeros=" << proc.CountZeros()
+	 << ")";
+  return stream;
 }

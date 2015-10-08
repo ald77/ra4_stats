@@ -1,19 +1,44 @@
 #ifndef H_BIN
 #define H_BIN
 
+#include <ostream>
 #include <string>
-#include <vector>
+#include <set>
+#include <tuple>
 
 #include "systematic.hpp"
+#include "cut.hpp"
 
-struct Bin{
-  Bin(const std::string &name, const std::string &cut,
-      const std::vector<Systematic> &systematics = std::vector<Systematic>());
+class Bin{
+  typedef std::set<Systematic> SystCollection;
+public:
+  Bin(const std::string &name, const class Cut &cut,
+      const SystCollection &systematics = SystCollection());
 
-  std::string name_, cut_;
-  std::vector<Systematic> systematics_;
+  const std::string Name() const;
+  Bin & Name(const std::string &name);
+
+  const class Cut & Cut() const;
+  class Cut & Cut();
+
+  const SystCollection & Systematics() const;
+  Bin & Systematics(const SystCollection &systematics);
+  Bin & AddSystematic(const Systematic &systematic);
+  Bin & AddSystematics(const SystCollection &systematic);
+  bool HasSystematic(const Systematic &systematic) const;
+  Bin & RemoveSystematic(const Systematic &systematic);
+  Bin & RemoveSystematics();
+  Bin & SetSystematicStrength(const std::string &name, double strength);
 
   bool operator<(const Bin &b) const;
+  bool operator==(const Bin &b) const;
+
+private:
+  class Cut cut_;
+  std::string name_;
+  SystCollection systematics_;
 };
+
+std::ostream & operator<<(std::ostream &stream, const Bin &bin);
 
 #endif

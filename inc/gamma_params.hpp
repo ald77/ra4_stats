@@ -1,6 +1,8 @@
 #ifndef H_GAMMA_PARAM
 #define H_GAMMA_PARAM
 
+#include <ostream>
+
 class GammaParams{
 public:
   GammaParams();
@@ -30,5 +32,6 @@ private:
 };
 
 GammaParams operator+(GammaParams gp1, GammaParams gp2);
+std::ostream & operator<<(std::ostream &stream, const GammaParams &gp);
 
 #endif

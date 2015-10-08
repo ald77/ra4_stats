@@ -2,30 +2,56 @@
 #define H_PROCESS
 
 #include <string>
-#include <vector>
+#include <set>
 #include <initializer_list>
+#include <tuple>
+#include <memory>
+#include <ostream>
 
 #include "TChain.h"
 
-struct Process{
+#include "cut.hpp"
+#include "gamma_params.hpp"
+
+class Process{
+public:
   Process(const std::string &name,
-          const std::vector<std::string> &file_names,
-          const std::string &cut = "1",
+          const std::set<std::string> &file_names,
+          const Cut &cut = ::Cut(),
           bool count_zeros = true);
   Process(const std::string &name,
           std::initializer_list<std::string> file_names,
-          const std::string &cut = "1",
+          const Cut &cut = ::Cut(),
           bool count_zeros = true);
 
-  Process(Process&& p) = delete;
-  Process(const Process &p) = delete;
-  Process& operator=(const Process &p) = delete;
+  const std::string & Name() const;
+  Process & Name(const std::string &name);
+
+  const class Cut & Cut() const;
+  class Cut & Cut();
+  
+  const bool & CountZeros() const;
+  bool & CountZeros();
+
+  const std::set<std::string> & FileNames() const;
+
+  long GetEntries() const;
+  GammaParams GetYield(const class Cut &cut = ::Cut("1")) const;
 
   bool operator<(const Process &p) const;
+  bool operator==(const Process &p) const;
 
-  TChain chain_;
-  std::string name_, cut_;
+private:
+  std::set<std::string> file_names_;
+  mutable std::shared_ptr<TChain> chain_;
+  class Cut cut_;
+  std::string name_;
   bool count_zeros_;
+
+  void CleanName();
+  void AddFiles();
 };
+
+std::ostream & operator<<(std::ostream &stream, const Process &proc);
 
 #endif
