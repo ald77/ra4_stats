@@ -91,3 +91,11 @@ void Process::AddFiles(){
     chain_->Add(file_name.c_str());
   }
 }
+
+ostream & operator<<(ostream &stream, const Process &proc){
+  stream << "Process::" << proc.Name()
+	 << "(cut=" << proc.Cut()
+	 << ",count_zeros=" << proc.CountZeros()
+	 << ")";
+  return stream;
+}

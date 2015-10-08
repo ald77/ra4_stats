@@ -13,3 +13,11 @@ const Process & GetProcess(const YieldKey &yk){
 const Cut & GetCut(const YieldKey &yk){
   return get<2>(yk);
 }
+
+ostream & operator<<(ostream &stream, const YieldKey &key){
+  stream << "YieldKey(" << GetBin(key)
+	 << "," << GetProcess(key)
+	 << "," << GetCut(key)
+	 << ")";
+  return stream;
+}

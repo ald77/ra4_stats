@@ -28,7 +28,6 @@ public:
   explicit operator const char *() const;
 
   bool operator<(const Cut &cut) const;
-  friend std::ostream & operator<<(std::ostream &stream, const Cut &cut);
 
 private:
   std::string cut_;
@@ -53,5 +52,7 @@ Cut operator%(Cut a, Cut b);
 Cut operator^(Cut a, Cut b);
 Cut operator<<(Cut a, Cut b);
 Cut operator>>(Cut a, Cut b);
+
+std::ostream & operator<<(std::ostream &stream, const Cut &cut);
 
 #endif

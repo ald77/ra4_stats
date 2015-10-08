@@ -149,6 +149,6 @@ Cut operator>> (Cut a, Cut b){
 }
 
 ostream & operator<<(ostream &stream, const Cut &cut){
-  stream << cut.cut_;
+  stream << static_cast<string>(cut);
   return stream;
 }

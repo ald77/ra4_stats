@@ -36,3 +36,8 @@ vector<vector<Bin> > & Block::Bins(){
 bool Block::operator<(const Block &b) const{
   return ComparisonTuple() < b.ComparisonTuple();
 }
+
+ostream & operator<<(ostream &stream, const Block &block){
+  stream << "Block::" << block.Name();
+  return stream;
+}

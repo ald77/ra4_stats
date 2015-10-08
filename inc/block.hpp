@@ -5,6 +5,7 @@
 #include <vector>
 #include <initializer_list>
 #include <tuple>
+#include <ostream>
 
 #include "bin.hpp"
 
@@ -30,5 +31,7 @@ private:
     return CompType(bins_);
   }
 };
+
+std::ostream & operator<<(std::ostream &stream, const Block &block);
 
 #endif

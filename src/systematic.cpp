@@ -34,3 +34,9 @@ bool Systematic::operator<(const Systematic &systematic) const{
 bool Systematic::operator==(const Systematic &systematic) const{
   return ComparisonTuple()==systematic.ComparisonTuple();
 }
+
+ostream & operator<<(ostream &stream, const Systematic &syst){
+  stream << "Systematic::" << syst.Name()
+	 << "(strength=" << syst.Strength() << ")";
+  return stream;
+}

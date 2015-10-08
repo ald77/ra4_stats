@@ -93,3 +93,10 @@ Bin & Bin::SetSystematicStrength(const std::string &name, double strength){
 bool Bin::operator<(const Bin &b) const{
   return ComparisonTuple() < b.ComparisonTuple();
 }
+
+ostream & operator<<(ostream &stream, const Bin &bin){
+  stream << "Bin::" << bin.Name()
+	 << "(cut=" << bin.Cut()
+	 << ")";
+  return stream;
+}

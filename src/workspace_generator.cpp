@@ -20,6 +20,7 @@ using namespace std;
 bool blinded = true;
 bool do_syst = false;
 double lumi = 3.;
+bool debug = true;
 
 map<YieldKey, GammaParams> WorkspaceGenerator::yields_ = map<YieldKey, GammaParams>();
 
@@ -42,6 +43,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 }
 
 void WorkspaceGenerator::WriteToFile(const string &file_name){
+  if(debug) cout << "WriteToFile(" << file_name << ")" << endl;
   AddDileptonSystematic();
   GetYields();
   AddPOI();
@@ -66,6 +68,7 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
 }
 
 void WorkspaceGenerator::GetYields() const{
+  if(debug) cout << "GetYields()" << endl;
   for(const auto &block: blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
@@ -80,13 +83,14 @@ void WorkspaceGenerator::GetYields() const{
 }
 
 void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process) const{
+  if(debug) cout << "StoreYield(" << bin << ", " << process << ")" << endl;
   StoreYield(bin, process, baseline_);
 }
 
 void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
 				    const Cut &temp_baseline) const{
-  cout << "Getting yields for bin " << bin.Name() << "(" << bin.Cut() << ")"
-       << ", process " << process.Name() << "(" << process.Cut() << ")" << endl;
+  if(debug) cout << "StoreYield(" << bin << ", " << process << ", " << temp_baseline << ")" << endl;
+  cout << "Getting yields for " << bin << ", " << process << endl;
 
   GammaParams gps;
   YieldKey key(bin, process, temp_baseline);
@@ -123,22 +127,18 @@ void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
     }
   }
 
-  cout
-    << "Found yield=" << gps.Yield()
-    << ", uncertainty=" << gps.CorrectedUncertainty()
-    << ", raw sqrt(n) uncertainty=" << gps.Uncertainty()
-    << ", N_eff=" << gps.NEffective()
-    << ", weight=" << gps.Weight()
-    << "\n" << endl;
+  cout << "Found yield=" << gps << '\n' << endl;
   yields_[key] =  gps;
 }
 
 void WorkspaceGenerator::AddPOI(){
+  if(debug) cout << "AddPOI()" << endl;
   w_.factory("r[1.,0.,20.]");
   poi_.insert(poi_.end(), "r");
 }
 
 void WorkspaceGenerator::AddDileptonSystematic(){
+  if(debug) cout << "AddDileptonSystematic()" << endl;
   StoreDileptonYields();
   return;
   set<Block> new_blocks;
@@ -181,6 +181,7 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 }
 
 void WorkspaceGenerator::StoreDileptonYields() const{
+  if(debug) cout << "StoreDileptonYields()" << endl;
   for(const auto &block: blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
@@ -199,6 +200,7 @@ void WorkspaceGenerator::StoreDileptonYields() const{
 }
 
 bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
+  if(debug) cout << "NeedsDileptonBin(" << bin << ")" << endl;
   return Contains(static_cast<string>(bin.Cut()), "mt>")
     && (Contains(static_cast<string>(bin.Cut()), "(nels+nmus)==1")
 	|| Contains(static_cast<string>(bin.Cut()), "(nmus+nels)==1")
@@ -213,6 +215,7 @@ bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
 }
 
 void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const{
+  if(debug) cout << "MakeDileptonBin(" << bin << ", " << dilep_bin << ", " << dilep_cut << ")" << endl;
   dilep_bin = bin;
   dilep_bin.Name("dilep_"+dilep_bin.Name());
   dilep_cut = baseline_;
@@ -233,6 +236,7 @@ void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &di
 }
 
 void WorkspaceGenerator::AddSystematicsGenerators(){
+  if(debug) cout << "AddSystematicsGenerators()" << endl;
   for(const auto &block: blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
@@ -253,6 +257,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
 }
 
 void WorkspaceGenerator::AddSystematicGenerator(const string &name){
+  if(debug) cout << "AddSystematicGenerator(" << name << ")" << endl;
   if(systematics_.find(name) != systematics_.end()) return;
   w_.factory(("RooGaussian::CONSTRAINT_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
   nuisances_.insert(nuisances_.end(), name);
@@ -260,6 +265,7 @@ void WorkspaceGenerator::AddSystematicGenerator(const string &name){
 }
 
 void WorkspaceGenerator::AddData(const Block &block){
+  if(debug) cout << "AddData(" << block << ")" << endl;
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
@@ -283,6 +289,7 @@ void WorkspaceGenerator::AddData(const Block &block){
 }
 
 void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
+  if(debug) cout << "AddBackgroundFractions(" << block << ")" << endl;
   ostringstream oss;
   if(backgrounds_.size()>1){
     map<Process, double> bkg_fracs = GetBackgroundFractions(block);
@@ -316,6 +323,7 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
 }
 
 map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &block) const{
+  if(debug) cout << "GetBackgroundFractions(" << block << ")" << endl;
   map<Process, double> output;
   for(const auto &bkg: backgrounds_){
     for(const auto &vbin: block.Bins()){
@@ -334,6 +342,7 @@ map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &blo
 }
 
 void WorkspaceGenerator::AddABCDParameters(const Block &block){
+  if(debug) cout << "AddABCDParameters(" << block << ")" << endl;
   BlockYields by(block, backgrounds_, baseline_, yields_);
 
   ostringstream rxss, ryss;
@@ -383,6 +392,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
 }
 
 void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
+  if(debug) cout << "AddRawBackgroundPredictions(" << block << ")" << endl;
   BlockYields by(block, backgrounds_, baseline_, yields_);
   size_t max_row = by.MaxRow();
   size_t max_col = by.MaxCol();
@@ -420,6 +430,7 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
+  if(debug) cout << "AddFullBackgroundPredictions(" << block << ")" << endl;
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
@@ -436,6 +447,7 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddSignalPredictions(const Block &block){
+  if(debug) cout << "AddSignalPredictions(" << block << ")" << endl;
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       YieldKey key(bin, signal_, baseline_);
@@ -460,6 +472,7 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddPdfs(const Block &block){
+  if(debug) cout << "AddSignalPredictions(" << block << ")" << endl;
   string null_list = "", alt_list = "";
   bool is_first = true;
   for(const auto &vbin: block.Bins()){
@@ -486,6 +499,7 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
 }
 
 void WorkspaceGenerator::AddFullPdf(){
+  if(debug) cout << "AddFullPdf()" << endl;
   if(blocks_.size() == 0){
     w_.factory("RooPoisson::model_b(0,0)");
     w_.factory("RooPoisson::model_s(0,0)");
@@ -509,6 +523,7 @@ void WorkspaceGenerator::AddFullPdf(){
 }
 
 void WorkspaceGenerator::AddParameterSets(){
+  if(debug) cout << "AddParameterSets()" << endl;
   DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
@@ -519,6 +534,7 @@ void WorkspaceGenerator::AddParameterSets(){
 
 void WorkspaceGenerator::DefineParameterSet(const string &set_name,
                                             const set<string> &var_names){
+  if(debug) cout << "DefineParameterSet()" << endl;
   if(var_names.size()==0){
     w_.defineSet(set_name.c_str(), "");
   }else{
@@ -532,6 +548,7 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
 }
 
 void WorkspaceGenerator::AddModels(){
+  if(debug) cout << "AddModel()s" << endl;
   RooStats::ModelConfig model_config("ModelConfig", &w_);
   model_config.SetPdf(*w_.pdf("model_s"));
   model_config.SetParametersOfInterest(*w_.set("POI"));
@@ -568,6 +585,7 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
 
 void WorkspaceGenerator::PrintComparison(ostream &stream, const YieldKey &key,
 					 const Block &block, bool is_data) const{
+  if(debug) cout << "PrintComparison([stream], " << key << ", " << block << ", " << is_data << ")" << endl;
   GammaParams gp(0., 0.);
   if(yields_.find(key) != yields_.end()) gp = yields_.at(key);
 

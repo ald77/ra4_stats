@@ -1,6 +1,7 @@
 #ifndef H_BIN
 #define H_BIN
 
+#include <ostream>
 #include <string>
 #include <set>
 #include <tuple>
@@ -41,5 +42,7 @@ private:
     return CompType(cut_, systematics_);
   }
 };
+
+std::ostream & operator<<(std::ostream &stream, const Bin &bin);
 
 #endif

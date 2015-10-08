@@ -3,6 +3,7 @@
 
 #include <string>
 #include <tuple>
+#include <ostream>
 
 class Systematic{
 public:
@@ -27,5 +28,7 @@ private:
     return CompType(name_);
   }
 };
+
+std::ostream & operator<<(std::ostream &stream, const Systematic &syst);
 
 #endif

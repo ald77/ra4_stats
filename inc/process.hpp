@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <tuple>
 #include <memory>
+#include <ostream>
 
 #include "TChain.h"
 
@@ -54,5 +55,7 @@ private:
     return CompType(cut_, file_names_, count_zeros_);
   }
 };
+
+std::ostream & operator<<(std::ostream &stream, const Process &proc);
 
 #endif
