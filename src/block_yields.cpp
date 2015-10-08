@@ -58,6 +58,7 @@ size_t BlockYields::MaxRow() const{
   for(size_t i = 1; i < gps.size(); ++i){
     if(gps.at(i).Yield() > yield_max){
       yield_max = gps.at(i).Yield();
+      imax = i;
     }
   }
   return imax;
@@ -71,6 +72,7 @@ size_t BlockYields::MaxCol() const{
   for(size_t i = 1; i < gps.size(); ++i){
     if(gps.at(i).Yield() > yield_max){
       yield_max = gps.at(i).Yield();
+      imax = i;
     }
   }
   return imax;
