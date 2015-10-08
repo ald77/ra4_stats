@@ -66,3 +66,17 @@ void GetCountAndUncertainty(TTree &tree,
   tree.Project(hist_name.c_str(), "0.", cut.c_str());
   count=temp.IntegralAndError(0,2,uncertainty);
 }
+
+string execute(const string &cmd){
+  FILE *pipe = popen(cmd.c_str(), "r");
+  if(!pipe) throw runtime_error("Could not open pipe.");
+  const size_t buffer_size = 128;
+  char buffer[buffer_size];
+  string result = "";
+  while(!feof(pipe)){
+    if(fgets(buffer, buffer_size, pipe) != NULL) result += buffer;
+  }
+
+  pclose(pipe);
+  return result;
+}

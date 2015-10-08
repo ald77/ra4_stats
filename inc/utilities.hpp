@@ -25,4 +25,6 @@ void GetCountAndUncertainty(TTree &tree,
                             double &count,
                             double &uncertainty);
 
+std::string execute(const std::string &cmd);
+
 #endif

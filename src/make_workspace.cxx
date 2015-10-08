@@ -54,8 +54,11 @@ int main(int argc, char *argv[]){
 		{"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
 		  {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
     }};
-  Process signal{"signal", {
+  Process signal_nc{"signal_nc", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1500*100*.root/tree"}
+    }};
+  Process signal_c{"signal_c", {
+      {"archive/2015_09_28_ana/skim/*T1tttt*1200*800*.root/tree"}
     }};
   Process data{"data", {}};
 
@@ -64,6 +67,7 @@ int main(int argc, char *argv[]){
 
   //Baseline selection applied to all bins and processes
   string baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
+  string baseline_david{"ht>500&&met>250&njets>=9&&nbm>=2&&(nels+nmus)==1"};
 
   //Declare bins
   //Method 3
@@ -110,6 +114,12 @@ int main(int argc, char *argv[]){
   Bin m1_r4_highmet_lownj{"m1_r4_highmet_lownj", "mt>140&&mj>600&&met>400&&njets<=8"};
   Bin m1_r4_highmet_highnj{"m1_r4_highmet_highnj", "mt>140&&mj>600&&met>400&&njets>8"};
 
+  //Method David
+  Bin r1{"r1", "mt<=140&&mj<=400"};
+  Bin r2{"r2", "mt<=140&&mj>400"};
+  Bin r3{"r3", "mt>140&&mj<=400"};
+  Bin r4{"r4", "mt>140&&mj>400"};
+
   //Specify ABCD constraints
   vector<Block> blocks_m3{
     {"lowmet_lownb", {{r1_lowmet_lownb, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb},
@@ -131,6 +141,10 @@ int main(int argc, char *argv[]){
                 {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
   };
 
+  vector<Block> blocks_david{
+    {"all", {{r1, r2}, {r3, r4}}}
+  };
+
   ostringstream oss;
   oss << (10.*lumi) << flush;
   string lumi_string = oss.str();
@@ -142,10 +156,18 @@ int main(int argc, char *argv[]){
   string no_syst = do_syst ? "" : "_nosyst";
 
   map<BinProc, GammaParams> yields, dilep_yields;
-  MakeWorkspace("method3_"+lumi_string+no_syst+".root",
-		baseline, blocks_m3, data, signal, backgrounds, yields);
-  MakeWorkspace("method1_"+lumi_string+no_syst+".root",
-		baseline, blocks_m1, data, signal, backgrounds, yields);
+  MakeWorkspace("method3nc_"+lumi_string+no_syst+".root",
+		baseline, blocks_m3, data, signal_nc, backgrounds, yields);
+  MakeWorkspace("method3c_"+lumi_string+no_syst+".root",
+		baseline, blocks_m3, data, signal_c, backgrounds, yields);
+  MakeWorkspace("method1nc_"+lumi_string+no_syst+".root",
+		baseline, blocks_m1, data, signal_nc, backgrounds, yields);
+  MakeWorkspace("method1c_"+lumi_string+no_syst+".root",
+  baseline, blocks_m1, data, signal_c, backgrounds, yields);
+  MakeWorkspace("methoddavidnc_"+lumi_string+no_syst+".root",
+		baseline_david, blocks_david, data, signal_nc, backgrounds, yields);
+  MakeWorkspace("methoddavidc_"+lumi_string+no_syst+".root",
+		baseline_david, blocks_david, data, signal_c, backgrounds, yields);
 }
 
 void GetYields(const vector<Block> &blocks,
@@ -581,10 +603,14 @@ void AddBackgroundPreds(RooWorkspace &w,
 	  ++syst){
 	AddSystGenerator(w, syst_generators, nuis_names, syst->base_name_);
 	string full_name = syst->base_name_ + "_" + bb_name;
+	string sname = "strength_"+full_name;
 	ostringstream oss;
+	oss << sname << "[" << syst->multiplier_ << "]" << flush;
+	w.factory(oss.str().c_str());
+	oss.str("");
 	oss << "expr::" << full_name
-	    << "('exp(" << syst->multiplier_ << "*" << syst->base_name_ << ")',"
-	    << syst->base_name_ << ")" << flush;
+	    << "('exp(" << sname << "*" << syst->base_name_ << ")',"
+	    << sname << "," << syst->base_name_ << ")" << flush;
 	w.factory(oss.str().c_str());
 	fact_str+=","+full_name;
       }
