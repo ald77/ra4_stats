@@ -18,9 +18,9 @@
 using namespace std;
 
 bool blinded = true;
-bool do_syst = false;
+bool do_syst = true;
 double lumi = 3.;
-bool debug = true;
+bool debug = false;
 
 map<YieldKey, GammaParams> WorkspaceGenerator::yields_ = map<YieldKey, GammaParams>();
 
@@ -44,10 +44,10 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 
 void WorkspaceGenerator::WriteToFile(const string &file_name){
   if(debug) cout << "WriteToFile(" << file_name << ")" << endl;
-  AddDileptonSystematic();
+  if(do_syst) AddDileptonSystematic();
   GetYields();
   AddPOI();
-  AddSystematicsGenerators();
+  if(do_syst) AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
     AddData(block);
@@ -134,7 +134,7 @@ void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
 void WorkspaceGenerator::AddPOI(){
   if(debug) cout << "AddPOI()" << endl;
   w_.factory("r[1.,0.,20.]");
-  poi_.insert(poi_.end(), "r");
+  Append(poi_, "r");
 }
 
 void WorkspaceGenerator::AddDileptonSystematic(){
@@ -154,9 +154,7 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 	if(blinded){
 	  for(const auto &bkg: backgrounds_){
 	    YieldKey dilep_key(dilep_bin, bkg, dilep_baseline);
-	    cout << dilep_key << endl;
 	    if(yields_.find(dilep_key) == yields_.end()) continue;
-	    cout << yields_.find(dilep_key)->first << endl;
 	    found_dilep_bin = true;
 	    dilep_gp += yields_.at(dilep_key);
 	  }
@@ -177,7 +175,7 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 	bin.AddSystematic(syst);
       }
     }
-    new_blocks.insert(new_blocks.end(), new_block);
+    Append(new_blocks, new_block);
   }
   blocks_ = new_blocks;
 }
@@ -263,8 +261,8 @@ void WorkspaceGenerator::AddSystematicGenerator(const string &name){
   if(debug) cout << "AddSystematicGenerator(" << name << ")" << endl;
   if(systematics_.find(name) != systematics_.end()) return;
   w_.factory(("RooGaussian::CONSTRAINT_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
-  nuisances_.insert(nuisances_.end(), name);
-  systematics_.insert(systematics_.end(),name);
+  Append(nuisances_, name);
+  Append(systematics_, name);
 }
 
 void WorkspaceGenerator::AddData(const Block &block){
@@ -284,7 +282,7 @@ void WorkspaceGenerator::AddData(const Block &block){
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()
           << "_BIN_" << bin.Name() << flush;
-      observables_.insert(observables_.end(), oss.str());
+      Append(observables_, oss.str());
       oss << "[" << gps.Yield() << "]" << flush;
       w_.factory(oss.str().c_str());
     }
@@ -303,8 +301,8 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
       oss << "frac_BLK_" << block.Name()
           << "_PRC_" << bkg->Name()
           << flush;
-      nuisances_.insert(nuisances_.end(), oss.str());
-      names.insert(names.end(), oss.str());
+      Append(nuisances_, oss.str());
+      Append(names, oss.str());
       oss << "[" << bkg_fracs.at(*bkg) << ",0.,1.]" << flush;
       w_.factory(oss.str().c_str());
     }
@@ -353,7 +351,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
   ryss << "sum::rynorm_BLK_" << block.Name() << "(1.,";
   ostringstream oss;
   oss << "norm_BLK_" << block.Name() << flush;
-  nuisances_.insert(nuisances_.end(), oss.str());
+  Append(nuisances_, oss.str());
   oss << "[" << max(1., by.Total().Yield()) << ",0.,"
       << max(5.*by.Total().Yield(), 20.) << "]" << flush;
   w_.factory(oss.str().c_str());
@@ -362,7 +360,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
     oss.str("");
     oss << "ry" << (irow+1) << (by.MaxRow()+1) << "_BLK_" << block.Name() << flush;
     ryss << "," << oss.str();
-    nuisances_.insert(nuisances_.end(), oss.str());
+    Append(nuisances_, oss.str());
     oss << "[" << by.RowSums().at(irow).Yield()/by.RowSums().at(by.MaxRow()).Yield()
         << ",0.,10.]" << flush;
     w_.factory(oss.str().c_str());
@@ -374,7 +372,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
     oss.str("");
     oss << "rx" << (icol+1) << (by.MaxCol()+1) << "_BLK_" << block.Name() << flush;
     rxss << "," << oss.str();
-    nuisances_.insert(nuisances_.end(), oss.str());
+    Append(nuisances_, oss.str());
     oss << "[" << by.ColSums().at(icol).Yield()/by.ColSums().at(by.MaxCol()).Yield()
         << ",0.,10.]" << flush;
     w_.factory(oss.str().c_str());
@@ -406,7 +404,7 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
       vector<string> prod_list;
       for(const auto &bkg: backgrounds_){
         string prod_name = "rate_"+bb_name+"_PRC_"+bkg.Name();
-        prod_list.push_back(prod_name);
+	Append(prod_list, prod_name);
         string factory_string = "prod::"+prod_name+"(rscale_BLK_"+block.Name();
         if(icol != max_col){
           ostringstream oss;

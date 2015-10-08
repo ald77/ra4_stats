@@ -27,4 +27,9 @@ void GetCountAndUncertainty(TTree &tree,
                             double &count,
                             double &uncertainty);
 
+template<typename T>
+void Append(T &collection, const typename T::value_type &value){
+  collection.insert(collection.end(), value);
+}
+
 #endif
