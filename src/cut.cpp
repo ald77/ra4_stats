@@ -93,7 +93,7 @@ Cut::operator const char*() const{
 }
 
 bool Cut::operator<(const Cut &cut) const{
-  return ComparisonTuple() < cut.ComparisonTuple();
+  return cut_ < cut.cut_;
 }
 
 void Cut::Clean(){

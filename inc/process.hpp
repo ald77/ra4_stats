@@ -49,11 +49,6 @@ private:
 
   void CleanName();
   void AddFiles();
-
-  using CompType = std::tuple<const class Cut&, const std::set<std::string> &, const bool &>;
-  CompType ComparisonTuple() const{
-    return CompType(cut_, file_names_, count_zeros_);
-  }
 };
 
 std::ostream & operator<<(std::ostream &stream, const Process &proc);

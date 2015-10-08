@@ -22,11 +22,6 @@ public:
 private:
   std::string name_;
   double strength_;
-
-  using CompType = std::tuple<const std::string &>;
-  CompType ComparisonTuple() const{
-    return CompType(name_);
-  }
 };
 
 std::ostream & operator<<(std::ostream &stream, const Systematic &syst);

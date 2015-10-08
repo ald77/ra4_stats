@@ -25,11 +25,6 @@ public:
 private:
   std::vector<std::vector<Bin> > bins_;
   std::string name_;
-
-  using CompType = std::tuple<const std::vector<std::vector<Bin> > &>;
-  CompType ComparisonTuple() const{
-    return CompType(bins_);
-  }
 };
 
 std::ostream & operator<<(std::ostream &stream, const Block &block);

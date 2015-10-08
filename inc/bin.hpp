@@ -36,11 +36,6 @@ private:
   class Cut cut_;
   std::string name_;
   SystCollection systematics_;
-
-  using CompType = std::tuple<const class Cut&, const SystCollection&>;
-  CompType ComparisonTuple() const{
-    return CompType(cut_, systematics_);
-  }
 };
 
 std::ostream & operator<<(std::ostream &stream, const Bin &bin);

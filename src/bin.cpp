@@ -91,7 +91,7 @@ Bin & Bin::SetSystematicStrength(const std::string &name, double strength){
 }
 
 bool Bin::operator<(const Bin &b) const{
-  return ComparisonTuple() < b.ComparisonTuple();
+  return tie(cut_, systematics_) < tie(b.cut_, b.systematics_);
 }
 
 ostream & operator<<(ostream &stream, const Bin &bin){

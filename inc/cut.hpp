@@ -33,11 +33,6 @@ private:
   std::string cut_;
 
   void Clean();
-
-  using CompType = std::tuple<const std::string &>;
-  CompType ComparisonTuple() const{
-    return CompType(cut_);
-  }
 };
 
 Cut operator&(Cut a, Cut b);

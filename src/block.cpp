@@ -34,7 +34,7 @@ vector<vector<Bin> > & Block::Bins(){
 }
 
 bool Block::operator<(const Block &b) const{
-  return ComparisonTuple() < b.ComparisonTuple();
+  return bins_ < b.bins_;
 }
 
 ostream & operator<<(ostream &stream, const Block &block){

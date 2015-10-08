@@ -28,11 +28,11 @@ double & Systematic::Strength(){
 }
 
 bool Systematic::operator<(const Systematic &systematic) const{
-  return ComparisonTuple()<systematic.ComparisonTuple();
+  return name_ < systematic.name_;
 }
 
 bool Systematic::operator==(const Systematic &systematic) const{
-  return ComparisonTuple()==systematic.ComparisonTuple();
+  return name_ == systematic.name_;
 }
 
 ostream & operator<<(ostream &stream, const Systematic &syst){
