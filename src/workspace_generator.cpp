@@ -17,8 +17,6 @@
 
 using namespace std;
 
-bool debug = false;
-
 map<YieldKey, GammaParams> WorkspaceGenerator::yields_ = map<YieldKey, GammaParams>();
 const double WorkspaceGenerator::yield_lumi_ = 3.;
 
