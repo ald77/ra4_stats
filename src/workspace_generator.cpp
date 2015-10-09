@@ -728,8 +728,8 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 	  oss << "," << syst.Name() << "_" << bb_name;
 	}
       }
-      if(false && do_mc_kappa_correction_){
-	oss << ",kappa_" << bb_name;
+      if(do_mc_kappa_correction_){
+	oss << ",kappamc_" << bb_name;
       }
       oss << ")" << flush;
       w_.factory(oss.str().c_str());
