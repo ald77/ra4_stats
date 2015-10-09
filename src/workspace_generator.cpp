@@ -17,12 +17,10 @@
 
 using namespace std;
 
-bool blinded = true;
-bool do_syst = true;
-double lumi = 3.;
 bool debug = false;
 
 map<YieldKey, GammaParams> WorkspaceGenerator::yields_ = map<YieldKey, GammaParams>();
+const double WorkspaceGenerator::yield_lumi_ = 3.;
 
 WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const set<Block> &blocks,
@@ -38,16 +36,100 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   poi_(),
   observables_(),
   nuisances_(),
-  systematics_(){
+  systematics_(),
+  luminosity_(3.),
+  print_level_(PrintLevel::normal),
+  blind_level_(BlindLevel::blinded),
+  do_systematics_(true),
+  w_is_valid_(false){
   w_.cd();
 }
 
 void WorkspaceGenerator::WriteToFile(const string &file_name){
-  if(debug) cout << "WriteToFile(" << file_name << ")" << endl;
-  if(do_syst) AddDileptonSystematic();
-  GetYields();
+  if(print_level_ >= PrintLevel::everything){
+    cout << "WriteToFile(" << file_name << ")" << endl;
+  }
+  if(!w_is_valid_) UpdateWorkspace();
+
+  w_.writeToFile(file_name.c_str());
+  if(print_level_ >= PrintLevel::everything){
+    w_.Print();
+  }
+  if(print_level_ >= PrintLevel::normal){
+    cout << *this << endl;
+  }
+  if(print_level_ >= PrintLevel::important){
+    cout << "Wrote workspace to file " << file_name << endl;
+  }
+}
+
+double WorkspaceGenerator::GetLuminosity() const{
+  return luminosity_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetLuminosity(double luminosity){
+  if(luminosity != luminosity_){
+    luminosity_ = luminosity;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
+WorkspaceGenerator::BlindLevel WorkspaceGenerator::GetBlindLevel() const{
+  return blind_level_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetBlindLevel(BlindLevel blind_level){
+  if(blind_level != blind_level_){
+    blind_level_ = blind_level;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
+bool WorkspaceGenerator::GetDoSystematics() const{
+  return do_systematics_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetDoSystematics(bool do_systematics){
+  if(do_systematics != do_systematics_){
+    do_systematics_ = do_systematics;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
+WorkspaceGenerator::PrintLevel WorkspaceGenerator::GetPrintLevel() const{
+  return print_level_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetPrintLevel(WorkspaceGenerator::PrintLevel print_level){
+  print_level_ = print_level;
+  return *this;
+}
+
+bool WorkspaceGenerator::HaveYield(const YieldKey &key){
+  return yields_.find(key) != yields_.end();
+}
+
+GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
+  if(!HaveYield(key)){
+    ComputeYield(key);
+  }
+
+  return (luminosity_/yield_lumi_)*yields_.at(key);
+}
+
+void WorkspaceGenerator::UpdateWorkspace(){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "UpdateWorkspace()" << endl;
+  }
+  w_ = RooWorkspace("w");
+  w_.cd();
+
+  if(do_systematics_) AddDileptonSystematic();
   AddPOI();
-  if(do_syst) AddSystematicsGenerators();
+  if(do_systematics_) AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
     AddData(block);
@@ -63,52 +145,48 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
   AddParameterSets();
   AddModels();
 
-  w_.writeToFile(file_name.c_str());
-  cout << "Wrote workspace to file " << file_name << endl;
+  w_is_valid_ = true;
 }
 
-void WorkspaceGenerator::GetYields() const{
-  if(debug) cout << "GetYields()" << endl;
-  for(const auto &block: blocks_){
-    for(const auto &vbin: block.Bins()){
-      for(const auto &bin: vbin){
-        StoreYield(bin, data_);
-        StoreYield(bin, signal_);
-        for(const auto &bkg: backgrounds_){
-          StoreYield(bin, bkg);
-        }
-      }
-    }
+void WorkspaceGenerator::ComputeYield(const Bin &bin, const Process &process) const{
+  if(print_level_ >= PrintLevel::everything){
+    cout << "ComputeYield(" << bin << ", " << process << ")" << endl;
   }
+  YieldKey key(bin, process, baseline_);
+  ComputeYield(key);
 }
 
-void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process) const{
-  if(debug) cout << "StoreYield(" << bin << ", " << process << ")" << endl;
-  StoreYield(bin, process, baseline_);
-}
-
-void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
-				    const Cut &temp_baseline) const{
-  if(debug) cout << "StoreYield(" << bin << ", " << process << ", " << temp_baseline << ")" << endl;
-  cout << "Getting yields for " << bin << ", " << process << endl;
+void WorkspaceGenerator::ComputeYield(const YieldKey &key) const{
+  if(print_level_ >= PrintLevel::everything){
+    cout << "ComputeYield(" << key << ")" << endl;
+  }
+  const Bin &bin = GetBin(key);
+  const Process &process = GetProcess(key);
+  const Cut &cut = GetCut(key);
+  if(print_level_ >= PrintLevel::normal){
+    cout << "Computing yield for " << key << endl;
+  }
 
   GammaParams gps;
-  YieldKey key(bin, process, temp_baseline);
 
-  if(yields_.find(key) != yields_.end()){
-    cout << "Recycling already computed yield." << endl;
-    gps = yields_.at(key);
+  if(HaveYield(key)){
+    if(print_level_ >= PrintLevel::normal){
+      cout << "Recycling already computed yield." << endl;
+    }
+    gps = GetYield(key);
   }else if(process.GetEntries() == 0){
-    cout << "No entries found." << endl;
+    if(print_level_ >= PrintLevel::normal){
+      cout << "No entries found." << endl;
+    }
     gps.SetNEffectiveAndWeight(0., 0.);
   }else{
     ostringstream oss;
-    oss << lumi << flush;
+    oss << luminosity_ << flush;
     Cut lumi_weight = Cut(oss.str()+"*weight");
 
     array<Cut, 6> cuts;
-    cuts.at(0) = lumi_weight*(temp_baseline && bin.Cut() && process.Cut());
-    cuts.at(1) = lumi_weight*(temp_baseline && process.Cut());
+    cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());
+    cuts.at(1) = lumi_weight*(cut && process.Cut());
     cuts.at(2) = lumi_weight*(process.Cut());
     cuts.at(3) = lumi_weight;
     cuts.at(4) = Cut(oss.str());
@@ -119,53 +197,54 @@ void WorkspaceGenerator::StoreYield(const Bin &bin, const Process &process,
         gps.SetNEffectiveAndWeight(0., 0.);
         break;
       }
-      Cut &cut = cuts.at(icut);
-      cout << "Trying cut " << cut << endl;
-      GammaParams temp_gps = process.GetYield(cut);
+      Cut &this_cut = cuts.at(icut);
+      if(print_level_ >= PrintLevel::normal){
+	cout << "Trying cut " << this_cut << endl;
+      }
+      GammaParams temp_gps = process.GetYield(this_cut);
       if(icut == 0) gps = temp_gps;
       else gps.SetNEffectiveAndWeight(0., temp_gps.Weight());
     }
   }
 
-  cout << "Found yield=" << gps << '\n' << endl;
-  yields_[key] =  gps;
+  if(print_level_ >= PrintLevel::normal){
+    cout << "Found yield=" << gps << '\n' << endl;
+  }
+  yields_[key] = (yield_lumi_/luminosity_)*gps;
 }
 
 void WorkspaceGenerator::AddPOI(){
-  if(debug) cout << "AddPOI()" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddPOI()" << endl;
+  }
   w_.factory("r[1.,0.,20.]");
   Append(poi_, "r");
 }
 
 void WorkspaceGenerator::AddDileptonSystematic(){
-  if(debug) cout << "AddDileptonSystematic()" << endl;
-  StoreDileptonYields();
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddDileptonSystematic()" << endl;
+  }
 
   set<Block> new_blocks;
   for(const auto &block: blocks_){
     Block new_block = block;
     for(auto &vbin: new_block.Bins()){
       for(auto &bin: vbin){
+	if(!NeedsDileptonBin(bin)) continue;
 	Bin dilep_bin = bin;
 	Cut dilep_baseline = baseline_;
 	MakeDileptonBin(bin, dilep_bin, dilep_baseline);
 	GammaParams dilep_gp(0., 0.);
-	bool found_dilep_bin = false;
-	if(blinded){
+	if(blind_level_ != BlindLevel::unblinded){
 	  for(const auto &bkg: backgrounds_){
 	    YieldKey dilep_key(dilep_bin, bkg, dilep_baseline);
-	    if(yields_.find(dilep_key) == yields_.end()) continue;
-	    found_dilep_bin = true;
-	    dilep_gp += yields_.at(dilep_key);
+	    dilep_gp += GetYield(dilep_key);
 	  }
 	}else{
 	  YieldKey dilep_key(dilep_bin, data_, dilep_baseline);
-	  if(yields_.find(dilep_key) != yields_.end()){
-	    found_dilep_bin = true;
-	    dilep_gp = yields_.at(dilep_key);
-	  }	  
+	  dilep_gp = GetYield(dilep_key);
 	}
-	if(!found_dilep_bin) continue;
 	double strength = 1.;
 	string name = "dilep_"+bin.Name();
 	if(dilep_gp.Yield()>1.){
@@ -180,27 +259,10 @@ void WorkspaceGenerator::AddDileptonSystematic(){
   blocks_ = new_blocks;
 }
 
-void WorkspaceGenerator::StoreDileptonYields() const{
-  if(debug) cout << "StoreDileptonYields()" << endl;
-  for(const auto &block: blocks_){
-    for(const auto &vbin: block.Bins()){
-      for(const auto &bin: vbin){
-	if(!NeedsDileptonBin(bin)) continue;
-	Bin dilep_bin = bin;
-	Cut dilep_baseline = baseline_;
-	MakeDileptonBin(bin, dilep_bin, dilep_baseline);
-	StoreYield(dilep_bin, data_, dilep_baseline);
-	StoreYield(dilep_bin, signal_, dilep_baseline);
-	for(const auto &bkg: backgrounds_){
-	  StoreYield(dilep_bin, bkg, dilep_baseline);
-	}
-      }
-    }
-  }
-}
-
 bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
-  if(debug) cout << "NeedsDileptonBin(" << bin << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "NeedsDileptonBin(" << bin << ")" << endl;
+  }
   return Contains(static_cast<string>(bin.Cut()), "mt>")
     && (Contains(static_cast<string>(bin.Cut()), "(nels+nmus)==1")
 	|| Contains(static_cast<string>(bin.Cut()), "(nmus+nels)==1")
@@ -215,7 +277,9 @@ bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
 }
 
 void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const{
-  if(debug) cout << "MakeDileptonBin(" << bin << ", " << dilep_bin << ", " << dilep_cut << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "MakeDileptonBin(" << bin << ", " << dilep_bin << ", " << dilep_cut << ")" << endl;
+  }
   dilep_bin = bin;
   dilep_bin.Name("dilep_"+dilep_bin.Name());
   dilep_cut = baseline_;
@@ -236,7 +300,9 @@ void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &di
 }
 
 void WorkspaceGenerator::AddSystematicsGenerators(){
-  if(debug) cout << "AddSystematicsGenerators()" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddSystematicsGenerators()" << endl;
+  }
   for(const auto &block: blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
@@ -258,7 +324,9 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
 }
 
 void WorkspaceGenerator::AddSystematicGenerator(const string &name){
-  if(debug) cout << "AddSystematicGenerator(" << name << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddSystematicGenerator(" << name << ")" << endl;
+  }
   if(systematics_.find(name) != systematics_.end()) return;
   w_.factory(("RooGaussian::CONSTRAINT_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
   Append(nuisances_, name);
@@ -266,17 +334,19 @@ void WorkspaceGenerator::AddSystematicGenerator(const string &name){
 }
 
 void WorkspaceGenerator::AddData(const Block &block){
-  if(debug) cout << "AddData(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddData(" << block << ")" << endl;
+  }
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
-      if(!blinded){
+      if(blind_level_ == BlindLevel::unblinded){
         YieldKey key(bin, data_, baseline_);
-        gps = yields_.at(key);
+        gps = GetYield(key);
       }else{
         for(const auto &bkg: backgrounds_){
           YieldKey key(bin, bkg, baseline_);
-	  gps += yields_.at(key);
+	  gps += GetYield(key);
         }
       }
       ostringstream oss;
@@ -290,7 +360,9 @@ void WorkspaceGenerator::AddData(const Block &block){
 }
 
 void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
-  if(debug) cout << "AddBackgroundFractions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddBackgroundFractions(" << block << ")" << endl;
+  }
   ostringstream oss;
   if(backgrounds_.size()>1){
     map<Process, double> bkg_fracs = GetBackgroundFractions(block);
@@ -324,13 +396,15 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
 }
 
 map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &block) const{
-  if(debug) cout << "GetBackgroundFractions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "GetBackgroundFractions(" << block << ")" << endl;
+  }
   map<Process, double> output;
   for(const auto &bkg: backgrounds_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
         YieldKey key(bin, bkg, baseline_);
-        output[bkg] += yields_.at(key).Yield();
+        output[bkg] += GetYield(key).Yield();
       }
     }
   }
@@ -343,7 +417,9 @@ map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &blo
 }
 
 void WorkspaceGenerator::AddABCDParameters(const Block &block){
-  if(debug) cout << "AddABCDParameters(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddABCDParameters(" << block << ")" << endl;
+  }
   BlockYields by(block, backgrounds_, baseline_, yields_);
 
   ostringstream rxss, ryss;
@@ -393,7 +469,9 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
 }
 
 void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
-  if(debug) cout << "AddRawBackgroundPredictions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddRawBackgroundPredictions(" << block << ")" << endl;
+  }
   BlockYields by(block, backgrounds_, baseline_, yields_);
   size_t max_row = by.MaxRow();
   size_t max_col = by.MaxCol();
@@ -431,7 +509,9 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
-  if(debug) cout << "AddFullBackgroundPredictions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddFullBackgroundPredictions(" << block << ")" << endl;
+  }
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
@@ -448,11 +528,13 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddSignalPredictions(const Block &block){
-  if(debug) cout << "AddSignalPredictions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddSignalPredictions(" << block << ")" << endl;
+  }
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       YieldKey key(bin, signal_, baseline_);
-      double yield = yields_.at(key).Yield();
+      double yield = GetYield(key).Yield();
       ostringstream oss;
       oss << "rate_BLK_" << block.Name()
           << "_BIN_" << bin.Name()
@@ -473,7 +555,9 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddPdfs(const Block &block){
-  if(debug) cout << "AddSignalPredictions(" << block << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddSignalPredictions(" << block << ")" << endl;
+  }
   string null_list = "", alt_list = "";
   bool is_first = true;
   for(const auto &vbin: block.Bins()){
@@ -500,7 +584,9 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
 }
 
 void WorkspaceGenerator::AddFullPdf(){
-  if(debug) cout << "AddFullPdf()" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddFullPdf()" << endl;
+  }
   if(blocks_.size() == 0){
     w_.factory("RooPoisson::model_b(0,0)");
     w_.factory("RooPoisson::model_s(0,0)");
@@ -512,7 +598,7 @@ void WorkspaceGenerator::AddFullPdf(){
       null_list += (",pdf_null_BLK_"+block->Name());
       alt_list += (",pdf_alt_BLK_"+block->Name());
     }
-    if(do_syst){
+    if(do_systematics_){
       for(const auto &syst: systematics_){
         null_list += (",CONSTRAINT_"+syst);
         alt_list += (",CONSTRAINT_"+syst);
@@ -524,7 +610,9 @@ void WorkspaceGenerator::AddFullPdf(){
 }
 
 void WorkspaceGenerator::AddParameterSets(){
-  if(debug) cout << "AddParameterSets()" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddParameterSets()" << endl;
+  }
   DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
@@ -535,7 +623,9 @@ void WorkspaceGenerator::AddParameterSets(){
 
 void WorkspaceGenerator::DefineParameterSet(const string &set_name,
                                             const set<string> &var_names){
-  if(debug) cout << "DefineParameterSet(" << set_name << ",[var_names])" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "DefineParameterSet(" << set_name << ",[var_names])" << endl;
+  }
   if(var_names.size()==0){
     w_.defineSet(set_name.c_str(), "");
   }else{
@@ -549,7 +639,9 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
 }
 
 void WorkspaceGenerator::AddModels(){
-  if(debug) cout << "AddModel()s" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddModel()s" << endl;
+  }
   RooStats::ModelConfig model_config("ModelConfig", &w_);
   model_config.SetPdf(*w_.pdf("model_s"));
   model_config.SetParametersOfInterest(*w_.set("POI"));
@@ -586,9 +678,11 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
 
 void WorkspaceGenerator::PrintComparison(ostream &stream, const YieldKey &key,
 					 const Block &block, bool is_data) const{
-  if(debug) cout << "PrintComparison([stream], " << key << ", " << block << ", " << is_data << ")" << endl;
+  if(print_level_ >= PrintLevel::everything){
+    cout << "PrintComparison([stream], " << key << ", " << block << ", " << is_data << ")" << endl;
+  }
   GammaParams gp(0., 0.);
-  if(yields_.find(key) != yields_.end()) gp = yields_.at(key);
+  if(HaveYield(key)) gp = GetYield(key);
 
   ostringstream name;
   name << (is_data ? "nobs" : "rate")

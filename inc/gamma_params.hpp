@@ -26,12 +26,15 @@ public:
   double CorrectedUncertainty() const;
 
   GammaParams & operator+=(const GammaParams &gp);
+  GammaParams & operator*=(double scale);
 
 private:
   double n_effective_, weight_;
 };
 
 GammaParams operator+(GammaParams gp1, GammaParams gp2);
+GammaParams operator*(double scale, GammaParams gp);
+GammaParams operator*(GammaParams gp, double scale);
 std::ostream & operator<<(std::ostream &stream, const GammaParams &gp);
 
 #endif

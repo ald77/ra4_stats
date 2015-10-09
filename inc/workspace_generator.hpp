@@ -24,9 +24,28 @@ public:
                      const Process &signal,
                      const Process &data);
 
+  enum class PrintLevel{silent, important, normal, everything};
+  enum class BlindLevel{unblinded, r4_blinded, blinded};
+
   void WriteToFile(const std::string &file_name);
 
+  double GetLuminosity() const;
+  WorkspaceGenerator & SetLuminosity(double luminosity);
+
+  BlindLevel GetBlindLevel() const;
+  WorkspaceGenerator & SetBlindLevel(BlindLevel blind_level);
+
+  bool GetDoSystematics() const;
+  WorkspaceGenerator & SetDoSystematics(bool do_systematics);
+
+  PrintLevel GetPrintLevel() const;
+  WorkspaceGenerator & SetPrintLevel(PrintLevel print_level);
+
+  static bool HaveYield(const YieldKey &key);
+  GammaParams GetYield(const YieldKey &key) const;
+
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
+
 private:
   Cut baseline_;
   std::set<Process> backgrounds_;
@@ -34,16 +53,20 @@ private:
   std::set<Block> blocks_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
+  double luminosity_;
+  PrintLevel print_level_;
+  BlindLevel blind_level_;
+  bool do_systematics_;
+  mutable bool w_is_valid_;
 
   static std::map<YieldKey, GammaParams> yields_;
+  static const double yield_lumi_;
 
-  void GetYields() const;
-  void StoreYield(const Bin &bin, const Process &process) const;
-  void StoreYield(const Bin &bin, const Process &process,
-		  const Cut &temp_baseline) const;
+  void UpdateWorkspace();
+  void ComputeYield(const Bin &bin, const Process &process) const;
+  void ComputeYield(const YieldKey &key) const;
   void AddPOI();
   void AddDileptonSystematic();
-  void StoreDileptonYields() const;
   bool NeedsDileptonBin(const Bin &bin) const;
   void MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const;
   void AddSystematicsGenerators();

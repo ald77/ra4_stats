@@ -72,8 +72,21 @@ GammaParams & GammaParams::operator+=(const GammaParams &gp){
   return *this;
 }
 
+GammaParams & GammaParams::operator*=(double scale){
+  SetNEffectiveAndWeight(NEffective(), scale*Weight());
+  return *this;
+}
+
 GammaParams operator+(GammaParams gp1, GammaParams gp2){
   return (gp1 += gp2);
+}
+
+GammaParams operator*(double scale, GammaParams gp){
+  return (gp*=scale);
+}
+
+GammaParams operator*(GammaParams gp, double scale){
+  return (gp*=scale);
 }
 
 std::ostream & operator<<(std::ostream &stream, const GammaParams &gp){
