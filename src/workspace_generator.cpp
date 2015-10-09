@@ -39,6 +39,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   print_level_(PrintLevel::normal),
   blind_level_(BlindLevel::blinded),
   do_systematics_(true),
+  do_mc_kappa_correction_(true),
   w_is_valid_(false){
   w_.cd();
 }
@@ -106,6 +107,18 @@ WorkspaceGenerator & WorkspaceGenerator::SetPrintLevel(WorkspaceGenerator::Print
   return *this;
 }
 
+bool WorkspaceGenerator::GetKappaCorrected() const{
+  return do_mc_kappa_correction_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correction){
+  if(do_mc_kappa_correction_ != do_kappa_correction){
+    do_mc_kappa_correction_ = do_kappa_correction;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
 bool WorkspaceGenerator::HaveYield(const YieldKey &key){
   return yields_.find(key) != yields_.end();
 }
@@ -134,6 +147,7 @@ void WorkspaceGenerator::UpdateWorkspace(){
     AddBackgroundFractions(block);
     AddABCDParameters(block);
     AddRawBackgroundPredictions(block);
+    if(do_mc_kappa_correction_) AddKappas(block);
     AddFullBackgroundPredictions(block);
     AddSignalPredictions(block);
     AddPdfs(block);
@@ -326,7 +340,7 @@ void WorkspaceGenerator::AddSystematicGenerator(const string &name){
     cout << "AddSystematicGenerator(" << name << ")" << endl;
   }
   if(systematics_.find(name) != systematics_.end()) return;
-  w_.factory(("RooGaussian::CONSTRAINT_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
+  w_.factory(("RooGaussian::constraint_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
   Append(nuisances_, name);
   Append(systematics_, name);
 }
@@ -506,6 +520,199 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
   }
 }
 
+void WorkspaceGenerator::AddKappas(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddKappas(" << block << ")" << endl;
+  }
+  AddMCYields(block);
+  AddKappaPdfs(block);
+  AddMCProcessSums(block);
+  AddMCRowSums(block);
+  AddMCColSums(block);
+  AddMCTotal(block);
+  AddMCPrediction(block);
+  AddMCKappa(block);
+}
+
+void WorkspaceGenerator::AddMCYields(const Block & block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCYields(" << block << ")" << endl;
+  }
+  for(const auto &vbin: block.Bins()){
+    for(const auto &bin: vbin){
+      string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
+      ostringstream oss;
+      for(const auto &bkg: backgrounds_){
+	YieldKey key(bin, bkg, baseline_);
+	GammaParams gp = GetYield(key);
+	string bbp_name = bb_name + "_PRC_"+bkg.Name();
+	oss.str("");
+	oss << "nobsmc_" << bbp_name << flush;
+	Append(observables_, oss.str());
+	oss << "[" << gp.NEffective() << "]" << flush;
+	w_.factory(oss.str().c_str());
+	oss.str("");
+	oss << "nmc_" << bbp_name << flush;
+	Append(nuisances_, oss.str());
+	oss << "[" << gp.NEffective()
+	    << ",0.," << max(5.*gp.NEffective(), 20.) << "]" << flush;
+	w_.factory(oss.str().c_str());
+	oss.str("");
+	oss << "wmc_" << bbp_name << "[" << gp.Weight() << "]" << flush;
+	w_.factory(oss.str().c_str());
+	oss.str("");
+	oss << "prod::ymc_" << bbp_name
+	    << "(nmc_" << bbp_name
+	    << ",wmc_" << bbp_name << ")" << flush;
+	w_.factory(oss.str().c_str());
+      }
+      oss.str("");
+    }
+  }
+}
+
+void WorkspaceGenerator::AddKappaPdfs(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddKappaPdfs(" << block << ")" << endl;
+  }
+  bool first = true;
+  string factory_string = "PROD::pdf_kappa_"+block.Name()+"(";
+  for(const auto &vbin: block.Bins()){
+    for(const auto &bin: vbin){
+      for(const auto &bkg: backgrounds_){
+	string bbp_name = "BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name();
+	w_.factory(("RooPoisson::pdf_kappa_"+bbp_name
+		    +"(nobsmc_"+bbp_name
+		    +",nmc_"+bbp_name+")").c_str());
+	(static_cast<RooPoisson*>(w_.pdf(("pdf_kappa_"+bbp_name).c_str())))->setNoRounding();
+	if(first) first = false;
+	else factory_string += ",";
+	factory_string += "pdf_kappa_"+bbp_name;
+      }
+    }
+  }
+  factory_string += ")";
+  w_.factory(factory_string.c_str());
+}
+
+void WorkspaceGenerator::AddMCProcessSums(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCProcessSums(" << block << ")" << endl;
+  }
+  for(const auto &vbin: block.Bins()){
+    for(const auto &bin: vbin){
+      ostringstream oss;
+      string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
+      oss << "sum::ymc_" << bb_name << "(";
+      if(backgrounds_.size() > 0){
+	auto bkg = backgrounds_.cbegin();
+	string name = "ymc_"+bb_name+"_PRC_"+bkg->Name();
+	oss << name;
+	for(++bkg; bkg != backgrounds_.cend(); ++bkg){
+	  name = "ymc_"+bb_name+"_PRC_"+bkg->Name();
+	  oss << "," << name;
+	}
+      }
+      oss << ")" << flush;
+      w_.factory(oss.str().c_str());
+    }
+  }
+}
+
+void WorkspaceGenerator::AddMCRowSums(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCRowSums(" << block << ")" << endl;
+  }
+  for(size_t irow = 0; irow < block.Bins().size(); ++irow){
+    ostringstream oss;
+    oss << "sum::rowmc" << (irow+1) << "_BLK_" << block.Name() << "(";
+    auto bin = block.Bins().at(irow).cbegin();
+    oss << "ymc_BLK_" << block.Name() << "_BIN_" << bin->Name();
+    for(++bin; bin != block.Bins().at(irow).cend(); ++bin){
+      oss << ",ymc_BLK_" << block.Name() << "_BIN_" << bin->Name();
+    }
+    oss << ")" << flush;
+    w_.factory(oss.str().c_str());
+  }
+}
+
+void WorkspaceGenerator::AddMCColSums(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCColSums(" << block << ")" << endl;
+  }
+  if(block.Bins().size() > 0 && block.Bins().at(0).size() > 0){
+    for(size_t icol = 0; icol < block.Bins().at(0).size(); ++icol){
+      ostringstream oss;
+      oss << "sum::colmc" << (icol+1) << "_BLK_" << block.Name() << "(";
+      size_t irow = 0;
+      oss << "ymc_BLK_" << block.Name() << "_BIN_" << block.Bins().at(irow).at(icol).Name();
+      for(irow = 1; irow < block.Bins().size(); ++irow){
+	if(icol < block.Bins().at(irow).size()){
+	  oss << ",ymc_BLK_" << block.Name() << "_BIN_" << block.Bins().at(irow).at(icol).Name();
+	}
+      }
+      oss << ")" << flush;;
+      w_.factory(oss.str().c_str());
+    }
+  }
+}
+
+void WorkspaceGenerator::AddMCTotal(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCTotalSums(" << block << ")" << endl;
+  }
+  ostringstream oss;
+  oss << "sum::totmc_BLK_" << block.Name() << "(";
+  if(block.Bins().size() > 0){
+    oss << "rowmc1_BLK_" << block.Name();
+    for(size_t irow = 1; irow < block.Bins().size(); ++irow){
+      oss << ",rowmc" << (irow+1) << "_BLK_" << block.Name();
+    }
+  }
+  oss << ")" << flush;
+  w_.factory(oss.str().c_str());
+}
+
+void WorkspaceGenerator::AddMCPrediction(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCPrediction(" << block << ")" << endl;
+  }
+  for(size_t irow = 0; irow < block.Bins().size(); ++irow){
+    for(size_t icol = 0; icol < block.Bins().at(irow).size(); ++icol){
+      const Bin &bin = block.Bins().at(irow).at(icol);
+      ostringstream oss;
+      oss << "expr::predmc_BLK_" << block.Name() << "_BIN_" << bin.Name() << "('"
+	  << "(rowmc" << (irow+1) << "_BLK_" << block.Name()
+	  << "*colmc" << (icol+1) << "_BLK_" << block.Name()
+	  << ")/totmc_BLK_" << block.Name()
+	  << "',rowmc" << (irow+1) << "_BLK_" << block.Name()
+	  << ",colmc" << (icol+1) << "_BLK_" << block.Name()
+	  << ",totmc_BLK_" << block.Name() << ")" << flush;
+      w_.factory(oss.str().c_str());
+    }
+  }
+}
+
+void WorkspaceGenerator::AddMCKappa(const Block &block){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddMCPrediction(" << block << ")" << endl;
+  }
+  for(size_t irow = 0; irow < block.Bins().size(); ++irow){
+    for(size_t icol = 0; icol < block.Bins().at(irow).size(); ++icol){
+      const Bin &bin = block.Bins().at(irow).at(icol);
+      string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
+      ostringstream oss;
+      oss << "expr::kappamc_" << bb_name << "('"
+	  << "ymc_" << bb_name
+	  << "/predmc_" << bb_name
+	  << "',ymc_" << bb_name
+	  << ",predmc_" << bb_name
+	  << ")" << flush;
+      w_.factory(oss.str().c_str());
+    }
+  }
+}
+
 void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddFullBackgroundPredictions(" << block << ")" << endl;
@@ -516,8 +723,13 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
       ostringstream oss;
       oss << "prod::nbkg_" << bb_name << "("
           << "nbkg_raw_" << bb_name;
-      for(const auto &syst: bin.Systematics()){
-        oss << "," << syst.Name() << "_" << bb_name;
+      if(do_systematics_){
+	for(const auto &syst: bin.Systematics()){
+	  oss << "," << syst.Name() << "_" << bb_name;
+	}
+      }
+      if(false && do_mc_kappa_correction_){
+	oss << ",kappa_" << bb_name;
       }
       oss << ")" << flush;
       w_.factory(oss.str().c_str());
@@ -591,15 +803,21 @@ void WorkspaceGenerator::AddFullPdf(){
   }else{
     string null_list = "pdf_null_BLK_"+blocks_.cbegin()->Name();
     string alt_list = "pdf_alt_BLK_"+blocks_.cbegin()->Name();
-    auto block = blocks_.cbegin();
-    for(++block; block != blocks_.cend(); ++block){
-      null_list += (",pdf_null_BLK_"+block->Name());
-      alt_list += (",pdf_alt_BLK_"+block->Name());
+    auto blockp = blocks_.cbegin();
+    for(++blockp; blockp != blocks_.cend(); ++blockp){
+      null_list += (",pdf_null_BLK_"+blockp->Name());
+      alt_list += (",pdf_alt_BLK_"+blockp->Name());
     }
     if(do_systematics_){
       for(const auto &syst: systematics_){
-        null_list += (",CONSTRAINT_"+syst);
-        alt_list += (",CONSTRAINT_"+syst);
+        null_list += (",constraint_"+syst);
+        alt_list += (",constraint_"+syst);
+      }
+    }
+    if(do_mc_kappa_correction_){
+      for(const auto & block: blocks_){
+	null_list += (",pdf_kappa_"+block.Name());
+	alt_list += (",pdf_kappa_"+block.Name());
       }
     }
     w_.factory(("PROD::model_b("+null_list+")").c_str());

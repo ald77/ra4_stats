@@ -41,6 +41,9 @@ public:
   PrintLevel GetPrintLevel() const;
   WorkspaceGenerator & SetPrintLevel(PrintLevel print_level);
 
+  bool GetKappaCorrected() const;
+  WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
+
   static bool HaveYield(const YieldKey &key);
   GammaParams GetYield(const YieldKey &key) const;
 
@@ -57,6 +60,7 @@ private:
   PrintLevel print_level_;
   BlindLevel blind_level_;
   bool do_systematics_;
+  bool do_mc_kappa_correction_;
   mutable bool w_is_valid_;
 
   static std::map<YieldKey, GammaParams> yields_;
@@ -76,6 +80,15 @@ private:
   std::map<Process, double> GetBackgroundFractions(const Block &block) const;
   void AddABCDParameters(const Block &block);
   void AddRawBackgroundPredictions(const Block &block);
+  void AddKappas(const Block &block);
+  void AddMCYields(const Block &block);
+  void AddKappaPdfs(const Block &block);
+  void AddMCProcessSums(const Block &block);
+  void AddMCRowSums(const Block &block);
+  void AddMCColSums(const Block &block);
+  void AddMCTotal(const Block &block);
+  void AddMCPrediction(const Block &block);
+  void AddMCKappa(const Block &block);
   void AddFullBackgroundPredictions(const Block &block);
   void AddSignalPredictions(const Block &block);
   void AddPdfs(const Block &block);

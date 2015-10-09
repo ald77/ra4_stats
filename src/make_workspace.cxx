@@ -145,7 +145,7 @@ int main(int argc, char *argv[]){
   WorkspaceGenerator wg3(baseline, blocks_m3, backgrounds, signal_nc, data);
   wg3.WriteToFile("test_3.root");
   WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_c, data);
-  wg1.WriteToFile("test_1.root");
+  //wg1.WriteToFile("test_1.root");
 }
 
 void GetOptions(int argc, char *argv[]){
