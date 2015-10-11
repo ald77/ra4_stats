@@ -14,6 +14,10 @@ bool Contains(const string &str, const string &pat){
   return str.find(pat) != string::npos;
 }
 
+bool StartsWith(const string &str, const string &pat){
+  return str.find(pat) == 0;
+}
+
 void ReplaceAll(string &str, const string &orig, const string &rep){
   size_t loc = 0;
   while ((loc = str.find(orig, loc)) != string::npos) {

@@ -11,6 +11,7 @@
 #include "cut.hpp"
 
 bool Contains(const std::string &str, const std::string &pat);
+bool StartsWith(const std::string &str, const std::string &pat);
 
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
 
