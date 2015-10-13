@@ -46,6 +46,11 @@ public:
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
   GammaParams GetYield(const YieldKey &key) const;
+  GammaParams GetYield(const Bin &bin,
+		       const Process &process,
+		       const Cut &cut) const;
+  GammaParams GetYield(const Bin &bin,
+		       const Process &process) const;
 
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
 
@@ -94,7 +99,7 @@ private:
   void DefineParameterSet(const std::string &cat_name,
                           const std::set<std::string> &var_names);
   void AddModels();
-  void PrintComparison(std::ostream &stream, const YieldKey &yk,
+  void PrintComparison(std::ostream &stream, const Bin &bin, const Process &process,
 		       const Block &block, bool is_data) const;
 };
 

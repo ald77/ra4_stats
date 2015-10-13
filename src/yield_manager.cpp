@@ -14,13 +14,19 @@ const double YieldManager::store_lumi_ = 4.;
 
 YieldManager::YieldManager(double lumi):
   local_lumi_(lumi),
-  verbose_(true){
+  verbose_(false){
 }
 
 GammaParams YieldManager::GetYield(const YieldKey &key) const{
   if(!HaveYield(key)) ComputeYield(key);
 
   return (local_lumi_/store_lumi_)*yields_.at(key);
+}
+
+GammaParams YieldManager::GetYield(const Bin &bin,
+				   const Process &process,
+				   const Cut &cut) const{
+  return GetYield(YieldKey(bin, process, cut));
 }
 
 const double & YieldManager::Luminosity() const{
@@ -39,23 +45,23 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
   const Bin &bin = GetBin(key);
   const Process &process = GetProcess(key);
   const Cut &cut = GetCut(key);
-  if(verbose_){
-    cout << "Computing yield for " << key << endl;
-  }
 
   GammaParams gps;
+  bool new_entry = false;
 
   if(HaveYield(key)){
     if(verbose_){
-      cout << "Recycling already computed yield." << endl;
+      cout << "Using known yield for " << key << endl;
     }
     gps = GetYield(key);
   }else if(process.GetEntries() == 0){
     if(verbose_){
-      cout << "No entries found." << endl;
+      cout << "No entries found for " << key << endl;
     }
     gps.SetNEffectiveAndWeight(0., 0.);
   }else{
+    cout << "Computing yield for " << key << endl;
+    new_entry = true;
     ostringstream oss;
     oss << local_lumi_ << flush;
     Cut lumi_weight = Cut(oss.str()+"*weight");
@@ -83,7 +89,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     }
   }
 
-  if(verbose_){
+  if(verbose_ || new_entry){
     cout << "Found yield=" << gps << '\n' << endl;
   }
   yields_[key] = (store_lumi_/local_lumi_)*gps;

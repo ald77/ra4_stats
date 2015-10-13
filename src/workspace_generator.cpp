@@ -122,6 +122,17 @@ GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
   return yields_.GetYield(key);
 }
 
+GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
+					 const Process &process,
+					 const Cut &cut) const{
+  return GetYield(YieldKey(bin, process, cut));
+}
+
+GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
+					 const Process &process) const{
+  return GetYield(bin, process, baseline_);
+}
+
 void WorkspaceGenerator::UpdateWorkspace(){
   if(print_level_ >= PrintLevel::everything){
     cout << "UpdateWorkspace()" << endl;
@@ -176,12 +187,10 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 	GammaParams dilep_gp(0., 0.);
 	if(blind_level_ != BlindLevel::unblinded){
 	  for(const auto &bkg: backgrounds_){
-	    YieldKey dilep_key(dilep_bin, bkg, dilep_baseline);
-	    dilep_gp += GetYield(dilep_key);
+	    dilep_gp += GetYield(dilep_bin, bkg, dilep_baseline);
 	  }
 	}else{
-	  YieldKey dilep_key(dilep_bin, data_, dilep_baseline);
-	  dilep_gp = GetYield(dilep_key);
+	  dilep_gp = GetYield(dilep_bin, data_, dilep_baseline);
 	}
 	double strength = 1.;
 	string name = "dilep_"+bin.Name();
@@ -279,12 +288,10 @@ void WorkspaceGenerator::AddData(const Block &block){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
       if(blind_level_ == BlindLevel::unblinded){
-        YieldKey key(bin, data_, baseline_);
-        gps = GetYield(key);
+        gps = GetYield(bin, data_);
       }else{
         for(const auto &bkg: backgrounds_){
-          YieldKey key(bin, bkg, baseline_);
-	  gps += GetYield(key);
+	  gps += GetYield(bin, bkg);
         }
       }
       ostringstream oss;
@@ -341,8 +348,7 @@ map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &blo
   for(const auto &bkg: backgrounds_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
-        YieldKey key(bin, bkg, baseline_);
-        output[bkg] += GetYield(key).Yield();
+        output[bkg] += GetYield(bin, bkg).Yield();
       }
     }
   }
@@ -469,8 +475,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
       ostringstream oss;
       for(const auto &bkg: backgrounds_){
-	YieldKey key(bin, bkg, baseline_);
-	GammaParams gp = GetYield(key);
+	GammaParams gp = GetYield(bin, bkg);
 	string bbp_name = bb_name + "_PRC_"+bkg.Name();
 	oss.str("");
 	oss << "nobsmc_" << bbp_name << flush;
@@ -669,8 +674,7 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
   }
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
-      YieldKey key(bin, signal_, baseline_);
-      double yield = GetYield(key).Yield();
+      double yield = GetYield(bin, signal_).Yield();
       ostringstream oss;
       oss << "rate_BLK_" << block.Name()
           << "_BIN_" << bin.Name()
@@ -782,7 +786,7 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
 
 void WorkspaceGenerator::AddModels(){
   if(print_level_ >= PrintLevel::everything){
-    cout << "AddModel()s" << endl;
+    cout << "AddModels()" << endl;
   }
   RooStats::ModelConfig model_config("ModelConfig", &w_);
   model_config.SetPdf(*w_.pdf("model_s"));
@@ -804,13 +808,10 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
   for(const auto &block: wg.blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
-        YieldKey key_data(bin, wg.data_, wg.baseline_);
-        wg.PrintComparison(stream, key_data, block, true);
-        YieldKey key_signal(bin, wg.signal_, wg.baseline_);
-        wg.PrintComparison(stream, key_signal, block, false);
+        wg.PrintComparison(stream, bin, wg.data_, block, true);
+        wg.PrintComparison(stream, bin, wg.signal_, block, false);
         for(const auto &bkg: wg.backgrounds_){
-          YieldKey key(bin, bkg, wg.baseline_);
-          wg.PrintComparison(stream, key, block, false);
+          wg.PrintComparison(stream, bin, bkg, block, false);
         }
       }
     }
@@ -818,22 +819,23 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
   return stream;
 }
 
-void WorkspaceGenerator::PrintComparison(ostream &stream, const YieldKey &key,
+void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin, const Process &process,
 					 const Block &block, bool is_data) const{
   if(print_level_ >= PrintLevel::everything){
-    cout << "PrintComparison([stream], " << key << ", " << block << ", " << is_data << ")" << endl;
+    cout << "PrintComparison([stream], " << bin << ", " << process
+	 << ", " << block << ", " << is_data << ")" << endl;
   }
   GammaParams gp(0., 0.);
   if(!is_data || blind_level_ == BlindLevel::unblinded){
-    gp = GetYield(key);
+    gp = GetYield(bin, process);
   }
 
   ostringstream name;
   name << (is_data ? "nobs" : "rate")
        << "_BLK_" << block.Name()
-       << "_BIN_" << GetBin(key).Name();
+       << "_BIN_" << bin.Name();
   if(!is_data){
-    name << "_PRC_" << GetProcess(key).Name();
+    name << "_PRC_" << process.Name();
   }
   name << flush;
 

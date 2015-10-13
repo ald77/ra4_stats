@@ -5,12 +5,18 @@
 
 #include "yield_key.hpp"
 #include "gamma_params.hpp"
+#include "bin.hpp"
+#include "process.hpp"
+#include "cut.hpp"
 
 class YieldManager{
 public:
   explicit YieldManager(double lumi = 4.);
 
   GammaParams GetYield(const YieldKey &key) const;
+  GammaParams GetYield(const Bin &bin,
+		       const Process &process,
+		       const Cut &cut) const;
 
   const double & Luminosity() const;
   double & Luminosity();
