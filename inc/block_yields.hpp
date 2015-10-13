@@ -10,13 +10,14 @@
 #include "cut.hpp"
 #include "gamma_params.hpp"
 #include "yield_key.hpp"
+#include "yield_manager.hpp"
 
 class BlockYields{
 public:
   BlockYields(const Block &block,
 	      const std::set<Process> &processes,
 	      const Cut &cut,
-	      const std::map<YieldKey, GammaParams> &yields);
+	      const YieldManager &yields);
 
   std::vector<GammaParams> RowSums() const;
   std::vector<GammaParams> ColSums() const;

@@ -12,13 +12,11 @@
 
 #include "RooStats/ModelConfig.h"
 
-#include "yield_key.hpp"
 #include "utilities.hpp"
 
 using namespace std;
 
-map<YieldKey, GammaParams> WorkspaceGenerator::yields_ = map<YieldKey, GammaParams>();
-const double WorkspaceGenerator::yield_lumi_ = 3.;
+YieldManager WorkspaceGenerator::yields_ = YieldManager(4.);
 
 WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const set<Block> &blocks,
@@ -35,7 +33,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   observables_(),
   nuisances_(),
   systematics_(),
-  luminosity_(3.),
+  luminosity_(4.),
   print_level_(PrintLevel::normal),
   blind_level_(BlindLevel::blinded),
   do_systematics_(true),
@@ -119,16 +117,9 @@ WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correct
   return *this;
 }
 
-bool WorkspaceGenerator::HaveYield(const YieldKey &key){
-  return yields_.find(key) != yields_.end();
-}
-
 GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
-  if(!HaveYield(key)){
-    ComputeYield(key);
-  }
-
-  return (luminosity_/yield_lumi_)*yields_.at(key);
+  yields_.Luminosity() = luminosity_;
+  return yields_.GetYield(key);
 }
 
 void WorkspaceGenerator::UpdateWorkspace(){
@@ -158,71 +149,6 @@ void WorkspaceGenerator::UpdateWorkspace(){
   AddModels();
 
   w_is_valid_ = true;
-}
-
-void WorkspaceGenerator::ComputeYield(const Bin &bin, const Process &process) const{
-  if(print_level_ >= PrintLevel::everything){
-    cout << "ComputeYield(" << bin << ", " << process << ")" << endl;
-  }
-  YieldKey key(bin, process, baseline_);
-  ComputeYield(key);
-}
-
-void WorkspaceGenerator::ComputeYield(const YieldKey &key) const{
-  if(print_level_ >= PrintLevel::everything){
-    cout << "ComputeYield(" << key << ")" << endl;
-  }
-  const Bin &bin = GetBin(key);
-  const Process &process = GetProcess(key);
-  const Cut &cut = GetCut(key);
-  if(print_level_ >= PrintLevel::normal){
-    cout << "Computing yield for " << key << endl;
-  }
-
-  GammaParams gps;
-
-  if(HaveYield(key)){
-    if(print_level_ >= PrintLevel::normal){
-      cout << "Recycling already computed yield." << endl;
-    }
-    gps = GetYield(key);
-  }else if(process.GetEntries() == 0){
-    if(print_level_ >= PrintLevel::normal){
-      cout << "No entries found." << endl;
-    }
-    gps.SetNEffectiveAndWeight(0., 0.);
-  }else{
-    ostringstream oss;
-    oss << luminosity_ << flush;
-    Cut lumi_weight = Cut(oss.str()+"*weight");
-
-    array<Cut, 6> cuts;
-    cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());
-    cuts.at(1) = lumi_weight*(cut && process.Cut());
-    cuts.at(2) = lumi_weight*(process.Cut());
-    cuts.at(3) = lumi_weight;
-    cuts.at(4) = Cut(oss.str());
-    cuts.at(5) = Cut();
-
-    for(size_t icut = 0; icut < cuts.size() && gps.Weight()<=0.; ++icut){
-      if(icut > 0 && !process.CountZeros()){
-        gps.SetNEffectiveAndWeight(0., 0.);
-        break;
-      }
-      Cut &this_cut = cuts.at(icut);
-      if(print_level_ >= PrintLevel::normal){
-	cout << "Trying cut " << this_cut << endl;
-      }
-      GammaParams temp_gps = process.GetYield(this_cut);
-      if(icut == 0) gps = temp_gps;
-      else gps.SetNEffectiveAndWeight(0., temp_gps.Weight());
-    }
-  }
-
-  if(print_level_ >= PrintLevel::normal){
-    cout << "Found yield=" << gps << '\n' << endl;
-  }
-  yields_[key] = (yield_lumi_/luminosity_)*gps;
 }
 
 void WorkspaceGenerator::AddPOI(){
@@ -898,7 +824,9 @@ void WorkspaceGenerator::PrintComparison(ostream &stream, const YieldKey &key,
     cout << "PrintComparison([stream], " << key << ", " << block << ", " << is_data << ")" << endl;
   }
   GammaParams gp(0., 0.);
-  if(HaveYield(key)) gp = GetYield(key);
+  if(!is_data || blind_level_ == BlindLevel::unblinded){
+    gp = GetYield(key);
+  }
 
   ostringstream name;
   name << (is_data ? "nobs" : "rate")

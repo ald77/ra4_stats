@@ -15,6 +15,7 @@
 #include "yield_key.hpp"
 #include "gamma_params.hpp"
 #include "block_yields.hpp"
+#include "yield_manager.hpp"
 
 class WorkspaceGenerator{
 public:
@@ -44,7 +45,6 @@ public:
   bool GetKappaCorrected() const;
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
-  static bool HaveYield(const YieldKey &key);
   GammaParams GetYield(const YieldKey &key) const;
 
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
@@ -63,12 +63,9 @@ private:
   bool do_mc_kappa_correction_;
   mutable bool w_is_valid_;
 
-  static std::map<YieldKey, GammaParams> yields_;
-  static const double yield_lumi_;
+  static YieldManager yields_;
 
   void UpdateWorkspace();
-  void ComputeYield(const Bin &bin, const Process &process) const;
-  void ComputeYield(const YieldKey &key) const;
   void AddPOI();
   void AddDileptonSystematic();
   bool NeedsDileptonBin(const Bin &bin) const;

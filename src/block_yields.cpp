@@ -9,7 +9,7 @@ using namespace std;
 BlockYields::BlockYields(const Block &block,
 			 const set<Process> &processes,
 			 const Cut &cut,
-			 const map<YieldKey, GammaParams> &yields):
+			 const YieldManager &yields):
   gps_(block.Bins().size(), 
        block.Bins().size()
        ? vector<GammaParams>(block.Bins().at(0).size())
@@ -22,7 +22,7 @@ BlockYields::BlockYields(const Block &block,
       gps = GammaParams(0., 0.);
       for(const auto &process: processes){
 	YieldKey key(bin, process, cut);
-	gps += yields.at(key);
+	gps += yields.GetYield(key);
       }
       ++icol;
     }
