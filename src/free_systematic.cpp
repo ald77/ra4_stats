@@ -42,3 +42,8 @@ bool FreeSystematic::operator<(const FreeSystematic &syst) const{
 bool FreeSystematic::operator==(const FreeSystematic &syst) const{
   return name_ == syst.name_;
 }
+
+ostream & operator<<(ostream &stream, const FreeSystematic &syst){
+  stream << "FreeSystematic::" << syst.Name();
+  return stream;
+}

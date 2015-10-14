@@ -162,6 +162,9 @@ void WorkspaceGenerator::UpdateWorkspace(){
 
   for(const auto &block: blocks_){
     AddData(block);
+    AddMCYields(block);
+    AddMCPdfs(block);
+    AddMCProcessSums(block);
     AddBackgroundFractions(block);
     AddABCDParameters(block);
     AddRawBackgroundPredictions(block);
@@ -362,35 +365,17 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddBackgroundFractions(" << block << ")" << endl;
   }
-  ostringstream oss;
-  if(backgrounds_.size()>1){
-    map<Process, double> bkg_fracs = GetBackgroundFractions(block);
-    set<string> names;
-    auto bkg = backgrounds_.cbegin();
-    for(++bkg; bkg != backgrounds_.cend(); ++bkg){
-      oss.str("");
-      oss << "frac_BLK_" << block.Name()
-          << "_PRC_" << bkg->Name()
-          << flush;
-      Append(nuisances_, oss.str());
-      Append(names, oss.str());
-      oss << "[" << bkg_fracs.at(*bkg) << ",0.,1.]" << flush;
-      w_.factory(oss.str().c_str());
+  for(const auto &vbin: block.Bins()){
+    for(const auto &bin: vbin){
+      for(const auto &bkg: backgrounds_){
+	string var = "expr::frac_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
+	  +"('ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
+	  +"/ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()
+	  +"',ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
+	  +",ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+")";
+	w_.factory(var.c_str());	
+      }
     }
-    oss.str("");
-    oss << "expr::frac_BLK_" << block.Name() << "_PRC_"
-        << backgrounds_.cbegin()->Name()
-        << "('1";
-    for(const auto &name: names) oss << "-" << name;
-    oss << "'";
-    for(const auto &name: names) oss << "," << name;
-    oss << ")" << flush;
-    w_.factory(oss.str().c_str());
-  }else{
-    oss << "frac_BLK_" << block.Name() << "_PRC_"
-        << backgrounds_.begin()->Name()
-        << "[1]" << flush;
-    w_.factory(oss.str().c_str());
   }
 }
 
@@ -492,7 +477,7 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
           oss << ",ry" << (irow+1) << (max_row+1) << "_BLK_" << block.Name() << flush;
           factory_string += oss.str();
         }
-        factory_string += (",frac_BLK_"+block.Name()+"_PRC_"+bkg.Name());
+        factory_string += (",frac_BIN_"+bin.Name()+"_PRC_"+bkg.Name());
 	if(do_systematics_){
 	  for(const auto &syst: bkg.Systematics()){
 	    factory_string += (","+syst.Name()+"_PRC_"+bkg.Name());
@@ -521,9 +506,6 @@ void WorkspaceGenerator::AddKappas(const Block &block){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddKappas(" << block << ")" << endl;
   }
-  AddMCYields(block);
-  AddKappaPdfs(block);
-  AddMCProcessSums(block);
   AddMCRowSums(block);
   AddMCColSums(block);
   AddMCTotal(block);
@@ -567,23 +549,23 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
   }
 }
 
-void WorkspaceGenerator::AddKappaPdfs(const Block &block){
+void WorkspaceGenerator::AddMCPdfs(const Block &block){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddKappaPdfs(" << block << ")" << endl;
   }
   bool first = true;
-  string factory_string = "PROD::pdf_kappa_"+block.Name()+"(";
+  string factory_string = "PROD::pdf_mc_"+block.Name()+"(";
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       for(const auto &bkg: backgrounds_){
 	string bbp_name = "BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name();
-	w_.factory(("RooPoisson::pdf_kappa_"+bbp_name
+	w_.factory(("RooPoisson::pdf_mc_"+bbp_name
 		    +"(nobsmc_"+bbp_name
 		    +",nmc_"+bbp_name+")").c_str());
-	(static_cast<RooPoisson*>(w_.pdf(("pdf_kappa_"+bbp_name).c_str())))->setNoRounding();
+	(static_cast<RooPoisson*>(w_.pdf(("pdf_mc_"+bbp_name).c_str())))->setNoRounding();
 	if(first) first = false;
 	else factory_string += ",";
-	factory_string += "pdf_kappa_"+bbp_name;
+	factory_string += "pdf_mc_"+bbp_name;
       }
     }
   }
@@ -811,8 +793,8 @@ void WorkspaceGenerator::AddFullPdf(){
     }
     if(do_mc_kappa_correction_){
       for(const auto & block: blocks_){
-	null_list += (",pdf_kappa_"+block.Name());
-	alt_list += (",pdf_kappa_"+block.Name());
+	null_list += (",pdf_mc_"+block.Name());
+	alt_list += (",pdf_mc_"+block.Name());
       }
     }
     w_.factory(("PROD::model_b("+null_list+")").c_str());

@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <ostream>
 
 #include "bin.hpp"
 #include "process.hpp"
@@ -27,5 +28,7 @@ private:
   std::string name_;
   std::map<std::pair<Bin, Process>, double> strengths_;
 };
+
+std::ostream & operator<<(std::ostream &stream, const FreeSystematic &syst);
 
 #endif

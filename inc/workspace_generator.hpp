@@ -90,7 +90,7 @@ private:
   void AddRawBackgroundPredictions(const Block &block);
   void AddKappas(const Block &block);
   void AddMCYields(const Block &block);
-  void AddKappaPdfs(const Block &block);
+  void AddMCPdfs(const Block &block);
   void AddMCProcessSums(const Block &block);
   void AddMCRowSums(const Block &block);
   void AddMCColSums(const Block &block);
