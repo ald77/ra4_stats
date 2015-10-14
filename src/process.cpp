@@ -3,6 +3,7 @@
 #include <string>
 #include <set>
 #include <initializer_list>
+#include <algorithm>
 
 #include "TChain.h"
 
@@ -13,12 +14,14 @@ using namespace std;
 Process::Process(const string &name,
                  const set<string> &file_names,
                  const class Cut &cut,
-                 bool count_zeros):
+                 bool count_zeros,
+		 const SystCollection &systematics):
   file_names_(file_names),
   chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
-  count_zeros_(count_zeros){
+  count_zeros_(count_zeros),
+  systematics_(systematics){
   CleanName();
   AddFiles();
   }
@@ -26,12 +29,14 @@ Process::Process(const string &name,
 Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
-                 bool count_zeros):
+                 bool count_zeros,
+		 const SystCollection &systematics):
   file_names_(file_names),
   chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
-  count_zeros_(count_zeros){
+  count_zeros_(count_zeros),
+  systematics_(systematics){
   CleanName();
   AddFiles();
   }
@@ -76,6 +81,64 @@ const bool & Process::CountZeros() const{
 
 bool & Process::CountZeros(){
   return count_zeros_;
+}
+
+const Process::SystCollection & Process::Systematics() const{
+  return systematics_;
+}
+
+Process & Process::Systematics(const SystCollection &systematics){
+  systematics_ = systematics;
+  return *this;
+}
+
+Process & Process::AddSystematic(const Systematic &systematic){
+  if(!HasSystematic(systematic)){
+    systematics_.insert(systematics_.end(), systematic);
+  }
+  return *this;
+}
+
+Process & Process::AddSystematics(const SystCollection &systematics){
+  for(const auto& systematic: systematics){
+    AddSystematic(systematic);
+  }
+  return *this;
+}
+
+bool Process::HasSystematic(const Systematic &systematic) const{
+  return find(systematics_.cbegin(), systematics_.cend(), systematic) != systematics_.cend();
+}
+
+Process & Process::RemoveSystematic(const Systematic &systematic){
+  try{
+    systematics_.erase(find(systematics_.begin(), systematics_.end(), systematic));
+  }catch(const out_of_range &e){
+    throw out_of_range(string(e.what())+": bin "+name_+" does not contain systematic "+systematic.Name()+".");
+  }
+  return *this;
+}
+
+Process & Process::RemoveSystematics(){
+  systematics_.clear();
+  return *this;
+}
+
+Process & Process::SetSystematicStrength(const std::string &name, double strength){
+  bool found_it = false;
+  for(auto systematic = systematics_.cbegin(); systematic != systematics_.cend(); ++systematic){
+    if(systematic->Name() == name){
+      Systematic new_syst = *systematic;
+      new_syst.Strength() = strength;
+      found_it = true;
+      systematics_.erase(systematic);
+      systematics_.insert(systematics_.end(), new_syst);
+    }
+  }
+  if(!found_it){
+    throw out_of_range("Process "+name_+" does not contain systematic "+name);
+  }
+  return *this;
 }
 
 bool Process::operator<(const Process &p) const{

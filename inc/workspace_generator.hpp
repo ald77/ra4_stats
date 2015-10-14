@@ -16,6 +16,7 @@
 #include "gamma_params.hpp"
 #include "block_yields.hpp"
 #include "yield_manager.hpp"
+#include "free_systematic.hpp"
 
 class WorkspaceGenerator{
 public:
@@ -39,6 +40,9 @@ public:
   bool GetDoSystematics() const;
   WorkspaceGenerator & SetDoSystematics(bool do_systematics);
 
+  bool GetDoDilepton() const;
+  WorkspaceGenerator & SetDoDilepton(bool do_systematics);
+
   PrintLevel GetPrintLevel() const;
   WorkspaceGenerator & SetPrintLevel(PrintLevel print_level);
 
@@ -61,10 +65,12 @@ private:
   std::set<Block> blocks_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
+  std::set<FreeSystematic> free_systematics_;
   double luminosity_;
   PrintLevel print_level_;
   BlindLevel blind_level_;
   bool do_systematics_;
+  bool do_dilepton_;
   bool do_mc_kappa_correction_;
   mutable bool w_is_valid_;
 

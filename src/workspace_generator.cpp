@@ -33,10 +33,12 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   observables_(),
   nuisances_(),
   systematics_(),
+  free_systematics_(),
   luminosity_(4.),
   print_level_(PrintLevel::normal),
   blind_level_(BlindLevel::blinded),
   do_systematics_(true),
+  do_dilepton_(true),
   do_mc_kappa_correction_(true),
   w_is_valid_(false){
   w_.cd();
@@ -96,6 +98,18 @@ WorkspaceGenerator & WorkspaceGenerator::SetDoSystematics(bool do_systematics){
   return *this;
 }
 
+bool WorkspaceGenerator::GetDoDilepton() const{
+  return do_dilepton_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetDoDilepton(bool do_dilepton){
+  if(do_dilepton != do_dilepton_){
+    do_dilepton_ = do_dilepton;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
 WorkspaceGenerator::PrintLevel WorkspaceGenerator::GetPrintLevel() const{
   return print_level_;
 }
@@ -140,9 +154,11 @@ void WorkspaceGenerator::UpdateWorkspace(){
   w_ = RooWorkspace("w");
   w_.cd();
 
-  if(do_systematics_) AddDileptonSystematic();
+  if(do_dilepton_){
+    AddDileptonSystematic();
+  }
   AddPOI();
-  if(do_systematics_) AddSystematicsGenerators();
+  AddSystematicsGenerators();
 
   for(const auto &block: blocks_){
     AddData(block);
@@ -265,6 +281,44 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
               << "strength_" << full_name << "," << syst.Name() << ")" << flush;
           w_.factory(oss.str().c_str());
         }
+      }
+    }
+  }
+
+  auto all_prcs = backgrounds_;
+  Append(all_prcs, signal_);
+  for(const auto &bkg: all_prcs){
+    for(const auto &syst: bkg.Systematics()){
+      AddSystematicGenerator(syst.Name());
+      string full_name = syst.Name()+"_PRC_"+bkg.Name();
+      ostringstream oss;
+      oss << "strength_" << full_name << "[" << syst.Strength() << "]" << flush;
+      w_.factory(oss.str().c_str());
+      oss.str("");
+      oss << "expr::" << full_name
+	  << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
+	  << "strength_" << full_name << "," << syst.Name() << ")" << flush;
+      w_.factory(oss.str().c_str());
+    }
+  }
+
+  for(const auto &syst: free_systematics_){
+    AddSystematicGenerator(syst.Name());
+    for(const auto &block: blocks_){
+      for(const auto &vbin: block.Bins()){
+	for(const auto &bin: vbin){
+	  for(const auto &prc: all_prcs){
+	    if(!syst.HasEntry(bin, prc)) continue;
+	    string full_name = syst.Name()+"_BIN_"+bin.Name()+"_PRC_"+prc.Name();
+	    ostringstream oss;
+	    oss << "strength_" << full_name << "[" << syst.Strength(bin, prc) << "]" << flush;
+	    w_.factory(oss.str().c_str());
+	    oss.str("");
+	    oss << "expr::" << full_name
+		<< "('exp(strength_" << full_name << "*" << syst.Name() << ")" << flush;
+	    w_.factory(oss.str().c_str());
+	  }
+	}
       }
     }
   }
@@ -438,7 +492,18 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
           oss << ",ry" << (irow+1) << (max_row+1) << "_BLK_" << block.Name() << flush;
           factory_string += oss.str();
         }
-        factory_string += (",frac_BLK_"+block.Name()+"_PRC_"+bkg.Name()+")");
+        factory_string += (",frac_BLK_"+block.Name()+"_PRC_"+bkg.Name());
+	if(do_systematics_){
+	  for(const auto &syst: bkg.Systematics()){
+	    factory_string += (","+syst.Name()+"_PRC_"+bkg.Name());
+	  }
+	  for(const auto &syst: free_systematics_){
+	    if(syst.HasEntry(bin, bkg)){
+	      factory_string += (","+syst.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name());
+	    }
+	  }
+	}
+	factory_string += ")";
         w_.factory(factory_string.c_str());
       }
       string factory_string="sum::nbkg_raw_"+bb_name+"(";
@@ -654,7 +719,7 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
       ostringstream oss;
       oss << "prod::nbkg_" << bb_name << "("
           << "nbkg_raw_" << bb_name;
-      if(do_systematics_){
+      if(do_systematics_ || do_dilepton_){
 	for(const auto &syst: bin.Systematics()){
 	  oss << "," << syst.Name() << "_" << bb_name;
 	}
@@ -738,7 +803,7 @@ void WorkspaceGenerator::AddFullPdf(){
       null_list += (",pdf_null_BLK_"+blockp->Name());
       alt_list += (",pdf_alt_BLK_"+blockp->Name());
     }
-    if(do_systematics_){
+    if(do_systematics_ || do_dilepton_){
       for(const auto &syst: systematics_){
         null_list += (",constraint_"+syst);
         alt_list += (",constraint_"+syst);
