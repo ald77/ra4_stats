@@ -3,7 +3,6 @@
 
 #include <ostream>
 #include <set>
-#include <map>
 #include <string>
 #include <utility>
 
@@ -85,7 +84,6 @@ private:
   void AddSystematicGenerator(const std::string &name);
   void AddData(const Block &block);
   void AddBackgroundFractions(const Block &block);
-  std::map<Process, double> GetBackgroundFractions(const Block &block) const;
   void AddABCDParameters(const Block &block);
   void AddRawBackgroundPredictions(const Block &block);
   void AddKappas(const Block &block);

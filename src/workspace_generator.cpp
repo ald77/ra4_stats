@@ -379,26 +379,6 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
   }
 }
 
-map<Process, double> WorkspaceGenerator::GetBackgroundFractions(const Block &block) const{
-  if(print_level_ >= PrintLevel::everything){
-    cout << "GetBackgroundFractions(" << block << ")" << endl;
-  }
-  map<Process, double> output;
-  for(const auto &bkg: backgrounds_){
-    for(const auto &vbin: block.Bins()){
-      for(const auto &bin: vbin){
-        output[bkg] += GetYield(bin, bkg).Yield();
-      }
-    }
-  }
-  double scale = 0.;
-  for(const auto &process_value: output) scale += process_value.second;
-  scale = 1./scale;
-  for(auto &process_value: output) process_value.second *= scale;
-
-  return output;
-}
-
 void WorkspaceGenerator::AddABCDParameters(const Block &block){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddABCDParameters(" << block << ")" << endl;
