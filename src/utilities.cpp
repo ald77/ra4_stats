@@ -84,3 +84,17 @@ string execute(const string &cmd){
   pclose(pipe);
   return result;
 }
+
+vector<string> Tokenize(const string& input,
+                        const string& tokens){
+  char* ipt(new char[input.size()+1]);
+  memcpy(ipt, input.data(), input.size());
+  ipt[input.size()]=static_cast<char>(0);
+  char* ptr(strtok(ipt, tokens.c_str()));
+  vector<string> output(0);
+  while(ptr!=NULL){
+    output.push_back(ptr);
+    ptr=strtok(NULL, tokens.c_str());
+  }
+  return output;
+}

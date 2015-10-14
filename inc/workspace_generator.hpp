@@ -23,7 +23,8 @@ public:
                      const std::set<Block> &blocks,
                      const std::set<Process> &backgrounds,
                      const Process &signal,
-                     const Process &data);
+                     const Process &data,
+		     const std::string &systematics_file = "");
 
   enum class PrintLevel{silent, important, normal, everything};
   enum class BlindLevel{unblinded, r4_blinded, blinded};
@@ -62,6 +63,7 @@ private:
   std::set<Process> backgrounds_;
   Process signal_, data_;
   std::set<Block> blocks_;
+  std::string systematics_file_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;
@@ -77,6 +79,8 @@ private:
 
   void UpdateWorkspace();
   void AddPOI();
+  void ReadSystematicsFile();
+  static void CleanLine(std::string &line);
   void AddDileptonSystematic();
   bool NeedsDileptonBin(const Bin &bin) const;
   void MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const;

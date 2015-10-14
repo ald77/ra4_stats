@@ -30,6 +30,9 @@ void GetCountAndUncertainty(TTree &tree,
 
 std::string execute(const std::string &cmd);
 
+std::vector<std::string> Tokenize(const std::string& input,
+                                  const std::string& tokens=" ");
+
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){
   collection.insert(collection.end(), value);

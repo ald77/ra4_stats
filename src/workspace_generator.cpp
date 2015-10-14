@@ -3,9 +3,11 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include <array>
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 
 #include "RooPoisson.h"
 #include "RooDataSet.h"
@@ -22,12 +24,14 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const set<Block> &blocks,
                                        const set<Process> &backgrounds,
                                        const Process &signal,
-                                       const Process &data):
+                                       const Process &data,
+				       const string &systematics_file):
   baseline_(baseline),
   backgrounds_(backgrounds),
   signal_(signal),
   data_(data),
   blocks_(blocks),
+  systematics_file_(systematics_file),
   w_("w"),
   poi_(),
   observables_(),
@@ -157,6 +161,9 @@ void WorkspaceGenerator::UpdateWorkspace(){
   if(do_dilepton_){
     AddDileptonSystematic();
   }
+  if(do_systematics_){
+    ReadSystematicsFile();
+  }
   AddPOI();
   AddSystematicsGenerators();
 
@@ -187,6 +194,87 @@ void WorkspaceGenerator::AddPOI(){
   }
   w_.factory("r[1.,0.,20.]");
   Append(poi_, "r");
+}
+
+void WorkspaceGenerator::ReadSystematicsFile(){
+  if(systematics_file_ == "") return;
+  ifstream file(systematics_file_);
+  vector<string> lines;
+  string one_line;
+  while(getline(file, one_line)){
+    CleanLine(one_line);
+    if(one_line != ""){
+      lines.push_back(one_line);
+    }
+  }
+
+  vector<vector<string> > words;
+  for(const auto &line: lines){
+    vector<string> these_words = Tokenize(line);
+    words.push_back(these_words);
+  }
+
+  auto all_prc = backgrounds_;
+  Append(all_prc, signal_);
+  string syst_name;
+  auto process_list = all_prc;
+  process_list.clear();
+
+  free_systematics_.clear();
+  FreeSystematic this_systematic("BADBADBADBADBADBADBADBADBAD");
+  bool ready = false;
+  for(const auto &line: words){
+    if(line.size() < 2){
+      string out;
+      for(const auto &word: line) out += word;
+      throw runtime_error("Bad systematics line: "+out);
+    }
+    if(line.at(0) == "SYSTEMATIC"){
+      if(ready){
+	Append(free_systematics_, this_systematic);
+      }
+      this_systematic = FreeSystematic(line.at(1));
+      ready = true;
+    }else if(line[0] == "PROCESSES"){
+      process_list.clear();
+      for(size_t iword = 1; iword < line.size(); ++iword){
+	vector<string> names = Tokenize(line.at(iword), ", ");
+	for(const auto &name: names){
+	  for(const auto &prc: all_prc){
+	    if(name == prc.Name()){
+	      Append(process_list, prc);
+	    }
+	  }
+	}
+      }
+    }else{
+      for(const auto &block: blocks_){
+	for(const auto &vbin: block.Bins()){
+	  for(const auto &bin: vbin){
+	    if(line.at(0) != bin.Name()) continue;
+	    for(const auto &prc: process_list){
+	      this_systematic.Strength(bin, prc) = atof(line.at(1).c_str());
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+void WorkspaceGenerator::CleanLine(string &line){
+  ReplaceAll(line, "=", "");
+  string old = line;
+  do{
+    old = line;
+    ReplaceAll(line, "  ", " ");
+  } while (line != old);
+  while(line.size() > 0 && line[0] == ' '){
+    line = line.substr(1);
+  }
+  if(line.size() > 0 && line[0] == '#'){
+    line = "";
+  }
 }
 
 void WorkspaceGenerator::AddDileptonSystematic(){
