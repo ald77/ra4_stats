@@ -26,15 +26,11 @@
 using namespace std;
 
 string temp_name = "my_temp_name.root";
+double max_lim = 2.;
+double sig_scale = 1.1;
 double min_lumi = 0.;
 double lumi_increment = 0.5;
-double max_lumi = 6.;
-double min_sig = 0.;
-double max_sig = 4.;
-double min_lim = 0.;
-double max_lim = 2.;
-string file_nc = "methoddavidnc_30.root";
-string file_c = "methoddavidc_30.root";
+double max_lumi = 8.;
 
 int main(){
   styles style("LargeLabels");
@@ -43,39 +39,66 @@ int main(){
   gStyle->SetPadLeftMargin(0.12);
   gStyle->SetPadRightMargin(0.12);
 
-  vector<double> sig_nc, sig_c, lim_nc, lim_c, lumis;
+  vector<string> files, names;
+//   files.push_back("method2nc.root"); names.push_back("T1tttt(1500,100)");
+//   files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
 
-  for(double lumi = min_lumi; lumi <= max_lumi; lumi += lumi_increment){
-    lumis.push_back(lumi);
-    sig_nc.push_back(GetSignificance(file_nc, lumi));
-    lim_nc.push_back(GetLimit(file_nc, lumi));
-    sig_c.push_back(GetSignificance(file_c, lumi));
-    lim_c.push_back(GetLimit(file_c, lumi));
-    cout << lumi << " " << sig_nc.back() << " " << lim_nc.back() << " " << sig_c.back() << " " << lim_c.back() << endl;
-    FixSignificance(sig_nc.back());
-    FixSignificance(sig_c.back());
-    FixLimit(lim_nc.back());
-    FixLimit(lim_c.back());
+//   files.push_back("method1nc.root"); names.push_back("T1tttt(1500,100)");
+//   files.push_back("method1c.root"); names.push_back("T1tttt(1200,800)");
+
+//   files.push_back("method2nc.root"); names.push_back("All systs");
+//   files.push_back("method2nc_nosyst.root"); names.push_back("Dilep only");
+//   files.push_back("method2nc_nodilep.root"); names.push_back("No dilep");
+//   files.push_back("method2nc_statonly.root"); names.push_back("No systs");
+
+  files.push_back("method2nc.root"); names.push_back("With kappa");
+  files.push_back("method2nc_nokappa.root"); names.push_back("No kappa");
+
+  vector<vector<double> > signif(files.size()), limit(files.size());
+  vector<double> lumis;
+
+  double max_sig = 0.;
+  for(size_t ifile = 0; ifile < files.size(); ++ifile){
+    for(double lumi = min_lumi; lumi <= max_lumi; lumi += lumi_increment){
+      if(ifile == 0) lumis.push_back(lumi);
+      signif.at(ifile).push_back(GetSignificance(files.at(ifile), lumi));
+      limit.at(ifile).push_back(GetLimit(files.at(ifile), lumi));
+      cout << files.at(ifile) << ", " << lumi << ": "
+	   << signif.at(ifile).back() << ", " << limit.at(ifile).back() << endl;
+      if(signif.at(ifile).back() > max_sig){
+	max_sig = signif.at(ifile).back();
+      }
+    }
   }
 
-  TGraph snc(lumis.size(), &lumis.at(0), &sig_nc.at(0));
-  TGraph sc(lumis.size(), &lumis.at(0), &sig_c.at(0));
-  TGraph lnc(lumis.size(), &lumis.at(0), &lim_nc.at(0));
-  TGraph lc(lumis.size(), &lumis.at(0), &lim_c.at(0));
-  snc.SetLineStyle(1);
-  snc.SetLineWidth(5);
-  TGraph dnc = snc;
-  snc.SetLineColor(kRed);
-  sc.SetLineStyle(2);
-  sc.SetLineWidth(5);
-  TGraph dc = sc;
-  sc.SetLineColor(kRed);
-  lnc.SetLineColor(kBlue);
-  lnc.SetLineStyle(1);
-  lnc.SetLineWidth(5);
-  lc.SetLineColor(kBlue);
-  lc.SetLineStyle(2);
-  lc.SetLineWidth(5);
+  for(size_t ifile = 0; ifile < files.size(); ++ifile){
+    for(size_t ilumi = 0; ilumi < signif.at(ifile).size(); ++ilumi){
+      signif.at(ifile).at(ilumi) *= max_lim/(sig_scale*max_sig);
+      if(signif.at(ifile).at(ilumi) < 0.) signif.at(ifile).at(ilumi) = 0.;
+      if(limit.at(ifile).at(ilumi) < 0.) limit.at(ifile).at(ilumi) = max_lim;
+      if(limit.at(ifile).at(ilumi) > max_lim) limit.at(ifile).at(ilumi) = max_lim;
+    }
+  }
+
+  vector<TGraph> signif_graphs, limit_graphs, dumb_graphs;
+  for(size_t ifile = 0; ifile < files.size(); ++ifile){
+    signif_graphs.push_back(TGraph(lumis.size(), &lumis.at(0), &signif.at(ifile).at(0)));
+    limit_graphs.push_back(TGraph(lumis.size(), &lumis.at(0), &limit.at(ifile).at(0)));
+    dumb_graphs.push_back(TGraph(0));
+
+    signif_graphs.back().SetLineStyle(ifile+1);
+    signif_graphs.back().SetLineWidth(5);
+    signif_graphs.back().SetLineColor(kRed);
+
+    limit_graphs.back().SetLineStyle(ifile+1);
+    limit_graphs.back().SetLineWidth(5);
+    limit_graphs.back().SetLineColor(kBlue);
+
+    dumb_graphs.back().SetLineStyle(ifile+1);
+    dumb_graphs.back().SetLineWidth(5);
+    dumb_graphs.back().SetLineColor(kBlack);
+  }
+
   TH1D h("h", ";Luminosity [fb^{-1}];Expected Limit/X-Section", 1, min_lumi, max_lumi);
   h.SetMaximum(max_lim);
   TAxis &yaxis = *h.GetYaxis();
@@ -84,9 +107,9 @@ int main(){
   yaxis.SetTitleOffset(.8);
   TCanvas c;
   c.SetTicks(1,0);
-  TGaxis *raxis = new TGaxis(max_lumi, min_lim,
+  TGaxis *raxis = new TGaxis(max_lumi, 0.,
                              max_lumi, max_lim,
-                             min_sig, max_sig, 510, "+L");
+                             0., max_sig*sig_scale, 510, "+L");
   raxis->SetLabelColor(kRed);
   raxis->SetTitleColor(kRed);
   raxis->SetTitle("Expected Significance");
@@ -98,19 +121,19 @@ int main(){
   raxis->SetTitleFont(yaxis.GetTitleFont());
 
   h.Draw("hist");
-  snc.Draw("samel");
-  sc.Draw("samel");
-  lnc.Draw("samel");
-  lc.Draw("samel");
-  raxis->Draw("same");
   TLegend l(1.0-gStyle->GetPadRightMargin()-0.4, 1.0-gStyle->GetPadTopMargin()-0.25,
 	    1.0-gStyle->GetPadRightMargin(), 1.0-gStyle->GetPadTopMargin());
   l.SetBorderSize(0);
   l.SetFillColor(0);
   l.SetFillStyle(4000);
-  l.AddEntry(&dnc, "T1tttt(1500,100)", "l");
-  l.AddEntry(&dc, "T1tttt(1200,800)", "l");
+  for(size_t ifile = files.size() - 1; ifile < files.size(); --ifile){
+    signif_graphs.at(ifile).Draw("samel");
+    limit_graphs.at(ifile).Draw("samel");
+    dumb_graphs.at(ifile).Draw("samel");
+    l.AddEntry(&dumb_graphs.at(ifile), names.at(ifile).c_str(), "l");
+  }
   l.Draw("same");
+  raxis->Draw("same");
 
   c.Print("sensitivity.pdf");
 }
@@ -138,7 +161,7 @@ void ModifyLumi(const string &file_name, double lumi){
     RooRealVar *var = static_cast<RooRealVar*>(*(*iter_ptr));
     if(var == nullptr) continue;
     if(lumi < 0.) continue;
-    double ratio = lumi/3.0;
+    double ratio = lumi/4.0;
     string name = var->GetName();
     if(Contains(name, "norm_")
        || Contains(name, "nobs_")
@@ -165,16 +188,4 @@ double ExtractNumber(const string &results, const string &key){
   }else{
     return -1.;
   }
-}
-
-void FixSignificance(double &x){
-  if(x<min_sig) x = min_sig;
-  if(x>max_sig) x = max_sig;
-  double sig_scale = max_lim/max_sig;
-  x *= sig_scale;
-}
-
-void FixLimit(double &x){
-  if(x<=0. || x>max_lim) x = max_lim;
-  if(x>0. && x<min_lim) x = min_lim;
 }

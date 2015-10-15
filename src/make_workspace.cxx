@@ -21,7 +21,7 @@
 using namespace std;
 
 namespace{
-  double lumi = 3.;
+  double lumi = 4.;
   bool blinded = true;
   bool do_syst = true;
 }
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
   Cut baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
 
   //Declare bins
-  //Method 3
+  //Method 2
   Bin r1_lowmet_lownb{"r1_lowmet_lownb", "mt<=140&&mj<=400&&met<=400&&nbm<=2"};
   Bin r1_lowmet_highnb{"r1_lowmet_highnb", "mt<=140&&mj<=400&&met<=400&&nbm>2"};
   Bin r1_highmet{"r1_highmet", "mt<=140&&mj<=400&&met>400"};
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
   Bin r4{"r4", "mt>140&&mj>400"};
 
   //Specify ABCD constraints
-  set<Block> blocks_m3{
+  set<Block> blocks_m2{
     {"lowmet_lownb", {{r1_lowmet_lownb, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb},
           {r3_lowmet_lownb, r4_lowmet_lownj_lownb, r4_lowmet_highnj_lownb}}},
       {"lowmet_highnb", {{r1_lowmet_highnb, r2_lowmet_lownj_highnb, r2_lowmet_highnj_highnb},
@@ -142,10 +142,33 @@ int main(int argc, char *argv[]){
   }
   string no_syst = do_syst ? "" : "_nosyst";
 
-  WorkspaceGenerator wg3(baseline, blocks_m3, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wg3.WriteToFile("test_3.root");
-  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_c, data, "txt/systematics/method1.txt");
-  //wg1.WriteToFile("test_1.root");
+  WorkspaceGenerator wg2(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
+  wg2.SetDoDilepton(true);
+  wg2.SetDoSystematics(true);
+  wg2.WriteToFile("method2nc.root");
+  WorkspaceGenerator wga(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
+  wga.SetDoDilepton(true);
+  wga.SetDoSystematics(false);
+  wga.WriteToFile("method2nc_nosyst.root");
+  WorkspaceGenerator wgb(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
+  wgb.SetDoDilepton(false);
+  wgb.SetDoSystematics(true);
+  wgb.WriteToFile("method2nc_nodilep.root");
+  WorkspaceGenerator wgc(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
+  wgc.SetDoDilepton(false);
+  wgc.SetDoSystematics(false);
+  wgc.WriteToFile("method2nc_statonly.root");
+  WorkspaceGenerator wgd(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
+  wgd.SetDoDilepton(true);
+  wgd.SetDoSystematics(true);
+  wgd.SetKappaCorrected(false);
+  wgd.WriteToFile("method2nc_nokappa.root");
+  WorkspaceGenerator wg2c(baseline, blocks_m2, backgrounds, signal_c, data, "txt/systematics/method2.txt");
+  wg2c.WriteToFile("method2c.root");
+  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_nc, data, "txt/systematics/method1.txt");
+  wg1.WriteToFile("method1nc.root");
+  WorkspaceGenerator wg1c(baseline, blocks_m1, backgrounds, signal_c, data, "txt/systematics/method1.txt");
+  wg1c.WriteToFile("method1c.root");
 }
 
 void GetOptions(int argc, char *argv[]){
