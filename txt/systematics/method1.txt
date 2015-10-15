@@ -1,0 +1,27 @@
+SYSTEMATIC isr_pt
+  PROCESSES ttbar
+    r4_lowmet_lownj 0.16
+    r4_lowmet_highnj 0.08
+    r4_highmet_lownj 0.14
+    r4_highmet_highnj 0.16
+
+SYSTEMATIC top_pt
+  PROCESSES ttbar
+    r4_lowmet_lownj 0.01
+    r4_lowmet_highnj 0.01
+    r4_highmet_lownj 0.01
+    r4_highmet_highnj 0.01
+
+SYSTEMATIC isr_mult
+  PROCESSES ttbar
+    r4_lowmet_lownj 0.03
+    r4_lowmet_highnj 0.01
+    r4_highmet_lownj 0.02
+    r4_highmet_highnj 0.01
+
+SYSTEMATIC highmt_contam
+  PROCESSES ttbar
+    r4_lowmet_lownj 0.28
+    r4_lowmet_highnj 0.27
+    r4_highmet_lownj 0.19
+    r4_highmet_highnj 0.26

@@ -36,11 +36,11 @@ double & FreeSystematic::Strength(const Bin &bin, const Process &process){
 }
 
 bool FreeSystematic::operator<(const FreeSystematic &syst) const{
-  return name_ < syst.name_;
+  return tie(name_, strengths_) < tie(syst.name_, syst.strengths_);
 }
 
 bool FreeSystematic::operator==(const FreeSystematic &syst) const{
-  return name_ == syst.name_;
+  return tie(name_, strengths_) == tie(syst.name_, syst.strengths_);
 }
 
 ostream & operator<<(ostream &stream, const FreeSystematic &syst){

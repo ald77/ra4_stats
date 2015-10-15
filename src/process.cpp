@@ -142,11 +142,13 @@ Process & Process::SetSystematicStrength(const std::string &name, double strengt
 }
 
 bool Process::operator<(const Process &p) const{
-  return tie(cut_, file_names_, count_zeros_) < tie(p.cut_, p.file_names_, p.count_zeros_);
+  return tie(cut_, file_names_, count_zeros_, systematics_)
+    < tie(p.cut_, p.file_names_, p.count_zeros_, p.systematics_);
 }
 
 bool Process::operator==(const Process &p) const{
-  return tie(cut_, file_names_, count_zeros_) == tie(p.cut_, p.file_names_, p.count_zeros_);
+  return tie(cut_, file_names_, count_zeros_, systematics_)
+    == tie(p.cut_, p.file_names_, p.count_zeros_, p.systematics_);
 }
 
 void Process::CleanName(){

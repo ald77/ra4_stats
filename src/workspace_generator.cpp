@@ -260,6 +260,9 @@ void WorkspaceGenerator::ReadSystematicsFile(){
       }
     }
   }
+  if(ready){
+    Append(free_systematics_, this_systematic);
+  }
 }
 
 void WorkspaceGenerator::CleanLine(string &line){
@@ -384,11 +387,13 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
       string full_name = syst.Name()+"_PRC_"+bkg.Name();
       ostringstream oss;
       oss << "strength_" << full_name << "[" << syst.Strength() << "]" << flush;
+      cout << "CCC " << oss.str() << endl;
       w_.factory(oss.str().c_str());
       oss.str("");
       oss << "expr::" << full_name
 	  << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
 	  << "strength_" << full_name << "," << syst.Name() << ")" << flush;
+      cout << "DDD " << oss.str() << endl;
       w_.factory(oss.str().c_str());
     }
   }
@@ -406,7 +411,8 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
 	    w_.factory(oss.str().c_str());
 	    oss.str("");
 	    oss << "expr::" << full_name
-		<< "('exp(strength_" << full_name << "*" << syst.Name() << ")" << flush;
+		<< "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
+		<< "strength_" << full_name << "," << syst.Name() << ")" << flush;
 	    w_.factory(oss.str().c_str());
 	  }
 	}
@@ -769,9 +775,28 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
       ostringstream oss;
       oss << "prod::nbkg_" << bb_name << "("
           << "nbkg_raw_" << bb_name;
-      if(do_systematics_ || do_dilepton_){
-	for(const auto &syst: bin.Systematics()){
+      for(const auto &syst: bin.Systematics()){
+	if((do_systematics_ && syst.Name().substr(0,6) != "dilep_")
+	   ||(do_dilepton_ && syst.Name().substr(0,6) == "dilep_")){
 	  oss << "," << syst.Name() << "_" << bb_name;
+	}
+      }
+      if(do_systematics_){
+	for(const auto &prc: backgrounds_){
+	  for(const auto &syst: prc.Systematics()){
+	    oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
+	  }
+	  for(const auto &syst: free_systematics_){
+	    if(!syst.HasEntry(bin, prc)) continue;
+	    oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
+	  }
+	}
+	for(const auto &syst: signal_.Systematics()){
+	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
+	}
+	for(const auto &syst: free_systematics_){
+	  if(!syst.HasEntry(bin, signal_)) continue;
+	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
 	}
       }
       if(do_mc_kappa_correction_){

@@ -142,9 +142,9 @@ int main(int argc, char *argv[]){
   }
   string no_syst = do_syst ? "" : "_nosyst";
 
-  WorkspaceGenerator wg3(baseline, blocks_m3, backgrounds, signal_nc, data);
+  WorkspaceGenerator wg3(baseline, blocks_m3, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
   wg3.WriteToFile("test_3.root");
-  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_c, data);
+  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_c, data, "txt/systematics/method1.txt");
   //wg1.WriteToFile("test_1.root");
 }
 
