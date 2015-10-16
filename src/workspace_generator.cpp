@@ -44,6 +44,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
+  inject_signal_(false),
   w_is_valid_(false){
   w_.cd();
 }
@@ -444,6 +445,9 @@ void WorkspaceGenerator::AddData(const Block &block){
         for(const auto &bkg: backgrounds_){
 	  gps += GetYield(bin, bkg);
         }
+	if(inject_signal_){
+	  gps += GetYield(bin, signal_);
+	}
       }
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()

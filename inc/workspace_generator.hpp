@@ -73,6 +73,7 @@ private:
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
+  bool inject_signal_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;
