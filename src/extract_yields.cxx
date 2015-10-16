@@ -26,6 +26,7 @@ using namespace std;
 
 int main(int argc, char *argv[]){
   if(argc < 2) return 1;
+
   styles style("RA4");
   string init_file = argv[1];
 
@@ -100,7 +101,8 @@ int main(int argc, char *argv[]){
   bin = 1;
   for(auto kappa = kmap.cbegin(); kappa != kmap.cend(); ++kappa){
     hkappa.SetBinContent(bin, kappa->second);
-    hkappa.GetXaxis()->SetBinLabel(bin, (kappa->first.substr(4)).c_str());
+    size_t pos = kappa->first.find("_BIN_");
+    hkappa.GetXaxis()->SetBinLabel(bin, (kappa->first.substr(pos+5)).c_str());
     ++bin;
   }
 
