@@ -348,13 +348,15 @@ void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &di
   dilep_bin.Cut().Replace("nleps==1", "nleps==2");
   dilep_bin.Cut().RmCutOn("nbm", "nbm>=1&&nbm<=2");
   dilep_bin.Cut().RmCutOn("met", "met>200&&met<=400");
+  dilep_bin.Cut().RmCutOn("mt");
   dilep_cut.Replace("(nels+nmus)==1", "(nels+nmus)==2");
   dilep_cut.Replace("(nmus+nels)==1", "(nmus+nels)==2");
   dilep_cut.Replace("nels+nmus==1", "nels+nmus==2");
   dilep_cut.Replace("nmus+nels==1", "nmus+nels==2");
   dilep_cut.Replace("nleps==1", "nleps==2");
   dilep_cut.RmCutOn("nbm", "nbm>=1&&nbm<=2");
-  dilep_cut.RmCutOn( "met", "met>200&&met<=400");
+  dilep_cut.RmCutOn("met", "met>200&&met<=400");
+  dilep_cut.RmCutOn("mt");
 }
 
 void WorkspaceGenerator::AddSystematicsGenerators(){
@@ -888,11 +890,9 @@ void WorkspaceGenerator::AddFullPdf(){
         alt_list += (",constraint_"+syst);
       }
     }
-    if(do_mc_kappa_correction_){
-      for(const auto & block: blocks_){
-	null_list += (",pdf_mc_"+block.Name());
-	alt_list += (",pdf_mc_"+block.Name());
-      }
+    for(const auto & block: blocks_){
+      null_list += (",pdf_mc_"+block.Name());
+      alt_list += (",pdf_mc_"+block.Name());
     }
     w_.factory(("PROD::model_b("+null_list+")").c_str());
     w_.factory(("PROD::model_s("+alt_list+")").c_str());
@@ -906,6 +906,7 @@ void WorkspaceGenerator::AddParameterSets(){
   DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
+  DefineParameterSet("globalObservables", set<string>());
   RooDataSet data_obs{"data_obs", "data_obs", *w_.set("observables")};
   data_obs.add(*w_.set("observables"));
   w_.import(data_obs);
@@ -937,12 +938,14 @@ void WorkspaceGenerator::AddModels(){
   model_config.SetParametersOfInterest(*w_.set("POI"));
   model_config.SetObservables(*w_.set("observables"));
   model_config.SetNuisanceParameters(*w_.set("nuisances"));
+  model_config.SetGlobalObservables(*w_.set("globalObservables"));
 
   RooStats::ModelConfig model_config_bonly("ModelConfig_bonly", &w_);
   model_config_bonly.SetPdf(*w_.pdf("model_b"));
   model_config_bonly.SetParametersOfInterest(*w_.set("POI"));
   model_config_bonly.SetObservables(*w_.set("observables"));
   model_config_bonly.SetNuisanceParameters(*w_.set("nuisances"));
+  model_config_bonly.SetGlobalObservables(*w_.set("globalObservables"));
 
   w_.import(model_config);
   w_.import(model_config_bonly);
