@@ -36,11 +36,11 @@ int main(int argc, char *argv[]){
   Process other{"other", {
       {"archive/2015_09_28_ana/skim/*DYJetsToLL*.root/tree"},
         {"archive/2015_09_28_ana/skim/*QCD_Pt*.root/tree"},
-	  {"archive/2015_09_28_ana/skim/*_ST_*.root/tree"},
-	    {"archive/2015_09_28_ana/skim/*WJetsToLNu*.root/tree"},
-	      {"archive/2015_09_28_ana/skim/*_WWTo*.root/tree"},
-		{"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
-		  {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
+          {"archive/2015_09_28_ana/skim/*_ST_*.root/tree"},
+            {"archive/2015_09_28_ana/skim/*WJetsToLNu*.root/tree"},
+              {"archive/2015_09_28_ana/skim/*_WWTo*.root/tree"},
+                {"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
+                  {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
     }};
   Process signal_nc{"signal_nc", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1500*100*.root/tree"}
@@ -48,13 +48,17 @@ int main(int argc, char *argv[]){
   Process signal_c{"signal_c", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1200*800*.root/tree"}
     }};
-  Process data{"data", {}};
+  Process data{"data", {
+      {"archive/2015_10_19_manuel_data/skim_1lht400/*.root/tree"},
+        {"archive/2015_10_19_manuel_data/skim_2l/*.root/tree"}
+    }, Cut(), true};
 
   //Make list of all backgrounds. Backgrounds assumed to be orthogonal
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
   Cut baseline{"ht>500&&met>200&njets>=7&&nbm>=2&&(nels+nmus)==1"};
+  Cut baseline_david{"ht>450&&met>150&njets>=6&&nbm>=1&&(nels+nmus)==1"};
 
   //Declare bins
   //Method 2
@@ -128,7 +132,7 @@ int main(int argc, char *argv[]){
                 {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
   };
 
-  vector<Block> blocks_david{
+  set<Block> blocks_david{
     {"all", {{r1, r2}, {r3, r4}}}
   };
 
@@ -142,33 +146,14 @@ int main(int argc, char *argv[]){
   }
   string no_syst = do_syst ? "" : "_nosyst";
 
-  WorkspaceGenerator wg2(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wg2.SetDoDilepton(true);
-  wg2.SetDoSystematics(true);
-  wg2.WriteToFile("method2nc.root");
-  WorkspaceGenerator wga(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wga.SetDoDilepton(true);
-  wga.SetDoSystematics(false);
-  wga.WriteToFile("method2nc_nosyst.root");
-  WorkspaceGenerator wgb(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wgb.SetDoDilepton(false);
-  wgb.SetDoSystematics(true);
-  wgb.WriteToFile("method2nc_nodilep.root");
-  WorkspaceGenerator wgc(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wgc.SetDoDilepton(false);
-  wgc.SetDoSystematics(false);
-  wgc.WriteToFile("method2nc_statonly.root");
-  WorkspaceGenerator wgd(baseline, blocks_m2, backgrounds, signal_nc, data, "txt/systematics/method2.txt");
-  wgd.SetDoDilepton(true);
-  wgd.SetDoSystematics(true);
-  wgd.SetKappaCorrected(false);
-  wgd.WriteToFile("method2nc_nokappa.root");
-  WorkspaceGenerator wg2c(baseline, blocks_m2, backgrounds, signal_c, data, "txt/systematics/method2.txt");
-  wg2c.WriteToFile("method2c.root");
-  WorkspaceGenerator wg1(baseline, blocks_m1, backgrounds, signal_nc, data, "txt/systematics/method1.txt");
-  wg1.WriteToFile("method1nc.root");
-  WorkspaceGenerator wg1c(baseline, blocks_m1, backgrounds, signal_c, data, "txt/systematics/method1.txt");
-  wg1c.WriteToFile("method1c.root");
+  WorkspaceGenerator wg(baseline_david, blocks_david, backgrounds, signal_nc, data);
+  if(!blinded){
+    wg.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+    wg.SetLuminosity(0.1346);
+  }
+  wg.SetDoDilepton(true);
+  wg.SetDoSystematics(false);
+  wg.WriteToFile("methoddavidnc.root");
 }
 
 void GetOptions(int argc, char *argv[]){
@@ -196,7 +181,7 @@ void GetOptions(int argc, char *argv[]){
     case 0:
       optname = long_options[option_index].name;
       if(optname == "no_syst"){
-	do_syst = false;
+        do_syst = false;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

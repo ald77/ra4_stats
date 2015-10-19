@@ -20,12 +20,15 @@ YieldManager::YieldManager(double lumi):
 GammaParams YieldManager::GetYield(const YieldKey &key) const{
   if(!HaveYield(key)) ComputeYield(key);
 
-  return (local_lumi_/store_lumi_)*yields_.at(key);
+  double factor = local_lumi_/store_lumi_;
+  if(GetProcess(key).IsData()) factor = 1.;
+
+  return factor*yields_.at(key);
 }
 
 GammaParams YieldManager::GetYield(const Bin &bin,
-				   const Process &process,
-				   const Cut &cut) const{
+                                   const Process &process,
+                                   const Cut &cut) const{
   return GetYield(YieldKey(bin, process, cut));
 }
 
@@ -64,15 +67,14 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     new_entry = true;
     ostringstream oss;
     oss << local_lumi_ << flush;
-    Cut lumi_weight = Cut(oss.str()+"*weight");
+    Cut lumi_weight = process.IsData() ? Cut() : Cut(oss.str()+"*weight");
 
-    array<Cut, 6> cuts;
+    array<Cut, 5> cuts;
     cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());
     cuts.at(1) = lumi_weight*(cut && process.Cut());
     cuts.at(2) = lumi_weight*(process.Cut());
     cuts.at(3) = lumi_weight;
-    cuts.at(4) = Cut(oss.str());
-    cuts.at(5) = Cut();
+    cuts.at(4) = Cut();
 
     for(size_t icut = 0; icut < cuts.size() && gps.Weight()<=0.; ++icut){
       if(icut > 0 && !process.CountZeros()){
@@ -80,8 +82,8 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
         break;
       }
       Cut &this_cut = cuts.at(icut);
-      if(verbose_){
-	cout << "Trying cut " << this_cut << endl;
+      if(verbose_ || true){
+        cout << "Trying cut " << this_cut << endl;
       }
       GammaParams temp_gps = process.GetYield(this_cut);
       if(icut == 0) gps = temp_gps;
@@ -92,5 +94,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
   if(verbose_ || new_entry){
     cout << "Found yield=" << gps << '\n' << endl;
   }
-  yields_[key] = (store_lumi_/local_lumi_)*gps;
+  double factor = store_lumi_/local_lumi_;
+  if(process.IsData()) factor = 1.;
+  yields_[key] = factor*gps;
 }

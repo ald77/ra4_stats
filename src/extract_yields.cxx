@@ -23,7 +23,7 @@ int main(){
   styles style("RA4");
   style.setDefaultStyle();
 
-  TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.123456.root","read");
+  TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
   if(!w_file.IsOpen()) return 1;
   RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
   if(w == nullptr) return 1;
@@ -96,12 +96,18 @@ void MakeYieldPlot(RooWorkspace &w,
   mid_pad.SetLogy();
   signal.SetTitleSize(font_size, "Y");
   signal.SetTitleOffset(offset, "Y");
-  signal.Draw();
+  signal.SetFillColor(2);
+  signal.SetFillStyle(1001);
+  signal.SetLineColor(2);
+  signal.SetLineStyle(1);
+  signal.SetLineWidth(0);
+  signal.Draw("hist");
   for(auto h = histos.rbegin(); h!= histos.rend(); ++h){
     h->Draw("same");
   }
   band.Draw("02 same");
   obs.Draw("e1p same");
+  signal.Draw("same axis");
 
   top_pad.cd();
   TLegend l(0.1, 0., 1., 1.);

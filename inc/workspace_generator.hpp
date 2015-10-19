@@ -109,7 +109,7 @@ private:
                           const std::set<std::string> &var_names);
   void AddModels();
   void PrintComparison(std::ostream &stream, const Bin &bin, const Process &process,
-		       const Block &block, bool is_data) const;
+		       const Block &block, bool is_data, bool is_signal=false) const;
 };
 
 #endif

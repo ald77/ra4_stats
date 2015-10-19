@@ -20,19 +20,24 @@ public:
   Process(const std::string &name,
           const std::set<std::string> &file_names,
           const Cut &cut = ::Cut(),
+          bool is_data = false,
           bool count_zeros = true,
-	  const SystCollection &systematics = SystCollection());
+          const SystCollection &systematics = SystCollection());
   Process(const std::string &name,
           std::initializer_list<std::string> file_names,
           const Cut &cut = ::Cut(),
+          bool is_data = false,
           bool count_zeros = true,
-	  const SystCollection &systematics = SystCollection());
+          const SystCollection &systematics = SystCollection());
 
   const std::string & Name() const;
   Process & Name(const std::string &name);
 
   const class Cut & Cut() const;
   class Cut & Cut();
+
+  const bool & IsData() const;
+  bool & IsData();
   
   const bool & CountZeros() const;
   bool & CountZeros();
@@ -59,6 +64,7 @@ private:
   mutable std::shared_ptr<TChain> chain_;
   class Cut cut_;
   std::string name_;
+  bool is_data_;
   bool count_zeros_;
   SystCollection systematics_;
 

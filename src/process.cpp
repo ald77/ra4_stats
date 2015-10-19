@@ -14,12 +14,14 @@ using namespace std;
 Process::Process(const string &name,
                  const set<string> &file_names,
                  const class Cut &cut,
+                 bool is_data,
                  bool count_zeros,
-		 const SystCollection &systematics):
+                 const SystCollection &systematics):
   file_names_(file_names),
   chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
+  is_data_(is_data),
   count_zeros_(count_zeros),
   systematics_(systematics){
   CleanName();
@@ -29,12 +31,14 @@ Process::Process(const string &name,
 Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
+                 bool is_data,
                  bool count_zeros,
-		 const SystCollection &systematics):
+                 const SystCollection &systematics):
   file_names_(file_names),
   chain_(make_shared<TChain>("tree", "tree")),
   cut_(cut),
   name_(name),
+  is_data_(is_data),
   count_zeros_(count_zeros),
   systematics_(systematics){
   CleanName();
@@ -73,6 +77,14 @@ GammaParams Process::GetYield(const class Cut &cut) const{
   GammaParams gps;
   gps.SetYieldAndUncertainty(count, uncertainty);
   return gps;
+}
+
+const bool & Process::IsData() const{
+  return is_data_;
+}
+
+bool & Process::IsData(){
+  return is_data_;
 }
 
 const bool & Process::CountZeros() const{
@@ -163,8 +175,8 @@ void Process::AddFiles(){
 
 ostream & operator<<(ostream &stream, const Process &proc){
   stream << "Process::" << proc.Name()
-	 << "(cut=" << proc.Cut()
-	 << ",count_zeros=" << proc.CountZeros()
-	 << ")";
+         << "(cut=" << proc.Cut()
+         << ",count_zeros=" << proc.CountZeros()
+         << ")";
   return stream;
 }
