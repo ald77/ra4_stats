@@ -177,6 +177,7 @@ ostream & operator<<(ostream &stream, const Process &proc){
   stream << "Process::" << proc.Name()
          << "(cut=" << proc.Cut()
          << ",count_zeros=" << proc.CountZeros()
+         << ",is_data=" << proc.IsData()
          << ")";
   return stream;
 }

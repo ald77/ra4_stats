@@ -49,9 +49,8 @@ int main(int argc, char *argv[]){
       {"archive/2015_09_28_ana/skim/*T1tttt*1200*800*.root/tree"}
     }};
   Process data{"data", {
-      {"archive/2015_10_19_manuel_data/skim_1lht400/*.root/tree"},
-        {"archive/2015_10_19_manuel_data/skim_2l/*.root/tree"}
-    }, Cut(), true};
+      {"archive/2015_10_19_manuel_data/singlelep/skim_1lht400/*.root/tree"}
+    }, "(trig[4]||trig[8])&&pass", true};
 
   //Make list of all backgrounds. Backgrounds assumed to be orthogonal
   set<Process> backgrounds{ttbar, other};
@@ -136,20 +135,10 @@ int main(int argc, char *argv[]){
     {"all", {{r1, r2}, {r3, r4}}}
   };
 
-  ostringstream oss;
-  oss << (10.*lumi) << flush;
-  string lumi_string = oss.str();
-  auto decimal = lumi_string.find('.');
-  while( decimal != string::npos ) {
-    lumi_string.erase(decimal,1);
-    decimal = lumi_string.find('.');
-  }
-  string no_syst = do_syst ? "" : "_nosyst";
-
-  WorkspaceGenerator wg(baseline_david, blocks_david, backgrounds, signal_nc, data);
+  WorkspaceGenerator wg(baseline, blocks_m2, backgrounds, signal_nc, data);
   if(!blinded){
     wg.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
-    wg.SetLuminosity(0.1346);
+    wg.SetLuminosity(lumi);
   }
   wg.SetDoDilepton(true);
   wg.SetDoSystematics(false);
