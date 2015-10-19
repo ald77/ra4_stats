@@ -42,10 +42,10 @@ int main(int argc, char *argv[]){
                 {"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
                   {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
     }};
-  Process signal_nc{"signal_nc", {
+  Process signal_nc{"signal", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1500*100*.root/tree"}
     }};
-  Process signal_c{"signal_c", {
+  Process signal_c{"signal", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1200*800*.root/tree"}
     }};
   Process data{"data", {
@@ -135,14 +135,14 @@ int main(int argc, char *argv[]){
     {"all", {{r1, r2}, {r3, r4}}}
   };
 
-  WorkspaceGenerator wg(baseline, blocks_m2, backgrounds, signal_nc, data);
+  WorkspaceGenerator wg(baseline, blocks_m2, backgrounds, signal_c, data, "txt/systematics/method2.txt");
   if(!blinded){
     wg.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
     wg.SetLuminosity(lumi);
   }
   wg.SetDoDilepton(true);
-  wg.SetDoSystematics(false);
-  wg.WriteToFile("methoddavidnc.root");
+  wg.SetDoSystematics(true);
+  wg.WriteToFile("method2c.root");
 }
 
 void GetOptions(int argc, char *argv[]){
