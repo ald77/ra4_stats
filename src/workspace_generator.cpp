@@ -797,13 +797,6 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 	    oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
 	  }
 	}
-	for(const auto &syst: signal_.Systematics()){
-	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
-	}
-	for(const auto &syst: free_systematics_){
-	  if(!syst.HasEntry(bin, signal_)) continue;
-	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
-	}
       }
       if(do_mc_kappa_correction_){
 	oss << ",kappamc_" << bb_name;
@@ -833,8 +826,17 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
           << "(r,"
           << "rate_BLK_" << block.Name()
           << "_BIN_" << bin.Name()
-          << "_PRC_" << signal_.Name()
-          << ")" << flush;
+          << "_PRC_" << signal_.Name();
+      if(do_systematics_){
+	for(const auto &syst: signal_.Systematics()){
+	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
+	}
+	for(const auto &syst: free_systematics_){
+	  if(!syst.HasEntry(bin, signal_)) continue;
+	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
+	}
+      }
+      oss << ")" << flush;
       w_.factory(oss.str().c_str());
     }
   }

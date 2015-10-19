@@ -42,10 +42,10 @@ int main(int argc, char *argv[]){
 		{"archive/2015_09_28_ana/skim/*ggZH_HToBB*.root/tree"},
 		  {"archive/2015_09_28_ana/skim/*ttHJetTobb*.root/tree"}
     }};
-  Process signal_nc{"signal_nc", {
+  Process signal_nc{"signal", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1500*100*.root/tree"}
     }};
-  Process signal_c{"signal_c", {
+  Process signal_c{"signal", {
       {"archive/2015_09_28_ana/skim/*T1tttt*1200*800*.root/tree"}
     }};
   Process data{"data", {}};

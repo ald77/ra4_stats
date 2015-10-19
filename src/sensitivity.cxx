@@ -40,8 +40,8 @@ int main(){
   gStyle->SetPadRightMargin(0.12);
 
   vector<string> files, names;
-//   files.push_back("method2nc.root"); names.push_back("T1tttt(1500,100)");
-//   files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
+  files.push_back("method2nc.root"); names.push_back("T1tttt(1500,100)");
+  files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
 
 //   files.push_back("method1nc.root"); names.push_back("T1tttt(1500,100)");
 //   files.push_back("method1c.root"); names.push_back("T1tttt(1200,800)");
@@ -51,8 +51,8 @@ int main(){
 //   files.push_back("method2nc_nodilep.root"); names.push_back("No dilep");
 //   files.push_back("method2nc_statonly.root"); names.push_back("No systs");
 
-  files.push_back("method2nc.root"); names.push_back("With kappa");
-  files.push_back("method2nc_nokappa.root"); names.push_back("No kappa");
+//   files.push_back("method2nc.root"); names.push_back("With kappa");
+//   files.push_back("method2nc_nokappa.root"); names.push_back("No kappa");
 
   vector<vector<double> > signif(files.size()), limit(files.size());
   vector<double> lumis;
