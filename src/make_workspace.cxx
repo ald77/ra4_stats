@@ -45,15 +45,16 @@ int main(int argc, char *argv[]){
 
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
-      {foldermc+"/*TTJets*.root/tree"}
+      {foldermc+"/*TTJets*Lept*.root/tree"},
+	{foldermc+"/*TTJets_HT*.root/tree"}
     }};
   Process other{"other", {
-      {foldermc+"/*DYJetsToLL*.root/tree"},
-        {foldermc+"/*QCD_Pt*.root/tree"},
-          {foldermc+"/*_TTWJets*.root/tree"},
-	    {foldermc+"/*_TTZTo*.root/tree"},
-	      {foldermc+"/*_ST_*.root/tree"},
-		{foldermc+"/*_WJetsToLNu*.root/tree"},
+      {foldermc+"/*_WJetsToLNu*.root/tree"},
+	{foldermc+"/*_TTWJets*.root/tree"},
+	  {foldermc+"/*_TTZTo*.root/tree"},
+	    {foldermc+"/*_ST_*.root/tree"},
+	      {foldermc+"/*DYJetsToLL*.root/tree"},
+		{foldermc+"/*QCD_HT*.root/tree"},
 		  {foldermc+"/*_WWTo*.root/tree"},
 		    {foldermc+"/*ggZH_HToBB*.root/tree"},
 		      {foldermc+"/*ttHJetTobb*.root/tree"}
@@ -205,7 +206,8 @@ int main(int argc, char *argv[]){
   wgnc.SetDoSystematics(true);
 
   TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p");
-  string outname(method+"_nc_met"+himet+"_nj"+minjets+hijets+"_lumi"+lumi_s.Data()+".root");
+  string outname(method+"_nc_met"+himet+"_mj"+mjthresh+"_nj"+minjets+hijets
+		 +"_lumi"+lumi_s.Data()+".root");
   wgnc.WriteToFile(outname);
 
   WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile);
@@ -215,7 +217,7 @@ int main(int argc, char *argv[]){
   wgc.SetLuminosity(lumi);
   wgc.SetDoDilepton(true);
   wgc.SetDoSystematics(true);
-  outname = method+"_c_met"+himet+"_nj"+minjets+hijets+"_lumi"+lumi_s.Data()+".root";
+  ReplaceAll(outname, "_nc_", "_c_");
   wgc.WriteToFile(outname);
 
 }
@@ -229,7 +231,7 @@ void GetOptions(int argc, char *argv[]){
       {"lowj", required_argument, 0, 'j'},
       {"hij", required_argument, 0, 'h'},
       {"himet", required_argument, 0, 'm'},
-      {"mjthresh", required_argument, 0, 's'},
+      {"mj", required_argument, 0, 's'},
       {"method", required_argument, 0, 't'},
       {0, 0, 0, 0}
     };
