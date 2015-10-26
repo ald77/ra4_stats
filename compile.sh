@@ -16,7 +16,7 @@ else
     echo
     
     if [[ $exit_code != 0 ]] ; then
-	echo "ERRORS AND WARNINGS:"
+	printf "\n\n\n\e[31m==========  ERRORS AND WARNINGS  ============\e[0m\n\n"
 	cat $tmp_file >&2
     else
 	echo "Compiled successfully without errors or warnings!"

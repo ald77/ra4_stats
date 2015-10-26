@@ -38,10 +38,11 @@ int main(int argc, char *argv[]){
   cout << fixed << setprecision(2);
   GetOptions(argc, argv);
   string midjets(""); midjets += to_string(atoi(hijets.c_str())-1); 
+  string minjets2l(""); minjets2l += to_string(atoi(minjets.c_str())-1); 
+  string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1); 
 
-  //string foldermc("archive/2015_09_28_ana/skim/");
   string foldermc("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/mc/skim_1lht500met200/");
-  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/data/singlelep/combined/skim_1lht500met200/");
+  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_25/data/singlelep/combined/skim_1lht500met200/");
 
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
@@ -75,43 +76,88 @@ int main(int argc, char *argv[]){
   //Baseline selection applied to all bins and processes
   Cut baseline{"ht>500&&met>200&njets>="+minjets+"&&nbm>=2&&(nels+nmus)==1"};
   Cut baseline1b{"ht>500&&met>200&njets>="+minjets+"&&nbm>=1&&(nels+nmus)==1"};
+  Cut baseline2l{"ht>500&&met>200&njets>="+minjets2l+"&&nbm>=1&&nbm<=2"};
   Cut baseline_david{"ht>450&&met>150&njets>=6&&nbm>=1&&(nels+nmus)==1"};
 
   //Declare bins
-  //Method 2
+  //Method 2, m1b, and m1bk
   Bin r1_lowmet_1b{"r1_lowmet_1b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
   Bin r1_highmet_1b{"r1_highmet_1b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
-  Bin r1_lowmet_lownb{"r1_lowmet_lownb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm<=2"};
+  Bin r1_lowmet_lownb{"r1_lowmet_lownb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
   Bin r1_lowmet_highnb{"r1_lowmet_highnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
   Bin r1_highmet{"r1_highmet", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+
+  Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet};
+  Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet};
+  Bin r1_allnb{"r1_allnb", "mt<=140&&mj<="+mjthresh};
 
   Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"};
   Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"};
   Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"};
   Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r2_lowmet_lownj_lownb{"r2_lowmet_lownj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm<=2"};
+  Bin r2_lowmet_lownj_lownb{"r2_lowmet_lownj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"};
   Bin r2_lowmet_lownj_highnb{"r2_lowmet_lownj_highnb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
-  Bin r2_lowmet_highnj_lownb{"r2_lowmet_highnj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm<=2"};
+  Bin r2_lowmet_highnj_lownb{"r2_lowmet_highnj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
   Bin r2_lowmet_highnj_highnb{"r2_lowmet_highnj_highnb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
   Bin r2_highmet_lownj{"r2_highmet_lownj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
   Bin r2_highmet_highnj{"r2_highmet_highnj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
 
   Bin r3_lowmet_1b{"r3_lowmet_1b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
   Bin r3_highmet_1b{"r3_highmet_1b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
-  Bin r3_lowmet_lownb{"r3_lowmet_lownb", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm<=2"};
+  Bin r3_lowmet_lownb{"r3_lowmet_lownb", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
   Bin r3_lowmet_highnb{"r3_lowmet_highnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
   Bin r3_highmet{"r3_highmet", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+
+  Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet};
+  Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet};
+  Bin r3_allnb{"r3_allnb", "mt>140&&mj<="+mjthresh};
 
   Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"};
   Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"};
   Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"};
   Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r4_lowmet_lownj_lownb{"r4_lowmet_lownj_lownb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm<=2"};
+  Bin r4_lowmet_lownj_lownb{"r4_lowmet_lownj_lownb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"};
   Bin r4_lowmet_lownj_highnb{"r4_lowmet_lownj_highnb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
-  Bin r4_lowmet_highnj_lownb{"r4_lowmet_highnj_lownb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm<=2"};
+  Bin r4_lowmet_highnj_lownb{"r4_lowmet_highnj_lownb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
   Bin r4_lowmet_highnj_highnb{"r4_lowmet_highnj_highnb", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
   Bin r4_highmet_lownj{"r4_highmet_lownj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
   Bin r4_highmet_highnj{"r4_highmet_highnj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
+
+
+  // Dilepton
+  Bin r1c_allnb{"r1c_allnb", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&(nels+nmus)==1"};
+
+  Bin r2c_lowmet_lownj_1b{"r2c_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets
+      +"&&nbm==1&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_highmet_lownj_1b{"r2c_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets
+      +"&&nbm==1&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_lowmet_highnj_1b{"r2c_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets
+      +"&&nbm==1&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_highmet_highnj_1b{"r2c_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets
+      +"&&nbm==1&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_lowmet_lownj_lownb{"r2c_lowmet_lownj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets
+      +"&&nbm==2&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_lowmet_lownj_highnb{"r2c_lowmet_lownj_highnb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets
+      +"&&nbm>2&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_lowmet_highnj_lownb{"r2c_lowmet_highnj_lownb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets
+      +"&&nbm==2&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_lowmet_highnj_highnb{"r2c_lowmet_highnj_highnb", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets
+      +"&&nbm>2&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_highmet_lownj{"r2c_highmet_lownj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets
+      +"&&nbm>=2&&njets>="+minjets+"&&(nels+nmus)==1"};
+  Bin r2c_highmet_highnj{"r2c_highmet_highnj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets
+      +"&&nbm>=2&&njets>="+minjets+"&&(nels+nmus)==1"};
+
+  Bin d3_allnb{"d3_allnb", "mj<="+mjthresh+"&&(nels+nmus)==2"};
+
+  Bin d4_lowmet_lownj_1b{"d4_lowmet_lownj_1b", "mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets2l+"&&nbm==1&&(nels+nmus)==2"};
+  Bin d4_highmet_lownj_1b{"d4_highmet_lownj_1b", "mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets2l+"&&nbm==1&&(nels+nmus)==2"};
+  Bin d4_lowmet_highnj_1b{"d4_lowmet_highnj_1b", "mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets2l+"&&nbm==1&&(nels+nmus)==2"};
+  Bin d4_highmet_highnj_1b{"d4_highmet_highnj_1b", "mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets2l+"&&nbm==1&&(nels+nmus)==2"};
+  Bin d4_lowmet_lownj_lownb{"d4_lowmet_lownj_lownb", "mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets2l+"&&nbm==2&&(nels+nmus)==2"};
+  Bin d4_lowmet_highnj_lownb{"d4_lowmet_highnj_lownb", "mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets2l+"&&nbm==2&&(nels+nmus)==2"};
+  Bin d4_highmet_lownj{"d4_highmet_lownj", "mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets2l+"&&nbm==2&&(nels+nmus)==2"};
+  Bin d4_highmet_highnj{"d4_highmet_highnj", "mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets2l+"&&nbm==2&&(nels+nmus)==2"};
 
   //Method 1
   Bin m1_r1_lowmet_lownj{"m1_r1_lowmet_lownj", "mt<=140&&mj<=600&&met<="+himet+"&&njets<="+midjets};
@@ -148,6 +194,33 @@ int main(int argc, char *argv[]){
             {r3_lowmet_highnb, r4_lowmet_lownj_highnb, r4_lowmet_highnj_highnb}}},
         {"highmet", {{r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
               {r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
+  };
+
+  set<Block> blocks_1bkall{
+    {"lowmet", {{r1_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb, 
+	    r2_lowmet_lownj_highnb, r2_lowmet_highnj_highnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, 
+	    r2_highmet_lownj, r2_highmet_highnj},
+          {r3_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_lownb, r4_lowmet_highnj_lownb, 
+	      r4_lowmet_lownj_highnb, r4_lowmet_highnj_highnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, 
+	      r4_highmet_lownj, r4_highmet_highnj}}}
+  };
+
+  set<Block> blocks_2lkall{
+    {"lowmet", {{r1c_allnb, r2c_lowmet_lownj_1b, r2c_lowmet_highnj_1b, r2c_lowmet_lownj_lownb, r2c_lowmet_highnj_lownb, 
+	    r2c_highmet_lownj_1b, r2c_highmet_highnj_1b, 
+	    r2c_highmet_lownj, r2c_highmet_highnj},
+          {d3_allnb, d4_lowmet_lownj_1b, d4_lowmet_highnj_1b, d4_lowmet_lownj_lownb, d4_lowmet_highnj_lownb, 
+	      d4_highmet_lownj_1b, d4_highmet_highnj_1b, 
+	      d4_highmet_lownj, d4_highmet_highnj}}}
+  };
+
+  set<Block> blocks_1bk{
+    {"lowmet", {{r1_lowmet_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_lownb, r2_lowmet_highnj_lownb, 
+	    r2_lowmet_lownj_highnb, r2_lowmet_highnj_highnb},
+          {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_lownb, r4_lowmet_highnj_lownb, 
+	      r4_lowmet_lownj_highnb, r4_lowmet_highnj_highnb}}},
+      {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, r2_highmet_lownj, r2_highmet_highnj},
+	    {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj, r4_highmet_highnj}}}
   };
 
   set<Block> blocks_mfs{
@@ -196,14 +269,26 @@ int main(int argc, char *argv[]){
     sysfile = "txt/systematics/m1b.txt";
   } else if(method == "mfs"){
     pblocks = &blocks_mfs;
+  } else if(method == "m1bk"){
+    pbaseline = &baseline1b;
+    pblocks = &blocks_1bk;
+    sysfile = "txt/systematics/m1bk.txt";
+  } else if(method == "m1bkall"){
+    pbaseline = &baseline1b;
+    pblocks = &blocks_1bkall;
+    sysfile = "txt/systematics/m1bkall.txt";
+  }else if(method == "m2lkall"){
+    pbaseline = &baseline2l;
+    pblocks = &blocks_2lkall;
+    do_syst = false;
   }
   WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile);
   if(!blinded){
     wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   }
   wgnc.SetLuminosity(lumi);
-  wgnc.SetDoDilepton(true);
-  wgnc.SetDoSystematics(true);
+  wgnc.SetDoDilepton(do_syst);
+  wgnc.SetDoSystematics(do_syst);
 
   TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p");
   string outname(method+"_nc_met"+himet+"_mj"+mjthresh+"_nj"+minjets+hijets
@@ -215,8 +300,8 @@ int main(int argc, char *argv[]){
     wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   }
   wgc.SetLuminosity(lumi);
-  wgc.SetDoDilepton(true);
-  wgc.SetDoSystematics(true);
+  wgc.SetDoDilepton(do_syst);
+  wgc.SetDoSystematics(do_syst);
   ReplaceAll(outname, "_nc_", "_c_");
   wgc.WriteToFile(outname);
 
