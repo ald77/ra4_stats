@@ -34,3 +34,7 @@
 *.root
 *.log
 *.pdf
+
+# LaTeX
+*.tex
+*.aux

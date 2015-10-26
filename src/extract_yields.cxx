@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
 
 #include "TFile.h"
@@ -19,7 +20,10 @@
 
 using namespace std;
 
-int main(){
+int main(int argc, char *argv[]){
+  if(argc < 2) return 1;
+  execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace "+string(argv[1]));
+
   styles style("RA4");
   style.setDefaultStyle();
 
@@ -33,13 +37,359 @@ int main(){
   RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
   RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
 
-  if(fit_b != nullptr) MakeYieldPlot(*w, *fit_b, "background_fit.pdf");
-  if(fit_s != nullptr) MakeYieldPlot(*w, *fit_s, "signal_fit.pdf");
+  if(fit_b != nullptr){
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[1], "_bkg_plot.pdf"));
+    PrintTable(*w, *fit_b, ChangeExtension(argv[1], "_bkg_table.tex"));
+  }
+  if(fit_s != nullptr){
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[1], "_sig_plot.pdf"));
+    PrintTable(*w, *fit_s, ChangeExtension(argv[1], "_sig_table.tex"));
+  }
 }
 
-void MakeYieldPlot(RooWorkspace &w,
-                   const RooFitResult &f,
-                   const string &file_name){
+string GetSignalName(const RooWorkspace &w){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nsig_BLK_") continue;
+    if(!(Contains(name, "_BIN_"))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    TIter iter2(arg->getVariables()->createIterator());
+    int size2 = arg->getVariables()->getSize();
+    TObject *obj2;
+    int i2 = 0;
+    while((obj2 = iter2()) && i2 < size2){
+      ++i2;
+      RooAbsArg *arg2 = static_cast<RooAbsArg*>(obj2);
+      if(arg2 == nullptr) continue;
+      string name2 = arg2->GetName();
+      if(name2.substr(0,9) != "rate_BLK_") continue;
+      auto pos = name2.find("_PRC_");
+      if(pos != string::npos){
+        return name2.substr(pos+5);
+      }
+    }
+  }
+  iter.Reset();
+  return "BADBADBADBADBADBADBADBADBAD";
+}
+
+string TexFriendly(const string &s){
+  string out;
+  for(size_t i = 0; i < s.size(); ++i){
+    if(s.at(i) == '_'){
+      out += "\\_";
+    }else{
+      out += s.at(i);
+    }
+  }
+  return out;
+}
+
+void PrintTable(RooWorkspace &w,
+                const RooFitResult &f,
+                const string &file_name){
+  SetVariables(w, f);
+  
+  vector<string> prc_names = GetProcessNames(w);
+  string sig_name = GetSignalName(w);
+  vector<string> bin_names = GetPlainBinNames(w);
+
+  ofstream out(file_name);
+  out << fixed << setprecision(2);
+  out << "\\documentclass{article}\n";
+  out << "\\usepackage{amsmath,graphicx,rotating}\n";
+  out << "\\usepackage[landscape]{geometry}\n";
+  out << "\\begin{document}\n";
+  out << "\\begin{table}\n";
+  out << "\\centering\n";
+  out << "\\resizebox{\\textwidth}{!}{\n";
+  out << "\\begin{tabular}{r";
+  for(size_t i = 0; i < prc_names.size() + 8; ++i) out << "r";
+  out << "}\n";
+  out << "\\hline\\hline\n";
+  out << "Bin & ";
+  for(const auto &prc_name: prc_names){
+    out << prc_name << " & ";
+  }
+  out << "Bkgnd. Tot. & Bkgnd. Pred. & Signal & Sig. Pred. & Tot. Pred. & Observed & $\\lambda$\\\\\n";
+  out << "\\hline\n";
+  for(const auto &bin_name: bin_names){
+    out << TexFriendly(bin_name) << " & ";
+    for(const auto &prc_name: prc_names){
+      out << GetMCYield(w, bin_name, prc_name) << " & ";
+    }
+    out << "$" << GetMCTotal(w, bin_name) << "\\pm" << GetMCTotalErr(w, f, bin_name) <<  "$ & ";
+    out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
+    out << GetMCYield(w, bin_name, sig_name) << " & ";
+    out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
+    out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
+    out << GetObserved(w, bin_name) << " & ";
+    out << "$" << GetLambda(w, bin_name) << "\\pm" << GetLambdaErr(w, f, bin_name) <<  "$\\\\\n";
+  }
+  out << "\\hline\\hline\n";
+  out << "\\end{tabular}\n";
+  out << "}\n";
+  out << "\\end{table}\n";
+  out << "\\end{document}\n";
+  out << endl;
+  out.close();
+}
+
+double GetMCYield(RooWorkspace &w,
+                  const string &bin_name,
+                  const string &prc_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,8) != "ymc_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(!(Contains(name, "_PRC_"+prc_name))) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetMCTotal(RooWorkspace &w,
+                  const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,8) != "ymc_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetMCTotalErr(RooWorkspace &w,
+                     const RooFitResult &f,
+                     const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,8) != "ymc_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetBkgPred(RooWorkspace &w,
+                  const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nbkg_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetBkgPredErr(RooWorkspace &w,
+                     const RooFitResult &f,
+                     const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nbkg_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetSigPred(RooWorkspace &w,
+                  const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nsig_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetSigPredErr(RooWorkspace &w,
+                     const RooFitResult &f,
+                     const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nsig_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetTotPred(RooWorkspace &w,
+                  const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nexp_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetTotPredErr(RooWorkspace &w,
+                     const RooFitResult &f,
+                     const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nexp_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetObserved(RooWorkspace &w,
+                   const string &bin_name){
+  TIter iter(w.allVars().createIterator());
+  int size = w.allVars().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nobs_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetLambda(RooWorkspace &w,
+                 const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,12) != "kappamc_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetLambdaErr(RooWorkspace &w,
+                    const RooFitResult &f,
+                    const string &bin_name){
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,12) != "kappamc_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+RooRealVar * SetVariables(RooWorkspace &w,
+                          const RooFitResult &f){
   bool set_r = false;
   RooArgList pars = f.floatParsFinal();
   for(int ipar = 0; ipar < pars.getSize(); ++ipar){
@@ -59,6 +409,13 @@ void MakeYieldPlot(RooWorkspace &w,
       r_var->setConstant(false);
     }
   }
+  return r_var;
+}
+
+void MakeYieldPlot(RooWorkspace &w,
+                   const RooFitResult &f,
+                   const string &file_name){
+  RooRealVar *r_var = SetVariables(w, f);
 
   vector<string> bin_names = GetBinNames(w);
   vector<string> prc_names = GetProcessNames(w);
@@ -168,6 +525,29 @@ vector<string> GetBinNames(const RooWorkspace &w){
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
     string bin_name = name.substr(5);
+    Append(names, bin_name);
+  }
+  iter.Reset();
+  reverse(names.begin(), names.end());
+  return names;
+}
+
+vector<string> GetPlainBinNames(const RooWorkspace &w){
+  vector<string> names;
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nexp_BLK_") continue;
+    auto bpos = name.find("_BIN_");
+    auto ppos = name.find("_PRC_");
+    if(bpos == string::npos) continue;
+    string bin_name = name.substr(bpos+5, ppos-bpos-5);
     Append(names, bin_name);
   }
   iter.Reset();
@@ -307,8 +687,8 @@ TH1D MakeObserved(const RooWorkspace &w,
 }
 
 void SetBounds(TH1D &a,
-	       TH1D &b,
-	       std::vector<TH1D> &cs){
+               TH1D &b,
+               std::vector<TH1D> &cs){
   double factor = 0.02;
 
   double hmax = GetMaximum(a, b, cs);
@@ -331,8 +711,8 @@ void SetBounds(TH1D &a,
 }
 
 double GetMaximum(const TH1D &a,
-		  const TH1D &b,
-		  const vector<TH1D> &cs){
+                  const TH1D &b,
+                  const vector<TH1D> &cs){
   double the_max = GetMaximum(a);
   double this_max = GetMaximum(b);
   if(this_max > the_max) the_max = this_max;
@@ -344,8 +724,8 @@ double GetMaximum(const TH1D &a,
 }
 
 double GetMinimum(const TH1D &a,
-		  const TH1D &b,
-		  const vector<TH1D> &cs){
+                  const TH1D &b,
+                  const vector<TH1D> &cs){
   double the_min = GetMinimum(a, 0.1);
   double this_min = GetMinimum(b, 0.1);
   if(this_min < the_min) the_min = this_min;
@@ -362,9 +742,9 @@ double GetMaximum(const TH1D &h, double y){
     double content = h.GetBinContent(bin);
     if(content > the_max){
       if(content < y){
-	the_max = content;
+        the_max = content;
       }else{
-	the_max = y;
+        the_max = y;
       }
     }
   }
@@ -377,9 +757,9 @@ double GetMinimum(const TH1D &h, double y){
     double content = h.GetBinContent(bin);
     if(content < the_min){
       if(content > y){
-	the_min = content;
+        the_min = content;
       }else{
-	the_min = y;
+        the_min = y;
       }
     }
   }

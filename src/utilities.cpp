@@ -98,3 +98,14 @@ vector<string> Tokenize(const string& input,
   }
   return output;
 }
+
+string ChangeExtension(string path, const string &new_ext){
+  auto pos = path.rfind(".");
+  if(pos == string::npos){
+    path += new_ext;
+  }else{
+    auto count = path.size() - pos;
+    path = path.replace(pos, count, new_ext);
+  }
+  return path;
+}
