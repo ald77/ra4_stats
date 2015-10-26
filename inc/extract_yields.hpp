@@ -19,40 +19,40 @@ void PrintTable(RooWorkspace &w,
                 const RooFitResult &f,
                 const std::string &file_name);
 
-double GetMCYield(RooWorkspace &w,
+double GetMCYield(const RooWorkspace &w,
                   const std::string &bin_name,
                   const std::string &prc_name);
 
-double GetMCTotal(RooWorkspace &w,
+double GetMCTotal(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetMCTotalErr(RooWorkspace &w,
+double GetMCTotalErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
-double GetBkgPred(RooWorkspace &w,
+double GetBkgPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetBkgPredErr(RooWorkspace &w,
+double GetBkgPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
-double GetSigPred(RooWorkspace &w,
+double GetSigPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetSigPredErr(RooWorkspace &w,
+double GetSigPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
-double GetTotPred(RooWorkspace &w,
+double GetTotPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetTotPredErr(RooWorkspace &w,
+double GetTotPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
-double GetObserved(RooWorkspace &w,
+double GetObserved(const RooWorkspace &w,
                    const std::string &bin_name);
 
-double GetLambda(RooWorkspace &w,
+double GetLambda(const RooWorkspace &w,
                  const std::string &bin_name);
-double GetLambdaErr(RooWorkspace &w,
+double GetLambdaErr(const RooWorkspace &w,
                     const RooFitResult &f,
                     const std::string &bin_name);
 

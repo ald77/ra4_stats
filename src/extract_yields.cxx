@@ -38,12 +38,12 @@ int main(int argc, char *argv[]){
   RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
 
   if(fit_b != nullptr){
-    MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[1], "_bkg_plot.pdf"));
     PrintTable(*w, *fit_b, ChangeExtension(argv[1], "_bkg_table.tex"));
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[1], "_bkg_plot.pdf"));
   }
   if(fit_s != nullptr){
-    MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[1], "_sig_plot.pdf"));
     PrintTable(*w, *fit_s, ChangeExtension(argv[1], "_sig_table.tex"));
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[1], "_sig_plot.pdf"));
   }
 }
 
@@ -58,8 +58,6 @@ string GetSignalName(const RooWorkspace &w){
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nsig_BLK_") continue;
-    if(!(Contains(name, "_BIN_"))) continue;
-    if(Contains(name, "_PRC_")) continue;
     TIter iter2(arg->getVariables()->createIterator());
     int size2 = arg->getVariables()->getSize();
     TObject *obj2;
@@ -69,15 +67,17 @@ string GetSignalName(const RooWorkspace &w){
       RooAbsArg *arg2 = static_cast<RooAbsArg*>(obj2);
       if(arg2 == nullptr) continue;
       string name2 = arg2->GetName();
-      if(name2.substr(0,9) != "rate_BLK_") continue;
-      auto pos = name2.find("_PRC_");
-      if(pos != string::npos){
-        return name2.substr(pos+5);
+      auto pos2 = name2.find("_PRC_");
+      if(pos2 != string::npos){
+        iter2.Reset();
+        iter.Reset();
+        return name2.substr(pos2+5);
       }
     }
+    iter2.Reset();
   }
   iter.Reset();
-  return "BADBADBADBADBADBADBADBADBAD";
+  return "signal";
 }
 
 string TexFriendly(const string &s){
@@ -97,8 +97,8 @@ void PrintTable(RooWorkspace &w,
                 const string &file_name){
   SetVariables(w, f);
   
-  vector<string> prc_names = GetProcessNames(w);
   string sig_name = GetSignalName(w);
+  vector<string> prc_names = GetProcessNames(w);
   vector<string> bin_names = GetPlainBinNames(w);
 
   ofstream out(file_name);
@@ -142,7 +142,7 @@ void PrintTable(RooWorkspace &w,
   out.close();
 }
 
-double GetMCYield(RooWorkspace &w,
+double GetMCYield(const RooWorkspace &w,
                   const string &bin_name,
                   const string &prc_name){
   TIter iter(w.allFunctions().createIterator());
@@ -163,7 +163,7 @@ double GetMCYield(RooWorkspace &w,
   return -1.;
 }
 
-double GetMCTotal(RooWorkspace &w,
+double GetMCTotal(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -183,7 +183,7 @@ double GetMCTotal(RooWorkspace &w,
   return -1.;
 }
 
-double GetMCTotalErr(RooWorkspace &w,
+double GetMCTotalErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -204,7 +204,7 @@ double GetMCTotalErr(RooWorkspace &w,
   return -1.;
 }
 
-double GetBkgPred(RooWorkspace &w,
+double GetBkgPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -224,7 +224,7 @@ double GetBkgPred(RooWorkspace &w,
   return -1.;
 }
 
-double GetBkgPredErr(RooWorkspace &w,
+double GetBkgPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -245,7 +245,7 @@ double GetBkgPredErr(RooWorkspace &w,
   return -1.;
 }
 
-double GetSigPred(RooWorkspace &w,
+double GetSigPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -265,7 +265,7 @@ double GetSigPred(RooWorkspace &w,
   return -1.;
 }
 
-double GetSigPredErr(RooWorkspace &w,
+double GetSigPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -286,7 +286,7 @@ double GetSigPredErr(RooWorkspace &w,
   return -1.;
 }
 
-double GetTotPred(RooWorkspace &w,
+double GetTotPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -306,7 +306,7 @@ double GetTotPred(RooWorkspace &w,
   return -1.;
 }
 
-double GetTotPredErr(RooWorkspace &w,
+double GetTotPredErr(const RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -327,7 +327,7 @@ double GetTotPredErr(RooWorkspace &w,
   return -1.;
 }
 
-double GetObserved(RooWorkspace &w,
+double GetObserved(const RooWorkspace &w,
                    const string &bin_name){
   TIter iter(w.allVars().createIterator());
   int size = w.allVars().getSize();
@@ -347,7 +347,7 @@ double GetObserved(RooWorkspace &w,
   return -1.;
 }
 
-double GetLambda(RooWorkspace &w,
+double GetLambda(const RooWorkspace &w,
                  const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -367,7 +367,7 @@ double GetLambda(RooWorkspace &w,
   return -1.;
 }
 
-double GetLambdaErr(RooWorkspace &w,
+double GetLambdaErr(const RooWorkspace &w,
                     const RooFitResult &f,
                     const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
