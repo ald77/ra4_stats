@@ -21,29 +21,30 @@
 using namespace std;
 
 int main(int argc, char *argv[]){
-  if(argc < 2) return 1;
-  execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace "+string(argv[1]));
-
-  styles style("RA4");
-  style.setDefaultStyle();
-
-  TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
-  if(!w_file.IsOpen()) return 1;
-  RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
-  if(w == nullptr) return 1;
-
-  TFile fit_file("mlfit.root","read");
-  if(!fit_file.IsOpen()) return 1;
-  RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
-  RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-
-  if(fit_b != nullptr){
-    PrintTable(*w, *fit_b, ChangeExtension(argv[1], "_bkg_table.tex"));
-    MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[1], "_bkg_plot.pdf"));
-  }
-  if(fit_s != nullptr){
-    PrintTable(*w, *fit_s, ChangeExtension(argv[1], "_sig_table.tex"));
-    MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[1], "_sig_plot.pdf"));
+  for(int argi = 1; argi < argc; ++argi){
+    execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace "+string(argv[argi]));
+    
+    styles style("RA4");
+    style.setDefaultStyle();
+    
+    TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
+    if(!w_file.IsOpen()) continue;
+    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
+    if(w == nullptr) continue;
+    
+    TFile fit_file("mlfit.root","read");
+    if(!fit_file.IsOpen()) continue;
+    RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
+    RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
+    
+    if(fit_b != nullptr){
+      PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
+      MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_plot.pdf"));
+    }
+    if(fit_s != nullptr){
+      PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_plot.pdf"));
+    }
   }
 }
 

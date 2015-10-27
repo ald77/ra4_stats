@@ -34,6 +34,7 @@
 *.root
 *.log
 *.pdf
+*.txt
 
 # LaTeX
 *.tex
