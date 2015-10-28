@@ -29,6 +29,8 @@ int main(int argc, char *argv[]){
     RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
     if(fit_b == nullptr) continue;
 
+    SetVariables(*w, *fit_b);
+    
     string outname = ChangeExtension(argv[argi], "_dilep.txt");
     ostringstream out;
     out << "SYSTEMATIC dilep_closure\n";
@@ -111,4 +113,28 @@ double GetBkgPredErr(const RooWorkspace &w,
   }
   iter.Reset();
   return -1.;
+}
+
+RooRealVar * SetVariables(RooWorkspace &w,
+                          const RooFitResult &f){
+  bool set_r = false;
+  RooArgList pars = f.floatParsFinal();
+  for(int ipar = 0; ipar < pars.getSize(); ++ipar){
+    RooRealVar *fit_var = static_cast<RooRealVar*>(pars.at(ipar));
+    if(fit_var == nullptr) continue;
+    RooRealVar *w_var = w.var(fit_var->GetName());
+    if(w_var == nullptr) continue;
+    w_var->setVal(fit_var->getVal());
+    if(fit_var->GetName() == string("r")) set_r = true;
+  }
+  RooRealVar *r_var = static_cast<RooRealVar*>(w.var("r"));
+  if(r_var != nullptr){
+    if(!set_r){
+      r_var->setVal(0);
+      r_var->setConstant(true);
+    }else{
+      r_var->setConstant(false);
+    }
+  }
+  return r_var;
 }
