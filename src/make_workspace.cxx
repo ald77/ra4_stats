@@ -77,7 +77,7 @@ int main(int argc, char *argv[]){
   Cut baseline{"ht>500&&met>200&njets>="+minjets+"&&nbm>=2&&(nels+nmus)==1"};
   Cut baseline1b{"ht>500&&met>200&njets>="+minjets+"&&nbm>=1&&(nels+nmus)==1"};
   Cut baseline2l{"ht>500&&met>200&njets>="+minjets2l+"&&nbm>=1&&nbm<=2"};
-  Cut baseline_david{"ht>450&&met>150&njets>=6&&nbm>=1&&(nels+nmus)==1"};
+  Cut baseline_david{"ht>450&&met>150&njets>=5&&nbm>=1&&(nels+nmus)==1"};
 
   //Declare bins
   //Method 2, m1b, and m1bk
@@ -280,8 +280,15 @@ int main(int argc, char *argv[]){
   }else if(method == "m2lkall"){
     pbaseline = &baseline2l;
     pblocks = &blocks_2lkall;
+    sysfile = "";
+    do_syst = false;
+  }else if(method == "david"){
+    pbaseline = &baseline_david;
+    pblocks = &blocks_david;
+    sysfile = "";
     do_syst = false;
   }
+  
   WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile);
   if(!blinded){
     wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
@@ -304,7 +311,6 @@ int main(int argc, char *argv[]){
   wgc.SetDoSystematics(do_syst);
   ReplaceAll(outname, "_nc_", "_c_");
   wgc.WriteToFile(outname);
-
 }
 
 void GetOptions(int argc, char *argv[]){
