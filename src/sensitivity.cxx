@@ -161,7 +161,7 @@ void ModifyLumi(const string &file_name, double lumi){
     RooRealVar *var = static_cast<RooRealVar*>(*(*iter_ptr));
     if(var == nullptr) continue;
     if(lumi < 0.) continue;
-    double ratio = lumi/4.0;
+    double ratio = lumi/3.0;
     string name = var->GetName();
     if(Contains(name, "norm_")
        || Contains(name, "nobs_")

@@ -40,10 +40,12 @@ int main(int argc, char *argv[]){
     if(fit_b != nullptr){
       PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
       MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_plot.pdf"));
+      MakeCorrectionPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_correction.pdf"));
     }
     if(fit_s != nullptr){
       PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_plot.pdf"));
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
+      MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
     }
   }
 }
@@ -798,4 +800,30 @@ TGraphErrors MakeRatio(const TH1D &num, const TH1D &den){
     }
   }
   return g;
+}
+
+void MakeCorrectionPlot(RooWorkspace &w,
+			const RooFitResult &f,
+			const string &file_name){
+  SetVariables(w, f);
+
+  vector<string> bin_names = GetBinNames(w);
+  vector<string> prc_names = GetProcessNames(w);
+
+  TCanvas c;
+  c.cd();
+
+  TH1D h("", ";;#lambda", bin_names.size(), 0.5, bin_names.size()+0.5);
+  for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
+    string bin = bin_names.at(ibin);
+    auto pos = bin.find("_BIN_");
+    string plain_bin = bin.substr(pos+5);
+    h.GetXaxis()->SetBinLabel(ibin+1, plain_bin.c_str());
+    h.SetBinContent(ibin+1, static_cast<RooRealVar*>(w.function(("kappamc_"+bin).c_str()))->getVal());
+    h.SetBinError(ibin+1, static_cast<RooRealVar*>(w.function(("kappamc_"+bin).c_str()))->getPropagatedError(f));
+  }
+  h.GetXaxis()->LabelsOption("V");
+  h.Draw();
+  c.SetMargin(0.1, 0.05, 1./3., 0.05);
+  c.Print(file_name.c_str());
 }
