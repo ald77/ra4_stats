@@ -1,0 +1,14 @@
+# SYSTEMATIC dilepton_r3
+#   PROCESSES ttbar,other
+#     r3 0.27
+
+SYSTEMATIC dilepton_r4
+  PROCESSES ttbar,other
+    r4 0.37
+
+SYSTEMATIC mocksignal
+  PROCESSES signal
+    r1 0.25
+    r2 0.25
+    r3 0.25
+    r4 0.25

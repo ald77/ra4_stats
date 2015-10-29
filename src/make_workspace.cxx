@@ -27,10 +27,10 @@ namespace{
   double lumi = 0.135;
   bool blinded = true;
   bool do_syst = true;
-  string minjets("7");
+  string method("m135");
+  string minjets("6");
   string hijets("9");
   string himet("400"); 
-  string method("method2");
   string mjthresh("400");
 }
 
@@ -80,10 +80,11 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline{"ht>500&&met>200&njets>="+minjets+"&&nbm>=2&&(nels+nmus)==1"};
-  Cut baseline1b{"ht>500&&met>200&njets>="+minjets+"&&nbm>=1&&(nels+nmus)==1"};
-  Cut baseline2l{"ht>500&&met>200&njets>="+minjets2l+"&&nbm>=1&&nbm<=2"};
-  Cut baseline_135{"ht>450&&met>150&njets>=6&&nbm>=1&&(nels+nmus)==1"};
+  Cut baseline{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&(nels+nmus)==1"};
+  Cut baseline1b{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&(nels+nmus)==1"};
+  Cut baseline2l{"ht>500&&met>200&&met<=400&&njets>="+minjets2l+"&&nbm>=1&&nbm<=2"};
+  Cut baseline2l0{"ht>450&&met>150&&met<=400&&njets>="+minjets2l+"&&nbm>=0&&nbm<=2"};
+  Cut baseline_135{"ht>450&&met>150"};
 
   //Declare bins
   //Method 2, m1b, and m1bk
@@ -167,10 +168,12 @@ int main(int argc, char *argv[]){
   Bin m1_r4_highmet_highnj{"m1_r4_highmet_highnj", "mt>140&&mj>600&&met>"+himet+"&&njets>"+midjets};
 
   //Method 135
-  Bin r1{"r1", "mt<=140&&mj<="+mjthresh};
-  Bin r2{"r2", "mt<=140&&mj>"+mjthresh};
-  Bin r3{"r3", "mt>140&&mj<="+mjthresh};
-  Bin r4{"r4", "mt>140&&mj>"+mjthresh};
+  Bin r1{"r1", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Bin r2{"r2", "mt<=140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Bin r3{"r3", "mt>140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Bin r4{"r4", "mt>140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Bin d3{"d3", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2"};
+  Bin d4{"d4", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2"};
 
   //Specify ABCD constraints
   set<Block> blocks_m2{
@@ -242,6 +245,10 @@ int main(int argc, char *argv[]){
     {"all", {{r1, r2}, {r3, r4}}}
   };
 
+  set<Block> blocks_135_2l{
+    {"all", {{r1, r2}, {d3, d4}}}
+  };
+
   Cut *pbaseline(&baseline);
   set<Block> *pblocks(&blocks_m2);
   string sysfile("txt/systematics/method2.txt");
@@ -268,13 +275,17 @@ int main(int argc, char *argv[]){
     pbaseline = &baseline_135;
     pblocks = &blocks_135;
     sysfile = "txt/systematics/m135.txt";
+  }else if(method == "m135_2l"){
+    pbaseline = &baseline_135;
+    pblocks = &blocks_135_2l;
+    sysfile = "txt/systematics/m135_2l.txt";
   }
   WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile);
   if(!blinded){
     wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   }
   wgnc.SetLuminosity(lumi);
-  if(!Contains(method, "2l")) wgnc.SetDoDilepton(do_syst);
+  wgnc.SetDoDilepton(false); // Applying dilep syst in text file
   wgnc.SetDoSystematics(do_syst);
 
   TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p");
@@ -287,7 +298,7 @@ int main(int argc, char *argv[]){
     wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   }
   wgc.SetLuminosity(lumi);
-  if(!Contains(method, "2l")) wgc.SetDoDilepton(do_syst);
+  wgc.SetDoDilepton(false); // Applying dilep syst in text file
   wgc.SetDoSystematics(do_syst);
   ReplaceAll(outname, "_nc_", "_c_");
   wgc.WriteToFile(outname);
