@@ -1,6 +1,6 @@
-# SYSTEMATIC dilepton_r3
-#   PROCESSES ttbar,other
-#     r3 0.27
+SYSTEMATIC dilepton_r3
+  PROCESSES ttbar,other
+    r3 0.27
 
 SYSTEMATIC dilepton_r4
   PROCESSES ttbar,other

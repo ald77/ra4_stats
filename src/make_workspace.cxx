@@ -28,6 +28,7 @@ namespace{
   bool blinded = true;
   bool no_kappa = false;
   bool do_syst = true;
+  bool use_r4 = false;
   string method("m135");
   string minjets("6");
   string hijets("9");
@@ -71,7 +72,7 @@ int main(int argc, char *argv[]){
   string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");
   if(method=="m2l") {
     data_cuts = "(trig[4]||trig[8])&&pass";
-    lumi = 1.26;
+    lumi = 1.264;
   }
   Process data{"data", {
       {folderdata+"/*.root/tree"}
@@ -83,8 +84,8 @@ int main(int argc, char *argv[]){
   //Baseline selection applied to all bins and processes
   Cut baseline{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&(nels+nmus)==1"};
   Cut baseline1b{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&(nels+nmus)==1"};
-  Cut baseline2l{"ht>500&&met>200&&met<=400&&njets>="+minjets2l+"&&nbm>=1&&nbm<=2"};
-  Cut baseline2l0{"ht>450&&met>150&&met<=400&&njets>="+minjets2l+"&&nbm>=0&&nbm<=2"};
+  Cut baseline2l{"ht>500&&met>200&&met<=400&&nbm>=1&&nbm<=2"};
+  Cut baseline2l_loose{"ht>450&&met>200&&met<=400&&nbm>=0&&nbm<=2"};
   Cut baseline_135{"ht>450&&met>150"};
 
   //Declare bins
@@ -268,47 +269,45 @@ int main(int argc, char *argv[]){
     pblocks = &blocks_1bkall;
     sysfile = "txt/systematics/m1bkall.txt";
   }else if(method == "m2l"){
-    pbaseline = &baseline2l;
-    pblocks = &blocks_2l;
-    sysfile = "txt/systematics/m2l.txt";
-    //do_syst = false; 
+    pbaseline = &baseline2l_loose;
+    pblocks = &blocks_135_2l;
+    //sysfile = "txt/systematics/m2l.txt";
+    sysfile = "txt/systematics/m2l_nosys.txt";
   }else if(method == "m135"){
     pbaseline = &baseline_135;
     pblocks = &blocks_135;
     sysfile = "txt/systematics/m135.txt";
+    sysfile = "txt/systematics/m135_nosys.txt";
   }else if(method == "m135_2l"){
     pbaseline = &baseline_135;
     pblocks = &blocks_135_2l;
     sysfile = "txt/systematics/m135_2l.txt";
   }
-  WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile);
-  if(!blinded){
-    wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
-  }
-  if(no_kappa){
-    wgnc.SetKappaCorrected(false);
-  }
+
+  TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
+  string outname(method+(use_r4 ? "" : "_nor4")+(no_kappa ? "_nokappa" : "")+string("_c_met")
+		 +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
+		 +"_lumi"+lumi_s.Data()+".root");
+
+  // Compressed SUSY
+  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4);
+  if(!blinded) wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+  if(no_kappa) wgc.SetKappaCorrected(false);
+  wgc.SetLuminosity(lumi);
+  wgc.SetDoDilepton(false); // Applying dilep syst in text file
+  wgc.SetDoSystematics(do_syst);
+  wgc.WriteToFile(outname);
+
+  // Non-compressed SUSY
+  WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4);
+  if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+  if(no_kappa) wgnc.SetKappaCorrected(false);
   wgnc.SetLuminosity(lumi);
   wgnc.SetDoDilepton(false); // Applying dilep syst in text file
   wgnc.SetDoSystematics(do_syst);
 
-  TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p");
-  string outname(method+(no_kappa ? "_nokappa" : "")+string("_nc_met")+himet+"_mj"+mjthresh+"_nj"+minjets+hijets
-		 +"_lumi"+lumi_s.Data()+".root");
+  ReplaceAll(outname, "_c_", "_nc_");
   wgnc.WriteToFile(outname);
-
-  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile);
-  if(!blinded){
-    wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
-  }
-  if(no_kappa){
-    wgc.SetKappaCorrected(false);
-  }
-  wgc.SetLuminosity(lumi);
-  wgc.SetDoDilepton(false); // Applying dilep syst in text file
-  wgc.SetDoSystematics(do_syst);
-  ReplaceAll(outname, "_nc_", "_c_");
-  wgc.WriteToFile(outname);
 
 }
 
@@ -324,12 +323,13 @@ void GetOptions(int argc, char *argv[]){
       {"mj", required_argument, 0, 's'},
       {"nokappa", no_argument, 0, 'k'},
       {"method", required_argument, 0, 't'},
+      {"use_r4", no_argument, 0, '4'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:4", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -350,7 +350,10 @@ void GetOptions(int argc, char *argv[]){
       himet = optarg;
       break;
     case 'k':
-      no_kappa = false;
+      no_kappa = true;
+      break;
+    case '4':
+      use_r4 = true;
       break;
     case 's':
       mjthresh = optarg;

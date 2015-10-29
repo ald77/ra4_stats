@@ -40,12 +40,12 @@ int main(int argc, char *argv[]){
     if(fit_b != nullptr){
       PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
       MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_plot.pdf"));
-      MakeCorrectionPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_correction.pdf"));
+      if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_correction.pdf"));
     }
     if(fit_s != nullptr){
       PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
       MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
-      MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
+      if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
     }
   }
 }

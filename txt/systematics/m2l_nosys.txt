@@ -1,0 +1,7 @@
+SYSTEMATIC isr_pt
+  PROCESSES ttbar
+    d3 0.00000000008
+
+SYSTEMATIC mocksignal
+  PROCESSES signal
+    d4 0.00000000025

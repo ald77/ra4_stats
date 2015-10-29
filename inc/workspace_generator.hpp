@@ -24,7 +24,8 @@ public:
                      const std::set<Process> &backgrounds,
                      const Process &signal,
                      const Process &data,
-		     const std::string &systematics_file = "");
+		     const std::string &systematics_file = "",
+		     const bool use_r4 = true);
 
   enum class PrintLevel{silent, important, normal, everything};
   enum class BlindLevel{unblinded, r4_blinded, blinded};
@@ -64,6 +65,7 @@ private:
   Process signal_, data_;
   std::set<Block> blocks_;
   std::string systematics_file_;
+  bool use_r4_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;

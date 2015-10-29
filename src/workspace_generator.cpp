@@ -25,13 +25,15 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const set<Process> &backgrounds,
                                        const Process &signal,
                                        const Process &data,
-                                       const string &systematics_file):
+                                       const string &systematics_file,
+				       const bool use_r4):
   baseline_(baseline),
   backgrounds_(backgrounds),
   signal_(signal),
   data_(data),
   blocks_(blocks),
   systematics_file_(systematics_file),
+  use_r4_(use_r4),
   w_("w"),
   poi_(),
   observables_(),
@@ -856,15 +858,14 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       null_list += null_name;
       alt_list += alt_name;
       w_.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
-      if(!Contains(bb_name, "4")){
+      if(!use_r4_ && Contains(bb_name, "4")){
+	w_.factory(("RooUniform::pdf_null"+bb_name+"(nobs"+bb_name+")").c_str());
+	w_.factory(("RooUniform::pdf_alt"+bb_name+"(nobs"+bb_name+")").c_str());
+      } else {
 	w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
 	(static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
 	w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
 	(static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
-      } else {
-	w_.factory(("RooUniform::pdf_null"+bb_name+"(nobs"+bb_name+")").c_str());
-	w_.factory(("RooUniform::pdf_alt"+bb_name+"(nobs"+bb_name+")").c_str());
-
       }
       is_first = false;
     }
