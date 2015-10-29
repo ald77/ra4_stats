@@ -26,6 +26,7 @@ using namespace std;
 namespace{
   double lumi = 0.135;
   bool blinded = true;
+  bool no_kappa = false;
   bool do_syst = true;
   string method("m135");
   string minjets("6");
@@ -284,18 +285,24 @@ int main(int argc, char *argv[]){
   if(!blinded){
     wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   }
+  if(no_kappa){
+    wgnc.SetKappaCorrected(false);
+  }
   wgnc.SetLuminosity(lumi);
   wgnc.SetDoDilepton(false); // Applying dilep syst in text file
   wgnc.SetDoSystematics(do_syst);
 
   TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p");
-  string outname(method+"_nc_met"+himet+"_mj"+mjthresh+"_nj"+minjets+hijets
+  string outname(method+(no_kappa ? "_nokappa" : "")+string("_nc_met")+himet+"_mj"+mjthresh+"_nj"+minjets+hijets
 		 +"_lumi"+lumi_s.Data()+".root");
   wgnc.WriteToFile(outname);
 
   WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile);
   if(!blinded){
     wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+  }
+  if(no_kappa){
+    wgc.SetKappaCorrected(false);
   }
   wgc.SetLuminosity(lumi);
   wgc.SetDoDilepton(false); // Applying dilep syst in text file
@@ -315,13 +322,14 @@ void GetOptions(int argc, char *argv[]){
       {"hij", required_argument, 0, 'h'},
       {"himet", required_argument, 0, 'm'},
       {"mj", required_argument, 0, 's'},
+      {"nokappa", no_argument, 0, 'k'},
       {"method", required_argument, 0, 't'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:uj:h:m:s:t:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -340,6 +348,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'm':
       himet = optarg;
+      break;
+    case 'k':
+      no_kappa = false;
       break;
     case 's':
       mjthresh = optarg;
