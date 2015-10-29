@@ -856,10 +856,16 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       null_list += null_name;
       alt_list += alt_name;
       w_.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
-      w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
-      (static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
-      w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
-      (static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
+      if(!Contains(bb_name, "4")){
+	w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
+	(static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
+	w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
+	(static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
+      } else {
+	w_.factory(("RooUniform::pdf_null"+bb_name+"(nobs"+bb_name+")").c_str());
+	w_.factory(("RooUniform::pdf_alt"+bb_name+"(nobs"+bb_name+")").c_str());
+
+      }
       is_first = false;
     }
   }
