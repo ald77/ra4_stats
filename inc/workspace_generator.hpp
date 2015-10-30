@@ -25,7 +25,8 @@ public:
                      const Process &signal,
                      const Process &data,
 		     const std::string &systematics_file = "",
-		     const bool use_r4 = true);
+		     const bool use_r4 = true,
+		     const double sig_strength = 0.);
 
   enum class PrintLevel{silent, important, normal, everything};
   enum class BlindLevel{unblinded, r4_blinded, blinded};
@@ -66,6 +67,7 @@ private:
   std::set<Block> blocks_;
   std::string systematics_file_;
   bool use_r4_;
+  double sig_strength_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;
@@ -75,7 +77,6 @@ private:
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
-  bool inject_signal_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;

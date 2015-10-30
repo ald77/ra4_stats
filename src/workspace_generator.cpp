@@ -26,7 +26,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const Process &signal,
                                        const Process &data,
                                        const string &systematics_file,
-				       const bool use_r4):
+				       const bool use_r4, const double sig_strength):
   baseline_(baseline),
   backgrounds_(backgrounds),
   signal_(signal),
@@ -34,6 +34,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   blocks_(blocks),
   systematics_file_(systematics_file),
   use_r4_(use_r4),
+  sig_strength_(sig_strength),
   w_("w"),
   poi_(),
   observables_(),
@@ -46,7 +47,6 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
-  inject_signal_(false),
   w_is_valid_(false){
   w_.cd();
 }
@@ -447,9 +447,8 @@ void WorkspaceGenerator::AddData(const Block &block){
         for(const auto &bkg: backgrounds_){
           gps += GetYield(bin, bkg);
         }
-        if(inject_signal_){
-          gps += GetYield(bin, signal_);
-        }
+	// Injecting signal
+	gps += sig_strength_*GetYield(bin, signal_);
       }
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()

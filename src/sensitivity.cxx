@@ -29,8 +29,9 @@ string temp_name = "my_temp_name.root";
 double max_lim = 2.;
 double sig_scale = 1.1;
 double min_lumi = 0.;
-double lumi_increment = 0.5;
-double max_lumi = 8.;
+double lumi_increment = 1;
+double max_lumi = 4.;
+double lumi_in_file = 3.;
 
 int main(){
   styles style("LargeLabels");
@@ -40,8 +41,8 @@ int main(){
   gStyle->SetPadRightMargin(0.12);
 
   vector<string> files, names;
-  files.push_back("method2nc.root"); names.push_back("T1tttt(1500,100)");
-  files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
+  files.push_back("m1bk_nc_met400_mj400_nj69_lumi3.root"); names.push_back("T1tttt(1500,100)");
+  //files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
 
 //   files.push_back("method1nc.root"); names.push_back("T1tttt(1500,100)");
 //   files.push_back("method1c.root"); names.push_back("T1tttt(1200,800)");
@@ -70,7 +71,7 @@ int main(){
       }
     }
   }
-  max_sig = 3./sig_scale;
+  max_sig = 3.0/sig_scale;
   for(size_t ifile = 0; ifile < files.size(); ++ifile){
     for(size_t ilumi = 0; ilumi < signif.at(ifile).size(); ++ilumi){
       signif.at(ifile).at(ilumi) *= max_lim/(sig_scale*max_sig);
@@ -161,7 +162,7 @@ void ModifyLumi(const string &file_name, double lumi){
     RooRealVar *var = static_cast<RooRealVar*>(*(*iter_ptr));
     if(var == nullptr) continue;
     if(lumi < 0.) continue;
-    double ratio = lumi/3.0;
+    double ratio = lumi/lumi_in_file;
     string name = var->GetName();
     if(Contains(name, "norm_")
        || Contains(name, "nobs_")
@@ -170,7 +171,7 @@ void ModifyLumi(const string &file_name, double lumi){
       if(var->hasMin() && var->hasMax() && var->getMin()>=0. && var->getMax()>=var->getMax()){
 	var->setMax(ratio*var->getMax());
       }
-    }else if(Contains(name, "strength_dilep_")){
+    }else if(Contains(name, "strength") && Contains(name, "dilep")){
       if(ratio>0.) var->setVal(var->getVal()/sqrt(ratio));
     }
   }

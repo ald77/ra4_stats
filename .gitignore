@@ -35,6 +35,7 @@
 *.log
 *.pdf
 *.txt
+!txt/*/*txt
 
 # LaTeX
 *.tex

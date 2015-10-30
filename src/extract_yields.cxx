@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
     }
     if(fit_s != nullptr){
       PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_plot.pdf"));
       if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
     }
   }
@@ -486,6 +486,7 @@ void MakeYieldPlot(RooWorkspace &w,
     oss << r_var->getVal() << " (fixed)";
   }else{
     oss << r_var->getVal() << "#pm" << r_var->getPropagatedError(f);
+    cout<<"Signal strength: "<<r_var->getVal() << "#pm" << r_var->getPropagatedError(f)<<endl;
   }
   oss << flush;
   l.AddEntry(&obs, oss.str().c_str(), "");

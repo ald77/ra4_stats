@@ -25,6 +25,7 @@ using namespace std;
 
 namespace{
   double lumi = 0.135;
+  double sig_strength = 0.;
   bool blinded = true;
   bool no_kappa = false;
   bool do_syst = true;
@@ -275,13 +276,14 @@ int main(int argc, char *argv[]){
     sysfile = "txt/systematics/m135_2l.txt";
   }
 
-  TString lumi_s(""); lumi_s+=lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
+  TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
+  TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
   string outname(method+(use_r4 ? "" : "_nor4")+(no_kappa ? "_nokappa" : "")+string("_c_met")
 		 +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
-		 +"_lumi"+lumi_s.Data()+".root");
+		 +sig_s+lumi_s.Data()+".root");
 
   // Compressed SUSY
-  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4);
+  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
   if(!blinded) wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   if(no_kappa) wgc.SetKappaCorrected(false);
   wgc.SetLuminosity(lumi);
@@ -290,7 +292,7 @@ int main(int argc, char *argv[]){
   wgc.WriteToFile(outname);
 
   // Non-compressed SUSY
-  WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4);
+  WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
   if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   if(no_kappa) wgnc.SetKappaCorrected(false);
   wgnc.SetLuminosity(lumi);
@@ -315,18 +317,22 @@ void GetOptions(int argc, char *argv[]){
       {"nokappa", no_argument, 0, 'k'},
       {"method", required_argument, 0, 't'},
       {"use_r4", no_argument, 0, '4'},
+      {"sig_strength", required_argument, 0, 'g'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:4", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:4g:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
     case 'l':
       lumi = atof(optarg);
+      break;
+    case 'g':
+      sig_strength = atof(optarg);
       break;
     case 'u':
       blinded = false;
