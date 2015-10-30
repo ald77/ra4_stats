@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
     for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
       RooAbsArg *var = static_cast<RooAbsArg*>(*(*iter_ptr));
       if(var == nullptr) continue;
-      if(var->isConstant()) continue;
+      // if(var->isConstant()) continue;
       var->Print();
     }
 

@@ -1,3 +1,4 @@
+
 SYSTEMATIC isr_pt
  PROCESSES ttbar
   r4_lowmet_lownj_1b 0.04
@@ -36,19 +37,6 @@ SYSTEMATIC jet_mismeas
   r4_lowmet_highnj_2b 0.02
   r4_lowmet_highnj_3b 0.07
   r4_highmet_highnj 0.07
-
-SYSTEMATIC dilep_closure
- PROCESSES ttbar
-  r4_lowmet_lownj_1b 0.21
-  r4_highmet_lownj_1b 0.21
-  r4_lowmet_highnj_1b 0.43
-  r4_highmet_highnj_1b 0.43
-  r4_lowmet_lownj_2b 0.21
-  r4_lowmet_lownj_3b 0.21
-  r4_highmet_lownj 0.21
-  r4_lowmet_highnj_2b 0.43
-  r4_lowmet_highnj_3b 0.43
-  r4_highmet_highnj 0.43
 
 SYSTEMATIC mocksignal
  PROCESSES signal

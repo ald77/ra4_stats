@@ -29,8 +29,8 @@ string temp_name = "my_temp_name.root";
 double max_lim = 2.;
 double sig_scale = 1.1;
 double min_lumi = 0.;
-double lumi_increment = 1;
-double max_lumi = 4.;
+double lumi_increment = 0.5;
+double max_lumi = 6.;
 double lumi_in_file = 3.;
 
 int main(){
@@ -41,16 +41,13 @@ int main(){
   gStyle->SetPadRightMargin(0.12);
 
   vector<string> files, names;
-  files.push_back("m1bk_nc_met400_mj400_nj69_lumi3.root"); names.push_back("T1tttt(1500,100)");
-  //files.push_back("method2c.root"); names.push_back("T1tttt(1200,800)");
+  // files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("T1tttt(1500,100)");
+  // files.push_back("m1bk_c_met400_mj400_nj69_sig0_lumi3.root");  names.push_back("T1tttt(1200,800)");
 
-//   files.push_back("method1nc.root"); names.push_back("T1tttt(1500,100)");
-//   files.push_back("method1c.root"); names.push_back("T1tttt(1200,800)");
-
-//   files.push_back("method2nc.root"); names.push_back("All systs");
-//   files.push_back("method2nc_nosyst.root"); names.push_back("Dilep only");
-//   files.push_back("method2nc_nodilep.root"); names.push_back("No dilep");
-//   files.push_back("method2nc_statonly.root"); names.push_back("No systs");
+  files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("All systs");
+  //files.push_back(""); names.push_back("Dilep only");
+  files.push_back("m1bk_nodilep_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("No dilep");
+  files.push_back("m1bk_nosys_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("No systs");
 
 //   files.push_back("method2nc.root"); names.push_back("With kappa");
 //   files.push_back("method2nc_nokappa.root"); names.push_back("No kappa");
@@ -61,6 +58,7 @@ int main(){
   double max_sig = 0.;
   for(size_t ifile = 0; ifile < files.size(); ++ifile){
     for(double lumi = min_lumi; lumi <= max_lumi; lumi += lumi_increment){
+      if(lumi <= 0) continue;
       if(ifile == 0) lumis.push_back(lumi);
       signif.at(ifile).push_back(GetSignificance(files.at(ifile), lumi));
       limit.at(ifile).push_back(GetLimit(files.at(ifile), lumi));
@@ -71,7 +69,7 @@ int main(){
       }
     }
   }
-  max_sig = 3.0/sig_scale;
+  max_sig = 5.0/sig_scale;
   for(size_t ifile = 0; ifile < files.size(); ++ifile){
     for(size_t ilumi = 0; ilumi < signif.at(ifile).size(); ++ilumi){
       signif.at(ifile).at(ilumi) *= max_lim/(sig_scale*max_sig);
@@ -166,7 +164,7 @@ void ModifyLumi(const string &file_name, double lumi){
     string name = var->GetName();
     if(Contains(name, "norm_")
        || Contains(name, "nobs_")
-       || (Contains(name, "rate_BLK_") && Contains(name, "_PRC_signal"))){
+       || Contains(name, "wmc_")){
       var->setVal(ratio*var->getVal());
       if(var->hasMin() && var->hasMax() && var->getMin()>=0. && var->getMax()>=var->getMax()){
 	var->setMax(ratio*var->getMax());

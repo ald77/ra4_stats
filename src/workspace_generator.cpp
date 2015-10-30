@@ -254,7 +254,11 @@ void WorkspaceGenerator::ReadSystematicsFile(){
       for(const auto &block: blocks_){
         for(const auto &vbin: block.Bins()){
           for(const auto &bin: vbin){
-            if(line.at(0) != bin.Name()) continue;
+	    //cout<<"line.at(0) "<<line.at(0)<<", bin.Name() "<<bin.Name()<<endl;
+	    string clean_line(line.at(0));
+	    ReplaceAll(clean_line, " ", "");
+	    ReplaceAll(clean_line, "\t", "");
+            if(clean_line != bin.Name()) continue;
             for(const auto &prc: process_list){
               this_systematic.Strength(bin, prc) = atof(line.at(1).c_str());
             }
@@ -785,8 +789,7 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
       oss << "prod::nbkg_" << bb_name << "("
           << "nbkg_raw_" << bb_name;
       for(const auto &syst: bin.Systematics()){
-        if((do_systematics_ && syst.Name().substr(0,6) != "dilep_")
-           ||(do_dilepton_ && syst.Name().substr(0,6) == "dilep_")){
+        if(do_systematics_ && syst.Name().substr(0,6) != "dilep_"){
           oss << "," << syst.Name() << "_" << bb_name;
         }
       }
