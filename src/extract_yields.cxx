@@ -143,6 +143,7 @@ void PrintTable(RooWorkspace &w,
   out << "\\end{document}\n";
   out << endl;
   out.close();
+  cout<<"Saved "<<file_name.c_str()<<endl;
 }
 
 double GetMCYield(const RooWorkspace &w,
