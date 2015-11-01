@@ -84,10 +84,10 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
-  Cut baseline1b{"ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Cut baseline2l{"ht>500&&met>200&&met<=400&&nbm<=2"};
-  Cut baseline_135{"ht>450&&met>150"};
+  Cut baseline{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
+  Cut baseline1b{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400&&nbm<=2"};
+  Cut baseline_135{"mj>250&&ht>450&&met>150"};
 
   //Method 1
   Bin m1_r1_lowmet_lownj{"m1_r1_lowmet_lownj", "mt<=140&&mj<=600&&met<="+himet+"&&njets<="+midjets};

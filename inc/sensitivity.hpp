@@ -9,5 +9,6 @@ double GetSignificance(const std::string &file, double lumi);
 double GetLimit(const std::string &file_name, double lumi);
 void ModifyLumi(const std::string &file_name, double lumi);
 double ExtractNumber(const std::string &results, const std::string &key);
+void GetOptions(int argc, char *argv[]);
 
 #endif

@@ -254,7 +254,6 @@ void WorkspaceGenerator::ReadSystematicsFile(){
       for(const auto &block: blocks_){
         for(const auto &vbin: block.Bins()){
           for(const auto &bin: vbin){
-	    //cout<<"line.at(0) "<<line.at(0)<<", bin.Name() "<<bin.Name()<<endl;
 	    string clean_line(line.at(0));
 	    ReplaceAll(clean_line, " ", "");
 	    ReplaceAll(clean_line, "\t", "");

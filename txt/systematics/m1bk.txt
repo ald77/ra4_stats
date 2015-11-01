@@ -1,78 +1,91 @@
 SYSTEMATIC isr_pt
  PROCESSES ttbar
-  r4_lowmet_lownj_1b 0.04
-  r4_highmet_lownj_1b 0.03
-  r4_lowmet_highnj_1b 0.05
-  r4_highmet_highnj_1b 0.04
-  r4_lowmet_lownj_2b 0.04
-  r4_lowmet_lownj_3b 0.04
-  r4_highmet_lownj 0.04
-  r4_lowmet_highnj_2b 0.03
-  r4_lowmet_highnj_3b 0.03
-  r4_highmet_highnj 0.04
+  r4_lowmet_lownj_1b	  0.04
+  r4_highmet_lownj_1b	  0.03
+  r4_lowmet_highnj_1b	  0.05
+  r4_highmet_highnj_1b	  0.04
+  r4_lowmet_lownj_2b	  0.04
+  r4_lowmet_lownj_3b	  0.04
+  r4_highmet_lownj	  0.04
+  r4_lowmet_highnj_2b	  0.03
+  r4_lowmet_highnj_3b	  0.03
+  r4_highmet_highnj	  0.04
 
 SYSTEMATIC top_pt
  PROCESSES ttbar
-  r4_lowmet_lownj_1b 0.001
-  r4_highmet_lownj_1b 0.03
-  r4_lowmet_highnj_1b 0.02
-  r4_highmet_highnj_1b 0.02
-  r4_lowmet_lownj_2b 0.001
-  r4_lowmet_lownj_3b 0.001
-  r4_highmet_lownj 0.03
-  r4_lowmet_highnj_2b 0.002
-  r4_lowmet_highnj_3b 0.002
-  r4_highmet_highnj 0.01
+  r4_lowmet_lownj_1b	  0.001
+  r4_highmet_lownj_1b	  0.03
+  r4_lowmet_highnj_1b	  0.02
+  r4_highmet_highnj_1b	  0.02
+  r4_lowmet_lownj_2b	  0.001
+  r4_lowmet_lownj_3b	  0.001
+  r4_highmet_lownj	  0.03
+  r4_lowmet_highnj_2b	  0.002
+  r4_lowmet_highnj_3b	  0.002
+  r4_highmet_highnj	  0.01
 
 SYSTEMATIC jet_mismeas
  PROCESSES ttbar
-  r4_lowmet_lownj_1b 0.03
-  r4_highmet_lownj_1b 0.01
-  r4_lowmet_highnj_1b 0.02
-  r4_highmet_highnj_1b 0.07
-  r4_lowmet_lownj_2b 0.03
-  r4_lowmet_lownj_3b 0.04
-  r4_highmet_lownj 0.01
-  r4_lowmet_highnj_2b 0.02
-  r4_lowmet_highnj_3b 0.07
-  r4_highmet_highnj 0.07
+  r4_lowmet_lownj_1b	  0.03
+  r4_highmet_lownj_1b	  0.01
+  r4_lowmet_highnj_1b	  0.02
+  r4_highmet_highnj_1b	  0.07
+  r4_lowmet_lownj_2b	  0.03
+  r4_lowmet_lownj_3b	  0.04
+  r4_highmet_lownj	  0.01
+  r4_lowmet_highnj_2b	  0.02
+  r4_lowmet_highnj_3b	  0.07
+  r4_highmet_highnj	  0.07
+
+SYSTEMATIC non_ttbar
+ PROCESSES other
+  r4_lowmet_lownj_1b	  1.00
+  r4_highmet_lownj_1b	  1.00
+  r4_lowmet_highnj_1b	  1.00
+  r4_highmet_highnj_1b	  1.00
+  r4_lowmet_lownj_2b	  1.00
+  r4_lowmet_lownj_3b	  1.00
+  r4_highmet_lownj	  1.00
+  r4_lowmet_highnj_2b	  1.00
+  r4_lowmet_highnj_3b	  1.00
+  r4_highmet_highnj	  1.00
 
 SYSTEMATIC dilep_closure
  PROCESSES ttbar
-  r4_lowmet_lownj_1b 0.21
-  r4_highmet_lownj_1b 0.21
-  r4_lowmet_highnj_1b 0.43
-  r4_highmet_highnj_1b 0.43
-  r4_lowmet_lownj_2b 0.21
-  r4_lowmet_lownj_3b 0.21
-  r4_highmet_lownj 0.21
-  r4_lowmet_highnj_2b 0.43
-  r4_lowmet_highnj_3b 0.43
-  r4_highmet_highnj 0.43
+  r4_lowmet_lownj_1b	  0.22
+  r4_highmet_lownj_1b	  0.22
+  r4_lowmet_highnj_1b	  0.44
+  r4_highmet_highnj_1b	  0.44
+  r4_lowmet_lownj_2b	  0.22
+  r4_lowmet_lownj_3b	  0.22
+  r4_highmet_lownj	  0.22
+  r4_lowmet_highnj_2b	  0.44
+  r4_lowmet_highnj_3b	  0.44
+  r4_highmet_highnj	  0.44
 
 SYSTEMATIC mocksignal
  PROCESSES signal
-  r1_lowmet_allnb 0.25
-  r1_highmet_allnb 0.25
-  r2_lowmet_lownj_1b 0.25
-  r2_lowmet_highnj_1b 0.25
-  r2_highmet_lownj_1b 0.25
-  r2_highmet_highnj_1b 0.25
-  r3_lowmet_allnb 0.25
-  r3_highmet_allnb 0.25
-  r4_lowmet_lownj_1b 0.25
-  r4_lowmet_highnj_1b 0.25
-  r4_highmet_lownj_1b 0.25
-  r4_highmet_highnj_1b 0.25
-  r2_lowmet_lownj_2b 0.25
-  r2_lowmet_lownj_3b 0.25
-  r2_lowmet_highnj_2b 0.25
-  r2_lowmet_highnj_3b 0.25
-  r2_highmet_lownj 0.25
-  r2_highmet_highnj 0.25
-  r4_lowmet_lownj_2b 0.25
-  r4_lowmet_lownj_3b 0.25
-  r4_lowmet_highnj_2b 0.25
-  r4_lowmet_highnj_3b 0.25
-  r4_highmet_lownj 0.25
-  r4_highmet_highnj 0.25
+  r1_lowmet_allnb	  0.25
+  r1_highmet_allnb	  0.25
+  r2_lowmet_lownj_1b	  0.25
+  r2_lowmet_highnj_1b	  0.25
+  r2_highmet_lownj_1b	  0.25
+  r2_highmet_highnj_1b	  0.25
+  r3_lowmet_allnb	  0.25
+  r3_highmet_allnb	  0.25
+  r4_lowmet_lownj_1b	  0.25
+  r4_lowmet_highnj_1b	  0.25
+  r4_highmet_lownj_1b	  0.25
+  r4_highmet_highnj_1b	  0.25
+  r2_lowmet_lownj_2b	  0.25
+  r2_lowmet_lownj_3b	  0.25
+  r2_lowmet_highnj_2b	  0.25
+  r2_lowmet_highnj_3b	  0.25
+  r2_highmet_lownj	  0.25
+  r2_highmet_highnj	  0.25
+  r4_lowmet_lownj_2b	  0.25
+  r4_lowmet_lownj_3b	  0.25
+  r4_lowmet_highnj_2b	  0.25
+  r4_lowmet_highnj_3b	  0.25
+  r4_highmet_lownj	  0.25
+  r4_highmet_highnj	  0.25
