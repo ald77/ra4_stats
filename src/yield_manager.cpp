@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <array>
 
 #include "bin.hpp"
 #include "process.hpp"
