@@ -456,7 +456,9 @@ void WorkspaceGenerator::AddData(const Block &block){
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()
           << "_BIN_" << bin.Name() << flush;
-      Append(observables_, oss.str());
+      if(use_r4_ || !Contains(bin.Name(), "4")){
+        Append(observables_, oss.str());
+      }
       oss << "[" << gps.Yield() << "]" << flush;
       w_.factory(oss.str().c_str());
     }
@@ -856,13 +858,10 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       string bb_name = "_BLK_"+block.Name() +"_BIN_"+bin.Name();
       string null_name = "pdf_null"+bb_name;
       string alt_name = "pdf_alt"+bb_name;
-      null_list += null_name;
-      alt_list += alt_name;
       w_.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
-      if(!use_r4_ && Contains(bb_name, "4")){
-	w_.factory(("RooUniform::pdf_null"+bb_name+"(nobs"+bb_name+")").c_str());
-	w_.factory(("RooUniform::pdf_alt"+bb_name+"(nobs"+bb_name+")").c_str());
-      } else {
+      if(use_r4_ || !Contains(bb_name, "4")){
+        null_list += null_name;
+        alt_list += alt_name;
 	w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
 	(static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
 	w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
