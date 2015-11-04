@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <random>
 
 #include "RooWorkspace.h"
 
@@ -51,6 +52,9 @@ public:
   bool GetKappaCorrected() const;
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
+  bool GetDoToy() const;
+  WorkspaceGenerator & SetDoToy(bool do_toy);
+
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
 		       const Process &process,
@@ -77,9 +81,15 @@ private:
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
+  bool do_toy_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;
+  static std::mt19937_64 prng_;
+  static std::poisson_distribution<> dist_;
+
+  static std::mt19937_64 InitializePRNG();
+  static int GetPoisson(double rate);
 
   void UpdateWorkspace();
   void AddPOI();

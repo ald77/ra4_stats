@@ -35,6 +35,7 @@ namespace{
   string hijets("9");
   string himet("400"); 
   string mjthresh("400");
+  bool do_toy = false;
 }
 
 int main(int argc, char *argv[]){
@@ -286,7 +287,7 @@ int main(int argc, char *argv[]){
 
   TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
   TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
-  string outname(method+(use_r4 ? "" : "_nor4")+(no_kappa ? "_nokappa" : "")+string("_c_met")
+  string outname(method+(use_r4 ? "" : "_nor4")+(no_kappa ? "_nokappa" : "")+(do_toy ? "_toy" : "")+string("_c_met")
 		 +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
 		 +sig_s+lumi_s.Data()+".root");
 
@@ -294,6 +295,7 @@ int main(int argc, char *argv[]){
   WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
   if(!blinded) wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   if(no_kappa) wgc.SetKappaCorrected(false);
+  if(do_toy) wgc.SetDoToy(true);
   wgc.SetLuminosity(lumi);
   wgc.SetDoDilepton(false); // Applying dilep syst in text file
   wgc.SetDoSystematics(do_syst);
@@ -303,6 +305,7 @@ int main(int argc, char *argv[]){
   WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
   if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
   if(no_kappa) wgnc.SetKappaCorrected(false);
+  if(do_toy) wgnc.SetDoToy(true);
   wgnc.SetLuminosity(lumi);
   wgnc.SetDoDilepton(false); // Applying dilep syst in text file
   wgnc.SetDoSystematics(do_syst);
@@ -325,6 +328,7 @@ void GetOptions(int argc, char *argv[]){
       {"nokappa", no_argument, 0, 'k'},
       {"method", required_argument, 0, 't'},
       {"use_r4", no_argument, 0, '4'},
+      {"toy", no_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
       {0, 0, 0, 0}
     };
@@ -370,6 +374,8 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "no_syst"){
         do_syst = false;
+      }else if(optname == "toy"){
+        do_toy = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

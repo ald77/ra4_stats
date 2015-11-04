@@ -19,6 +19,8 @@
 using namespace std;
 
 YieldManager WorkspaceGenerator::yields_ = YieldManager(4.);
+mt19937_64 WorkspaceGenerator::prng_ = WorkspaceGenerator::InitializePRNG();
+poisson_distribution<> WorkspaceGenerator::dist_(1.);
 
 WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const set<Block> &blocks,
@@ -47,6 +49,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
+  do_toy_(false),
   w_is_valid_(false){
   w_.cd();
 }
@@ -138,6 +141,18 @@ WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correct
   return *this;
 }
 
+bool WorkspaceGenerator::GetDoToy() const{
+  return do_toy_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetDoToy(bool do_toy){
+  if(do_toy_ != do_toy){
+    do_toy_ = do_toy;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
 GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
   yields_.Luminosity() = luminosity_;
   return yields_.GetYield(key);
@@ -152,6 +167,20 @@ GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
 GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
                                          const Process &process) const{
   return GetYield(bin, process, baseline_);
+}
+
+mt19937_64 WorkspaceGenerator::InitializePRNG(){
+  array<int, 128> sd;
+  random_device r;
+  generate_n(sd.begin(), sd.size(), ref(r));
+  seed_seq ss(begin(sd), end(sd));
+  return mt19937_64(ss);
+}
+
+int WorkspaceGenerator::GetPoisson(double rate){
+  using param_t = decltype(dist_)::param_type;
+  dist_.param(param_t{rate});
+  return dist_(prng_);
 }
 
 void WorkspaceGenerator::UpdateWorkspace(){
@@ -459,7 +488,7 @@ void WorkspaceGenerator::AddData(const Block &block){
       if(use_r4_ || !Contains(bin.Name(), "4")){
         Append(observables_, oss.str());
       }
-      oss << "[" << gps.Yield() << "]" << flush;
+      oss << "[" << (do_toy_ ? GetPoisson(gps.Yield()) : gps.Yield()) << "]" << flush;
       w_.factory(oss.str().c_str());
     }
   }
