@@ -26,7 +26,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const Process &signal,
                                        const Process &data,
                                        const string &systematics_file,
-				       const bool use_r4, const double sig_strength):
+                                       const bool use_r4, const double sig_strength):
   baseline_(baseline),
   backgrounds_(backgrounds),
   signal_(signal),
@@ -254,9 +254,9 @@ void WorkspaceGenerator::ReadSystematicsFile(){
       for(const auto &block: blocks_){
         for(const auto &vbin: block.Bins()){
           for(const auto &bin: vbin){
-	    string clean_line(line.at(0));
-	    ReplaceAll(clean_line, " ", "");
-	    ReplaceAll(clean_line, "\t", "");
+            string clean_line(line.at(0));
+            ReplaceAll(clean_line, " ", "");
+            ReplaceAll(clean_line, "\t", "");
             if(clean_line != bin.Name()) continue;
             for(const auto &prc: process_list){
               this_systematic.Strength(bin, prc) = atof(line.at(1).c_str());
@@ -450,8 +450,8 @@ void WorkspaceGenerator::AddData(const Block &block){
         for(const auto &bkg: backgrounds_){
           gps += GetYield(bin, bkg);
         }
-	// Injecting signal
-	gps += sig_strength_*GetYield(bin, signal_);
+        // Injecting signal
+        gps += sig_strength_*GetYield(bin, signal_);
       }
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()
@@ -477,7 +477,7 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
           +"/ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()
           +"',ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
           +",ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+")";
-        w_.factory(var.c_str());        
+        w_.factory(var.c_str());
       }
     }
   }
@@ -795,15 +795,15 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
         }
       }
       if(do_systematics_){
-	for(const auto &prc: backgrounds_){
-	  for(const auto &syst: prc.Systematics()){
-	    oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
-	  }
-	  for(const auto &syst: free_systematics_){
-	    if(!syst.HasEntry(bin, prc)) continue;
-	    oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
-	  }
-	}
+        for(const auto &prc: backgrounds_){
+          for(const auto &syst: prc.Systematics()){
+            oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
+          }
+          for(const auto &syst: free_systematics_){
+            if(!syst.HasEntry(bin, prc)) continue;
+            oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
+          }
+        }
       }
       if(do_mc_kappa_correction_){
         oss << ",kappamc_" << bb_name;
@@ -829,13 +829,13 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
           << "_BIN_" << bin.Name()
           << "_PRC_" << signal_.Name();
       if(do_systematics_){
-	for(const auto &syst: signal_.Systematics()){
-	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
-	}
-	for(const auto &syst: free_systematics_){
-	  if(!syst.HasEntry(bin, signal_)) continue;
-	  oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
-	}
+        for(const auto &syst: signal_.Systematics()){
+          oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
+        }
+        for(const auto &syst: free_systematics_){
+          if(!syst.HasEntry(bin, signal_)) continue;
+          oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << signal_.Name();
+        }
       }
       oss << ")" << flush;
       w_.factory(oss.str().c_str());
@@ -862,10 +862,10 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       if(use_r4_ || !Contains(bb_name, "4")){
         null_list += null_name;
         alt_list += alt_name;
-	w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
-	(static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
-	w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
-	(static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
+        w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
+        (static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
+        w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
+        (static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
       }
       is_first = false;
     }
