@@ -22,13 +22,22 @@ int main(int argc, char *argv[]){
 
     cout << fixed << setprecision(2);
 
-    cout << "Fundamental variables:" << endl;
+    cout << "Constants:" << endl;
     const RooArgSet &vars = w->allVars();
     TIterator *iter_ptr = vars.createIterator();
     for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
       RooAbsArg *var = static_cast<RooAbsArg*>(*(*iter_ptr));
       if(var == nullptr) continue;
-      // if(var->isConstant()) continue;
+      if(!var->isConstant()) continue;
+      var->Print();
+    }
+
+    cout << endl << "Fundamental variables:" << endl;
+    iter_ptr->Reset();
+    for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
+      RooAbsArg *var = static_cast<RooAbsArg*>(*(*iter_ptr));
+      if(var == nullptr) continue;
+      if(var->isConstant()) continue;
       var->Print();
     }
 
