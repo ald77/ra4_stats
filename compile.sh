@@ -8,7 +8,7 @@ then
     ./run/remove_backups.sh
     exit_code=$?
 else
-    bad_file=$(mktemp compile_XXXXXXXXXXXXXXXX)
+    bad_file=$(mktemp -t compile_XXXXXXXXXXXXXXXX)
 
     make -j 4 -k -r -R 2> $bad_file
     exit_code=$?
