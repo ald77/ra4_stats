@@ -2,16 +2,17 @@
 
 ./compile.sh 
 
-./run/make_workspace.exe --method m135 -u --nokappa
-./run/make_workspace.exe --method m135 -u 
-./run/make_workspace.exe --method m135 -u --use_r4
-./run/make_workspace.exe --method m2l  -u --lumi 1.264
-./run/make_workspace.exe --method m2l  --lumi 3
-./run/make_workspace.exe --method m1bk --lumi 3 --use_r4
-./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1
-./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4
-./run/make_workspace.exe --method m1bk_nosys --lumi 3 --use_r4
+./run/make_workspace.exe --method m135 -u --nokappa &
+./run/make_workspace.exe --method m135 -u &
+./run/make_workspace.exe --method m135 -u --use_r4 &
+./run/make_workspace.exe --method m2l  -u --lumi 1.264 &
+./run/make_workspace.exe --method m2l  --lumi 3 &
+./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1 &
+./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4 &
+./run/make_workspace.exe --method m1bk_nosys --lumi 3 --use_r4 &
 
+wait
 
 ./run/extract_yields.exe m135_c_met400_mj400_nj69_sig0_lumi0p135.root
 ./run/extract_yields.exe m135_nc_met400_mj400_nj69_sig0_lumi0p135.root
