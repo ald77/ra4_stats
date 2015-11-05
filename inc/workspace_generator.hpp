@@ -52,8 +52,8 @@ public:
   bool GetKappaCorrected() const;
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
-  bool GetDoToy() const;
-  WorkspaceGenerator & SetDoToy(bool do_toy);
+  unsigned GetToyNum() const;
+  WorkspaceGenerator & SetToyNum(unsigned toy_num);
 
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
@@ -81,7 +81,7 @@ private:
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
-  bool do_toy_;
+  unsigned toy_num_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;

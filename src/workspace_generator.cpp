@@ -9,6 +9,8 @@
 #include <numeric>
 #include <stdexcept>
 
+#include "TDirectory.h"
+
 #include "RooPoisson.h"
 #include "RooDataSet.h"
 
@@ -49,7 +51,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
-  do_toy_(false),
+  toy_num_(0),
   w_is_valid_(false){
   w_.cd();
 }
@@ -59,8 +61,7 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
     cout << "WriteToFile(" << file_name << ")" << endl;
   }
   if(!w_is_valid_) UpdateWorkspace();
-
-  w_.writeToFile(file_name.c_str());
+  w_.writeToFile(file_name.c_str(), toy_num_==0);
   if(print_level_ >= PrintLevel::everything){
     w_.Print();
   }
@@ -141,13 +142,13 @@ WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correct
   return *this;
 }
 
-bool WorkspaceGenerator::GetDoToy() const{
-  return do_toy_;
+unsigned WorkspaceGenerator::GetToyNum() const{
+  return toy_num_;
 }
 
-WorkspaceGenerator & WorkspaceGenerator::SetDoToy(bool do_toy){
-  if(do_toy_ != do_toy){
-    do_toy_ = do_toy;
+WorkspaceGenerator & WorkspaceGenerator::SetToyNum(unsigned toy_num){
+  if(toy_num_ != toy_num){
+    toy_num_ = toy_num;
     w_is_valid_ = false;
   }
   return *this;
@@ -187,7 +188,12 @@ void WorkspaceGenerator::UpdateWorkspace(){
   if(print_level_ >= PrintLevel::everything){
     cout << "UpdateWorkspace()" << endl;
   }
-  w_ = RooWorkspace("w");
+  string old_name = w_.GetName();
+  w_.Delete();
+  gDirectory->Delete(old_name.c_str());
+  w_.Clear();
+  w_ = RooWorkspace(toy_num_ !=0 ? ("w_"+to_string(toy_num_)).c_str() : "w");
+  w_.SetName(toy_num_ !=0 ? ("w_"+to_string(toy_num_)).c_str() : "w");
   w_.cd();
 
   if(do_dilepton_){
@@ -488,7 +494,7 @@ void WorkspaceGenerator::AddData(const Block &block){
       if(use_r4_ || !Contains(bin.Name(), "4")){
         Append(observables_, oss.str());
       }
-      oss << "[" << (do_toy_ ? GetPoisson(gps.Yield()) : gps.Yield()) << "]" << flush;
+      oss << "[" << (toy_num_!=0 ? GetPoisson(gps.Yield()) : gps.Yield()) << "]" << flush;
       w_.factory(oss.str().c_str());
     }
   }
@@ -642,7 +648,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
         Append(observables_, oss.str());
-        oss << "[" << gp.NEffective() << "]" << flush;
+        oss << "[" << (toy_num_!=0 ? GetPoisson(gp.NEffective()) : gp.NEffective()) << "]" << flush;
         w_.factory(oss.str().c_str());
         oss.str("");
         oss << "nmc_" << bbp_name << flush;
@@ -941,7 +947,9 @@ void WorkspaceGenerator::AddParameterSets(){
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
   DefineParameterSet("globalObservables", set<string>());
-  RooDataSet data_obs{"data_obs", "data_obs", *w_.set("observables")};
+  auto xxx = w_.set("observables");
+  const auto & yy = *xxx;
+  RooDataSet data_obs{"data_obs", "data_obs", *xxx};
   data_obs.add(*w_.set("observables"));
   w_.import(data_obs);
 }
