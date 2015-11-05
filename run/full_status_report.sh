@@ -10,7 +10,7 @@
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1 &
 ./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4 &
-./run/make_workspace.exe --method m1bk_nosys --lumi 3 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --no_syst &
 
 wait
 

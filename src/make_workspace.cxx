@@ -33,7 +33,7 @@ namespace{
   string method("m135");
   string minjets("6");
   string hijets("9");
-  string himet("400"); 
+  string himet("400");
   string mjthresh("400");
   unsigned n_toys = 0;
 }
@@ -41,9 +41,9 @@ namespace{
 int main(int argc, char *argv[]){
   cout << fixed << setprecision(2);
   GetOptions(argc, argv);
-  string midjets(""); midjets += to_string(atoi(hijets.c_str())-1); 
-  string minjets2l(""); minjets2l += to_string(atoi(minjets.c_str())-1); 
-  string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1); 
+  string midjets(""); midjets += to_string(atoi(hijets.c_str())-1);
+  string minjets2l(""); minjets2l += to_string(atoi(minjets.c_str())-1);
+  string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1);
 
   string skim("skim_1lht500met200/");
   if(Contains(method, "m135")) skim = "skim_1lht400/";
@@ -53,18 +53,18 @@ int main(int argc, char *argv[]){
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
       {foldermc+"/*TTJets*Lept*.root/tree"},
-	{foldermc+"/*TTJets_HT*.root/tree"}
+        {foldermc+"/*TTJets_HT*.root/tree"}
     }};
   Process other{"other", {
       {foldermc+"/*_WJetsToLNu*.root/tree"},
-	{foldermc+"/*_TTWJets*.root/tree"},
-	  {foldermc+"/*_TTZTo*.root/tree"},
-	    {foldermc+"/*_ST_*.root/tree"},
-	      {foldermc+"/*DYJetsToLL*.root/tree"},
-		{foldermc+"/*QCD_HT*.root/tree"},
-		  {foldermc+"/*_WWTo*.root/tree"},
-		    {foldermc+"/*ggZH_HToBB*.root/tree"},
-		      {foldermc+"/*ttHJetTobb*.root/tree"}
+        {foldermc+"/*_TTWJets*.root/tree"},
+          {foldermc+"/*_TTZTo*.root/tree"},
+            {foldermc+"/*_ST_*.root/tree"},
+              {foldermc+"/*DYJetsToLL*.root/tree"},
+                {foldermc+"/*QCD_HT*.root/tree"},
+                  {foldermc+"/*_WWTo*.root/tree"},
+                    {foldermc+"/*ggZH_HToBB*.root/tree"},
+                      {foldermc+"/*ttHJetTobb*.root/tree"}
     }};
   Process signal_nc{"signal", {
       {foldermc+"/*T1tttt*1500*100*.root/tree"}
@@ -155,7 +155,6 @@ int main(int argc, char *argv[]){
   Bin r4_highmet_lownj{"r4_highmet_lownj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
   Bin r4_highmet_highnj{"r4_highmet_highnj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
 
-
   // Dilepton blocks
   Bin r1c_allnj{"r1c_allnj", "mt<=140&&mj<="+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&nleps==1"};
 
@@ -177,12 +176,12 @@ int main(int argc, char *argv[]){
 
   //// METHOD 1BK: Adding 1b, fat R1/R3 integrated over njets, nb, but not MET
   set<Block> blocks_1bk{
-    {"lowmet", {{r1_lowmet_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b, 
-	    r2_lowmet_lownj_3b, r2_lowmet_highnj_3b},
-          {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b, 
-	      r4_lowmet_lownj_3b, r4_lowmet_highnj_3b}}},
+    {"lowmet", {{r1_lowmet_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
+            r2_lowmet_lownj_3b, r2_lowmet_highnj_3b},
+          {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
+              r4_lowmet_lownj_3b, r4_lowmet_highnj_3b}}},
       {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, r2_highmet_lownj, r2_highmet_highnj},
-	    {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj, r4_highmet_highnj}}}
+            {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj, r4_highmet_highnj}}}
   };
 
   //// METHOD 1
@@ -209,26 +208,26 @@ int main(int argc, char *argv[]){
 
   //// METHOD 1BKALL: Adding 1b, fat R1/R3 integrated over njets, nb, and MET
   set<Block> blocks_1bkall{
-    {"all", {{r1_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b, 
-	    r2_lowmet_lownj_3b, r2_lowmet_highnj_3b, r2_highmet_lownj_1b, r2_highmet_highnj_1b, 
-	    r2_highmet_lownj, r2_highmet_highnj},
-          {r3_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b, 
-	      r4_lowmet_lownj_3b, r4_lowmet_highnj_3b, r4_highmet_lownj_1b, r4_highmet_highnj_1b, 
-	      r4_highmet_lownj, r4_highmet_highnj}}}
+    {"all", {{r1_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
+            r2_lowmet_lownj_3b, r2_lowmet_highnj_3b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
+            r2_highmet_lownj, r2_highmet_highnj},
+          {r3_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
+              r4_lowmet_lownj_3b, r4_lowmet_highnj_3b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
+              r4_highmet_lownj, r4_highmet_highnj}}}
   };
 
   //// METHOD 1BK: Adding 1b, sharing RmT across all dimensions
   set<Block> blocks_1b{
-    {"all", {{r1_lowmet_1b, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, 
-	    r1_lowmet_2b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
-	    r1_lowmet_3b, r2_lowmet_lownj_3b, r2_lowmet_highnj_3b, 
-	    r1_highmet_1b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
-	    r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
-          {r3_lowmet_1b, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, 
-	      r3_lowmet_2b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b, 
-	      r3_lowmet_3b, r4_lowmet_lownj_3b, r4_lowmet_highnj_3b, 
-	      r3_highmet_1b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
-	      r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
+    {"all", {{r1_lowmet_1b, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b,
+            r1_lowmet_2b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
+            r1_lowmet_3b, r2_lowmet_lownj_3b, r2_lowmet_highnj_3b,
+            r1_highmet_1b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
+            r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
+          {r3_lowmet_1b, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b,
+              r3_lowmet_2b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
+              r3_lowmet_3b, r4_lowmet_lownj_3b, r4_lowmet_highnj_3b,
+              r3_highmet_1b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
+              r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
   };
 
   //// METHOD 135: simple ABCD for 135 ipb
@@ -261,10 +260,6 @@ int main(int argc, char *argv[]){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
     sysfile = "txt/systematics/m1bk_nodilep.txt";
-  } else if(method == "m1bk_nosys"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1bk;
-    sysfile = "txt/systematics/m1bk_nosys.txt";
   } else if(method == "m1bkall"){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bkall;
@@ -272,13 +267,11 @@ int main(int argc, char *argv[]){
   }else if(method == "m2l"){
     pbaseline = &baseline2l;
     pblocks = &blocks_2l;
-    //sysfile = "txt/systematics/m2l.txt";
-    sysfile = "txt/systematics/m2l_nosys.txt";
+    sysfile = "txt/systematics/m2l.txt";
   }else if(method == "m135"){
     pbaseline = &baseline_135;
     pblocks = &blocks_135;
     sysfile = "txt/systematics/m135.txt";
-    sysfile = "txt/systematics/m135_nosys.txt";
   }else if(method == "m135_2l"){
     pbaseline = &baseline_135;
     pblocks = &blocks_135_2l;
@@ -287,7 +280,8 @@ int main(int argc, char *argv[]){
 
   TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
   TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
-  string outname(method+(use_r4 ? "" : "_nor4")+(no_kappa ? "_nokappa" : "")+string("_c_met")
+  string outname(method+(do_syst ? "" : "_nosys")+(use_r4 ? "" : "_nor4")
+                 +(no_kappa ? "_nokappa" : "")+string("_c_met")
                  +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
                  +sig_s+lumi_s.Data()+".root");
 
@@ -302,7 +296,7 @@ int main(int argc, char *argv[]){
     wgc.SetDoSystematics(do_syst);
     ReplaceAll(outname, "_nc_", "_c_");
     wgc.WriteToFile(outname);
-    
+
     // Non-compressed SUSY
     WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
     if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);

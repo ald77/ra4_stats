@@ -1,3 +1,0 @@
-SYSTEMATIC silly_systematic
-  PROCESSES ttbar,other,signal
-    r2_lowmet_lownj_1b 0.0000000000001

@@ -219,6 +219,7 @@ void WorkspaceGenerator::UpdateWorkspace(){
     AddPdfs(block);
   }
 
+  AddDummyNuisance();
   AddFullPdf();
   AddParameterSets();
   AddModels();
@@ -909,34 +910,33 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
   w_.factory(("PROD:pdf_alt_BLK_"+block.Name()+"("+alt_list+")").c_str());
 }
 
+void WorkspaceGenerator::AddDummyNuisance(){
+  w_.factory("RooGaussian::pdf_dummy_nuisance(dummy_nuisance[0.,-10.,10.],0.,1.)");
+  Append(nuisances_, "dummy_nuisance");
+}
+
 void WorkspaceGenerator::AddFullPdf(){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddFullPdf()" << endl;
   }
-  if(blocks_.size() == 0){
-    w_.factory("RooPoisson::model_b(0,0)");
-    w_.factory("RooPoisson::model_s(0,0)");
-  }else{
-    string null_list = "pdf_null_BLK_"+blocks_.cbegin()->Name();
-    string alt_list = "pdf_alt_BLK_"+blocks_.cbegin()->Name();
-    auto blockp = blocks_.cbegin();
-    for(++blockp; blockp != blocks_.cend(); ++blockp){
-      null_list += (",pdf_null_BLK_"+blockp->Name());
-      alt_list += (",pdf_alt_BLK_"+blockp->Name());
-    }
-    if(do_systematics_ || do_dilepton_){
-      for(const auto &syst: systematics_){
-        null_list += (",constraint_"+syst);
-        alt_list += (",constraint_"+syst);
-      }
-    }
-    for(const auto & block: blocks_){
-      null_list += (",pdf_mc_"+block.Name());
-      alt_list += (",pdf_mc_"+block.Name());
-    }
-    w_.factory(("PROD::model_b("+null_list+")").c_str());
-    w_.factory(("PROD::model_s("+alt_list+")").c_str());
+  string null_list = "pdf_dummy_nuisance";
+  string alt_list = "pdf_dummy_nuisance";
+  for(const auto &block: blocks_){
+    null_list += (",pdf_null_BLK_"+block.Name());
+    alt_list += (",pdf_alt_BLK_"+block.Name());
   }
+  if(do_systematics_ || do_dilepton_){
+    for(const auto &syst: systematics_){
+      null_list += (",constraint_"+syst);
+      alt_list += (",constraint_"+syst);
+    }
+  }
+  for(const auto & block: blocks_){
+    null_list += (",pdf_mc_"+block.Name());
+    alt_list += (",pdf_mc_"+block.Name());
+  }
+  w_.factory(("PROD::model_b("+null_list+")").c_str());
+  w_.factory(("PROD::model_s("+alt_list+")").c_str());
 }
 
 void WorkspaceGenerator::AddParameterSets(){

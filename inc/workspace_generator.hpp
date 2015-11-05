@@ -25,9 +25,9 @@ public:
                      const std::set<Process> &backgrounds,
                      const Process &signal,
                      const Process &data,
-		     const std::string &systematics_file = "",
-		     const bool use_r4 = true,
-		     const double sig_strength = 0.);
+                     const std::string &systematics_file = "",
+                     const bool use_r4 = true,
+                     const double sig_strength = 0.);
 
   enum class PrintLevel{silent, important, normal, everything};
   enum class BlindLevel{unblinded, r4_blinded, blinded};
@@ -57,10 +57,10 @@ public:
 
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
-		       const Process &process,
-		       const Cut &cut) const;
+                       const Process &process,
+                       const Cut &cut) const;
   GammaParams GetYield(const Bin &bin,
-		       const Process &process) const;
+                       const Process &process) const;
 
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
 
@@ -116,13 +116,14 @@ private:
   void AddFullBackgroundPredictions(const Block &block);
   void AddSignalPredictions(const Block &block);
   void AddPdfs(const Block &block);
+  void AddDummyNuisance();
   void AddFullPdf();
   void AddParameterSets();
   void DefineParameterSet(const std::string &cat_name,
                           const std::set<std::string> &var_names);
   void AddModels();
   void PrintComparison(std::ostream &stream, const Bin &bin, const Process &process,
-		       const Block &block, bool is_data, bool is_signal=false) const;
+                       const Block &block, bool is_data, bool is_signal=false) const;
 };
 
 #endif
