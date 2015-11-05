@@ -27,9 +27,9 @@ int main(int argc, char *argv[]){
     styles style("RA4");
     style.setDefaultStyle();
     
-    TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
+    TFile w_file("MaxLikelihoodFitResult.root","read");
     if(!w_file.IsOpen()) continue;
-    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
+    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("MaxLikelihoodFitResult"));
     if(w == nullptr) continue;
     
     TFile fit_file("mlfit.root","read");
@@ -38,11 +38,13 @@ int main(int argc, char *argv[]){
     RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
     
     if(fit_b != nullptr){
+      PrintDebug(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_debug.tex"));
       PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
       MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_plot.pdf"));
       if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_correction.pdf"));
     }
     if(fit_s != nullptr){
+      PrintDebug(*w, *fit_s, ChangeExtension(argv[argi], "_sig_debug.tex"));
       PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
       MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_plot.pdf"));
       if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
@@ -95,6 +97,48 @@ string TexFriendly(const string &s){
   return out;
 }
 
+void PrintDebug(RooWorkspace &w,
+                const RooFitResult &f,
+                const string &file_name){
+  SetVariables(w, f);
+  
+  vector<string> var_names = GetVarNames(w);
+  vector<string> func_names = GetFuncNames(w);
+
+  ofstream out(file_name);
+  out << "\\documentclass{article}\n";
+  out << "\\usepackage{amsmath,graphicx,rotating,longtable}\n";
+  out << "\\begin{document}\n";
+  out << "\\begin{longtable}{rr}\n";
+  out << "\\hline\\hline\n";
+  out << "Variable & Fit Value\\\\\n";
+  out << "\\hline\n";
+  out << fixed << setprecision(4);
+  for(const auto &var: var_names){
+    RooRealVar *varo = w.var(var.c_str());
+    if(!varo->isConstant()){
+      out << TexFriendly(var) << " & $" << varo->getVal() << "\\pm" << varo->getPropagatedError(f) << "$\\\\\n";
+    }else{
+      out << TexFriendly(var) << " & $" << varo->getVal() << "$\\\\\n";
+    }
+  }
+  for(const auto &func: func_names){
+    RooAbsReal *funco = w.function(func.c_str());
+    if(!funco->isConstant()){
+      out << TexFriendly(func) << " & $" << funco->getVal() << "\\pm" << funco->getPropagatedError(f) << "$\\\\\n";
+    }else{
+      out << TexFriendly(func) << " & $" << funco->getVal() << "$\\\\\n";
+    }
+  }
+
+  out << "\\hline\\hline\n";
+  out << "\\end{longtable}\n";
+  out << "\\end{document}\n";
+  out << endl;
+  out.close();
+  cout<<"Saved "<<file_name.c_str()<<endl;
+}
+
 void PrintTable(RooWorkspace &w,
                 const RooFitResult &f,
                 const string &file_name){
@@ -105,7 +149,7 @@ void PrintTable(RooWorkspace &w,
   vector<string> bin_names = GetPlainBinNames(w);
 
   ofstream out(file_name);
-  out << fixed << setprecision(2);
+  out << fixed << setprecision(4);
   out << "\\documentclass{article}\n";
   out << "\\usepackage{amsmath,graphicx,rotating}\n";
   out << "\\usepackage[landscape]{geometry}\n";
@@ -401,7 +445,9 @@ RooRealVar * SetVariables(RooWorkspace &w,
     if(fit_var == nullptr) continue;
     RooRealVar *w_var = w.var(fit_var->GetName());
     if(w_var == nullptr) continue;
+    w_var->removeRange();
     w_var->setVal(fit_var->getVal());
+    w_var->setError(fit_var->getError());
     if(fit_var->GetName() == string("r")) set_r = true;
   }
   RooRealVar *r_var = static_cast<RooRealVar*>(w.var("r"));
@@ -478,7 +524,7 @@ void MakeYieldPlot(RooWorkspace &w,
   l.AddEntry(&obs, "Observed", "lep");
   l.AddEntry(&signal, "Signal", "f");
   ostringstream oss;
-  oss << setprecision(2) << fixed;
+  oss << setprecision(4) << fixed;
   oss << "r=";
   if(r_var == nullptr){
     oss << "???";
@@ -515,6 +561,40 @@ void MakeYieldPlot(RooWorkspace &w,
   pred_rat.Draw("02 same");
   obs_rat.Draw("0 same");
   c.Print(file_name.c_str());
+}
+
+vector<string> GetVarNames(const RooWorkspace &w){
+  vector<string> names;
+  TIter iter(w.allVars().createIterator());
+  int size = w.allVars().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    if(obj == nullptr) continue;
+    string name = obj->GetName();
+    Append(names, name);
+  }
+  iter.Reset();
+  sort(names.begin(), names.end());
+  return names;
+}
+
+vector<string> GetFuncNames(const RooWorkspace &w){
+  vector<string> names;
+  TIter iter(w.allFunctions().createIterator());
+  int size = w.allFunctions().getSize();
+  TObject *obj;
+  int i = 0;
+  while((obj = iter()) && i < size){
+    ++i;
+    if(obj == nullptr) continue;
+    string name = obj->GetName();
+    Append(names, name);
+  }
+  iter.Reset();
+  sort(names.begin(), names.end());
+  return names;
 }
 
 vector<string> GetBinNames(const RooWorkspace &w){

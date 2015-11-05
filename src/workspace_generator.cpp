@@ -337,13 +337,16 @@ void WorkspaceGenerator::AddDileptonSystematic(){
         Cut dilep_baseline = baseline_;
         MakeDileptonBin(bin, dilep_bin, dilep_baseline);
         GammaParams dilep_gp(0., 0.);
-        if(blind_level_ != BlindLevel::unblinded){
+        if(blind_level_ == BlindLevel::unblinded
+           || (blind_level_ == BlindLevel::r4_blinded
+               && !Contains(bin.Name(), "4"))){
+          dilep_gp = GetYield(dilep_bin, data_, dilep_baseline);
+        }else{
           for(const auto &bkg: backgrounds_){
             dilep_gp += GetYield(dilep_bin, bkg, dilep_baseline);
           }
-        }else{
-          dilep_gp = GetYield(dilep_bin, data_, dilep_baseline);
         }
+
         double strength = 1.;
         string name = "dilep_"+bin.Name();
         if(dilep_gp.Yield()>1.){
@@ -480,7 +483,9 @@ void WorkspaceGenerator::AddData(const Block &block){
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
-      if(blind_level_ == BlindLevel::unblinded){
+      if(blind_level_ == BlindLevel::unblinded
+         || (blind_level_ == BlindLevel::r4_blinded
+             && !Contains(bin.Name(),"4"))){
         gps = GetYield(bin, data_);
       }else{
         for(const auto &bkg: backgrounds_){
@@ -1015,7 +1020,10 @@ void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin, const 
          << ", " << block << ", " << is_data << ")" << endl;
   }
   GammaParams gp(0., 0.);
-  if(!is_data || blind_level_ == BlindLevel::unblinded){
+  if(!is_data ||
+     blind_level_ == BlindLevel::unblinded
+     || (blind_level_ == BlindLevel::r4_blinded
+         && !Contains(bin.Name(), "4"))){
     gp = GetYield(bin, process);
   }
 

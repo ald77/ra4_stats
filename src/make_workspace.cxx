@@ -26,7 +26,7 @@ using namespace std;
 namespace{
   double lumi = 0.135;
   double sig_strength = 0.;
-  bool blinded = true;
+  WorkspaceGenerator::BlindLevel blind_level = WorkspaceGenerator::BlindLevel::blinded;
   bool no_kappa = false;
   bool do_syst = true;
   bool use_r4 = false;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
       {foldermc+"/*T1tttt*1200*800*.root/tree"}
     }};
 
-  string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");
+  string data_cuts("(trig[4]||trig[8])&&pass");
   if(method=="m2l") {
     data_cuts = "(trig[4]||trig[8])&&pass";
   }
@@ -90,34 +90,13 @@ int main(int argc, char *argv[]){
   Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400&&nbm<=2"};
   Cut baseline_135{"mj>250&&ht>450&&met>150"};
 
-  //Method 1
-  Bin m1_r1_lowmet_lownj{"m1_r1_lowmet_lownj", "mt<=140&&mj<=600&&met<="+himet+"&&njets<="+midjets};
-  Bin m1_r1_lowmet_highnj{"m1_r1_lowmet_highnj", "mt<=140&&mj<=600&&met<="+himet+"&&njets>"+midjets};
-  Bin m1_r1_highmet_lownj{"m1_r1_highmet_lownj", "mt<=140&&mj<=600&&met>"+himet+"&&njets<="+midjets};
-  Bin m1_r1_highmet_highnj{"m1_r1_highmet_highnj", "mt<=140&&mj<=600&&met>"+himet+"&&njets>"+midjets};
-
-  Bin m1_r2_lowmet_lownj{"m1_r2_lowmet_lownj", "mt<=140&&mj>600&&met<="+himet+"&&njets<="+midjets};
-  Bin m1_r2_lowmet_highnj{"m1_r2_lowmet_highnj", "mt<=140&&mj>600&&met<="+himet+"&&njets>"+midjets};
-  Bin m1_r2_highmet_lownj{"m1_r2_highmet_lownj", "mt<=140&&mj>600&&met>"+himet+"&&njets<="+midjets};
-  Bin m1_r2_highmet_highnj{"m1_r2_highmet_highnj", "mt<=140&&mj>600&&met>"+himet+"&&njets>"+midjets};
-
-  Bin m1_r3_lowmet_lownj{"m1_r3_lowmet_lownj", "mt>140&&mj<=600&&met<="+himet+"&&njets<="+midjets};
-  Bin m1_r3_lowmet_highnj{"m1_r3_lowmet_highnj", "mt>140&&mj<=600&&met<="+himet+"&&njets>"+midjets};
-  Bin m1_r3_highmet_lownj{"m1_r3_highmet_lownj", "mt>140&&mj<=600&&met>"+himet+"&&njets<="+midjets};
-  Bin m1_r3_highmet_highnj{"m1_r3_highmet_highnj", "mt>140&&mj<=600&&met>"+himet+"&&njets>"+midjets};
-
-  Bin m1_r4_lowmet_lownj{"m1_r4_lowmet_lownj", "mt>140&&mj>600&&met<="+himet+"&&njets<="+midjets};
-  Bin m1_r4_lowmet_highnj{"m1_r4_lowmet_highnj", "mt>140&&mj>600&&met<="+himet+"&&njets>"+midjets};
-  Bin m1_r4_highmet_lownj{"m1_r4_highmet_lownj", "mt>140&&mj>600&&met>"+himet+"&&njets<="+midjets};
-  Bin m1_r4_highmet_highnj{"m1_r4_highmet_highnj", "mt>140&&mj>600&&met>"+himet+"&&njets>"+midjets};
-
   //Declare bins
   //Method 2, m1b, and m1bk
   Bin r1_lowmet_1b{"r1_lowmet_1b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
   Bin r1_highmet_1b{"r1_highmet_1b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
   Bin r1_lowmet_2b{"r1_lowmet_2b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
   Bin r1_lowmet_3b{"r1_lowmet_3b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
-  Bin r1_highmet{"r1_highmet", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+  Bin r1_highmet_2b{"r1_highmet_2b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
 
   Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet};
   Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet};
@@ -131,14 +110,14 @@ int main(int argc, char *argv[]){
   Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
   Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
   Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
-  Bin r2_highmet_lownj{"r2_highmet_lownj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
-  Bin r2_highmet_highnj{"r2_highmet_highnj", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
+  Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
+  Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
 
   Bin r3_lowmet_1b{"r3_lowmet_1b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
   Bin r3_highmet_1b{"r3_highmet_1b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
   Bin r3_lowmet_2b{"r3_lowmet_2b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
   Bin r3_lowmet_3b{"r3_lowmet_3b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
-  Bin r3_highmet{"r3_highmet", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+  Bin r3_highmet_2b{"r3_highmet_2b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
 
   Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet};
   Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet};
@@ -152,8 +131,8 @@ int main(int argc, char *argv[]){
   Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
   Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
   Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
-  Bin r4_highmet_lownj{"r4_highmet_lownj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
-  Bin r4_highmet_highnj{"r4_highmet_highnj", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
+  Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
+  Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
 
   // Dilepton blocks
   Bin r1c_allnj{"r1c_allnj", "mt<=140&&mj<="+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&nleps==1"};
@@ -180,40 +159,18 @@ int main(int argc, char *argv[]){
             r2_lowmet_lownj_3b, r2_lowmet_highnj_3b},
           {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
               r4_lowmet_lownj_3b, r4_lowmet_highnj_3b}}},
-      {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, r2_highmet_lownj, r2_highmet_highnj},
-            {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj, r4_highmet_highnj}}}
-  };
-
-  //// METHOD 1
-  set<Block> blocks_m1{
-    {"lowmet_lownj", {{m1_r1_lowmet_lownj, m1_r2_lowmet_lownj},
-          {m1_r3_lowmet_lownj, m1_r4_lowmet_lownj}}},
-      {"lowmet_highnj", {{m1_r1_lowmet_highnj, m1_r2_lowmet_highnj},
-            {m1_r3_lowmet_highnj, m1_r4_lowmet_highnj}}},
-        {"highmet_lownj", {{m1_r1_highmet_lownj, m1_r2_highmet_lownj},
-              {m1_r3_highmet_lownj, m1_r4_highmet_lownj}}},
-          {"highmet_highnj", {{m1_r1_highmet_highnj, m1_r2_highmet_highnj},
-                {m1_r3_highmet_highnj, m1_r4_highmet_highnj}}}
-  };
-
-  //// METHOD 2
-  set<Block> blocks_m2{
-    {"lowmet_2b", {{r1_lowmet_2b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b},
-          {r3_lowmet_2b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b}}},
-      {"lowmet_3b", {{r1_lowmet_3b, r2_lowmet_lownj_3b, r2_lowmet_highnj_3b},
-            {r3_lowmet_3b, r4_lowmet_lownj_3b, r4_lowmet_highnj_3b}}},
-        {"highmet", {{r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
-              {r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
+      {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, r2_highmet_lownj_2b, r2_highmet_highnj_2b},
+            {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
   };
 
   //// METHOD 1BKALL: Adding 1b, fat R1/R3 integrated over njets, nb, and MET
   set<Block> blocks_1bkall{
     {"all", {{r1_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
             r2_lowmet_lownj_3b, r2_lowmet_highnj_3b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
-            r2_highmet_lownj, r2_highmet_highnj},
+            r2_highmet_lownj_2b, r2_highmet_highnj_2b},
           {r3_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
               r4_lowmet_lownj_3b, r4_lowmet_highnj_3b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
-              r4_highmet_lownj, r4_highmet_highnj}}}
+              r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
   };
 
   //// METHOD 1BK: Adding 1b, sharing RmT across all dimensions
@@ -222,12 +179,12 @@ int main(int argc, char *argv[]){
             r1_lowmet_2b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
             r1_lowmet_3b, r2_lowmet_lownj_3b, r2_lowmet_highnj_3b,
             r1_highmet_1b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
-            r1_highmet, r2_highmet_lownj, r2_highmet_highnj},
+            r1_highmet_2b, r2_highmet_lownj_2b, r2_highmet_highnj_2b},
           {r3_lowmet_1b, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b,
               r3_lowmet_2b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
               r3_lowmet_3b, r4_lowmet_lownj_3b, r4_lowmet_highnj_3b,
               r3_highmet_1b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
-              r3_highmet, r4_highmet_lownj, r4_highmet_highnj}}}
+              r3_highmet_2b, r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
   };
 
   //// METHOD 135: simple ABCD for 135 ipb
@@ -245,9 +202,9 @@ int main(int argc, char *argv[]){
           {d3_allnj, d4_lownj, d4_highnj}}}
   };
 
-  Cut *pbaseline(&baseline);
-  set<Block> *pblocks(&blocks_m2);
-  string sysfile("txt/systematics/method2.txt");
+  Cut *pbaseline(&baseline1b);
+  set<Block> *pblocks(&blocks_1bk);
+  string sysfile("txt/systematics/m1bk.txt");
   if(method == "m1b"){
     pbaseline = &baseline1b;
     pblocks = &blocks_1b;
@@ -280,15 +237,21 @@ int main(int argc, char *argv[]){
 
   TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
   TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
+  string blind_name = "";
+  if(blind_level == WorkspaceGenerator::BlindLevel::unblinded){
+    blind_name = "_unblinded";
+  }else if(blind_level == WorkspaceGenerator::BlindLevel::r4_blinded){
+    blind_name = "_r4blinded";
+  }
   string outname(method+(do_syst ? "" : "_nosys")+(use_r4 ? "" : "_nor4")
                  +(no_kappa ? "_nokappa" : "")+string("_c_met")
                  +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
-                 +sig_s+lumi_s.Data()+".root");
+                 +sig_s+lumi_s.Data()+blind_name+".root");
 
   for(unsigned itoy = 0; itoy <= n_toys; ++itoy){
     // Compressed SUSY
     WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
-    if(!blinded) wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+    wgc.SetBlindLevel(blind_level);
     wgc.SetKappaCorrected(!no_kappa);
     wgc.SetDoSystematics(do_syst);
     wgc.SetToyNum(itoy);
@@ -300,7 +263,7 @@ int main(int argc, char *argv[]){
 
     // Non-compressed SUSY
     WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
-    if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
+    wgnc.SetBlindLevel(blind_level);
     wgnc.SetKappaCorrected(!no_kappa);
     wgnc.SetDoSystematics(do_syst);
     wgnc.SetToyNum(itoy);
@@ -316,7 +279,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},
-      {"unblind", no_argument, 0, 'u'},
+      {"unblind", required_argument, 0, 'u'},
       {"no_syst", no_argument, 0, 0},
       {"lowj", required_argument, 0, 'j'},
       {"hij", required_argument, 0, 'h'},
@@ -332,7 +295,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:uj:h:m:s:kt:4g:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:kt:4g:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -344,7 +307,13 @@ void GetOptions(int argc, char *argv[]){
       sig_strength = atof(optarg);
       break;
     case 'u':
-      blinded = false;
+      if(string(optarg)=="all"){
+        blind_level = WorkspaceGenerator::BlindLevel::unblinded;
+      }else if(string(optarg)=="sideband"){
+        blind_level = WorkspaceGenerator::BlindLevel::r4_blinded;
+      }else{
+        blind_level = WorkspaceGenerator::BlindLevel::blinded;
+      }
       break;
     case 'j':
       minjets = optarg;

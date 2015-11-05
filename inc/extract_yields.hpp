@@ -15,6 +15,10 @@ std::string GetSignalName(const RooWorkspace &w);
 
 std::string TexFriendly(const std::string &s);
 
+void PrintDebug(RooWorkspace &w,
+                const RooFitResult &f,
+                const std::string &file_name);
+
 void PrintTable(RooWorkspace &w,
                 const RooFitResult &f,
                 const std::string &file_name);
@@ -63,6 +67,8 @@ void MakeYieldPlot(RooWorkspace &w,
                    const RooFitResult &f,
                    const std::string &file_name);
 
+std::vector<std::string> GetVarNames(const RooWorkspace &w);
+std::vector<std::string> GetFuncNames(const RooWorkspace &w);
 std::vector<std::string> GetBinNames(const RooWorkspace &w);
 std::vector<std::string> GetPlainBinNames(const RooWorkspace &w);
 std::vector<std::string> GetProcessNames(const RooWorkspace &w);

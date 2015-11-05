@@ -1,44 +1,48 @@
 #! /bin/bash
 
+shopt -s nullglob
+
+texify(){
+    orig_dir=$(pwd)
+    cd $1
+    for i in $(ls -A)
+    do
+	if [ -f $i ] && [ "${i: -4}" == ".tex" ]
+	then
+            pdfname=$(basename "$i" .tex).pdf
+	    if [ ! -f $pdfname ] || [ $i -nt $pdfname ]
+	    then
+		echo "Compiling $i"
+		pdflatex --shell-escape $i 1> /dev/null
+		auxname=$(basename "$i" .tex).aux
+		logname=$(basename "$i" .tex).log
+		rm -f $auxname $logname
+	    else
+		echo "Skipping $i"
+	    fi
+	fi
+    done
+    cd $orig_dir
+}
+
 ./compile.sh 
 
-./run/make_workspace.exe --method m135 -u --nokappa --no_syst &
-./run/make_workspace.exe --method m135 -u --no_syst &
-./run/make_workspace.exe --method m135 -u --use_r4 --no_syst &
-./run/make_workspace.exe --method m2l  -u --lumi 1.264 --no_syst &
+#./run/make_workspace.exe --method m135 -u all --nokappa --no_syst &
+#./run/make_workspace.exe --method m135 -u all --no_syst &
+#./run/make_workspace.exe --method m135 -u all --use_r4 --no_syst &
+./run/make_workspace.exe --method m2l  -u all --lumi 1.264 --no_syst &
 ./run/make_workspace.exe --method m2l  --lumi 3 --no_syst &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1 &
 ./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4 &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --no_syst &
+./run/make_workspace.exe --method m1bk -u sideband --lumi 1.264 &
 
 wait
 
-./run/extract_yields.exe m135_c_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m135_nc_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m135_nor4_c_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m135_nor4_nc_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m135_nor4_nokappa_c_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m135_nor4_nokappa_nc_met400_mj400_nj69_sig0_lumi0p135.root
-./run/extract_yields.exe m2l_nor4_c_met400_mj400_nj69_sig0_lumi1p264.root
-./run/extract_yields.exe m2l_nor4_c_met400_mj400_nj69_sig0_lumi3.root
-./run/extract_yields.exe m2l_nor4_nc_met400_mj400_nj69_sig0_lumi1p264.root
-./run/extract_yields.exe m2l_nor4_nc_met400_mj400_nj69_sig0_lumi3.root
-./run/extract_yields.exe m1bk_nc_met400_mj400_nj69_sig1_lumi3.root
-./run/extract_yields.exe m1bk_c_met400_mj400_nj69_sig1_lumi3.root
-./run/extract_yields.exe m1bk_nc_met400_mj400_nj69_sig0_lumi3.root
-./run/extract_yields.exe m1bk_c_met400_mj400_nj69_sig0_lumi3.root
+for file in $(ls -A *.root)
+do
+    ./run/extract_yields.exe $file
+done
 
-pdflatex m135_c_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m135_nc_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m135_nor4_c_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m135_nor4_nc_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m135_nor4_nokappa_c_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m135_nor4_nokappa_nc_met400_mj400_nj69_sig0_lumi0p135_bkg_table.tex
-pdflatex m2l_nor4_c_met400_mj400_nj69_sig0_lumi1p264_bkg_table.tex
-pdflatex m2l_nor4_c_met400_mj400_nj69_sig0_lumi3_bkg_table.tex
-pdflatex m2l_nor4_nc_met400_mj400_nj69_sig0_lumi1p264_bkg_table.tex
-pdflatex m2l_nor4_nc_met400_mj400_nj69_sig0_lumi3_bkg_table.tex
-pdflatex m1bk_nc_met400_mj400_nj69_sig0_lumi3_bkg_table.tex
-pdflatex m1bk_nc_met400_mj400_nj69_sig1_lumi3_bkg_table.tex
-pdflatex m1bk_c_met400_mj400_nj69_sig1_lumi3_bkg_table.tex
+texify .
