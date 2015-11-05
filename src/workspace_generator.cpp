@@ -893,16 +893,16 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       string bb_name = "_BLK_"+block.Name() +"_BIN_"+bin.Name();
       string null_name = "pdf_null"+bb_name;
       string alt_name = "pdf_alt"+bb_name;
-      w_.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
       if(use_r4_ || !Contains(bb_name, "4")){
+        w_.factory(("sum::nexp"+bb_name+"(nbkg"+bb_name+",nsig"+bb_name+")").c_str());
         null_list += null_name;
         alt_list += alt_name;
         w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
         (static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
         w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
         (static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
+        is_first = false;
       }
-      is_first = false;
     }
   }
   w_.factory(("PROD:pdf_null_BLK_"+block.Name()+"("+null_list+")").c_str());
