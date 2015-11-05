@@ -17,7 +17,7 @@ else
 	printf "\n\e[31m==========  ERRORS AND WARNINGS  ============\e[0m\n"
 	cat $bad_file >&2
     else
-	printf "\n\e[32mCompiled successfully without errors or warnings!\e[0m\n"
+	printf "\n\e[32mCompiled successfully without errors or warnings!\e[0m\n\n"
     fi
     
     rm -rf $bad_file

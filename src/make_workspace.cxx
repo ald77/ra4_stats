@@ -162,10 +162,10 @@ int main(int argc, char *argv[]){
   Bin r2c_lownj{"r2c_lownj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&njets<="+midjets+"&&nleps==1"};
   Bin r2c_highnj{"r2c_highnj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>"+midjets+"&&nleps==1"};
 
-  Bin d3_allnj{"d3_allnj", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nleps==2"};
+  Bin d3_allnj{"d3_allnj", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm<=2&&nleps==2"};
 
-  Bin d4_lownj{"d4_lownj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets<="+midjets2l+"&&nleps==2"};
-  Bin d4_highnj{"d4_highnj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets>"+midjets2l+"&&nleps==2"};
+  Bin d4_lownj{"d4_lownj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets<="+midjets2l+"&&nbm<=2&&nleps==2"};
+  Bin d4_highnj{"d4_highnj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets>"+midjets2l+"&&nbm<=2&&nleps==2"};
 
   //Method 135
   Bin r1{"r1", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
