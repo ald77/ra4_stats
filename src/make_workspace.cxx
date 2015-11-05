@@ -289,8 +289,8 @@ int main(int argc, char *argv[]){
     // Compressed SUSY
     WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
     if(!blinded) wgc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
-    if(no_kappa) wgc.SetKappaCorrected(false);
-    if(!do_syst) wgc.SetDoSystematics(false);
+    wgc.SetKappaCorrected(!no_kappa);
+    wgc.SetDoSystematics(do_syst);
     wgc.SetToyNum(itoy);
     wgc.SetLuminosity(lumi);
     wgc.SetDoDilepton(false); // Applying dilep syst in text file
@@ -301,8 +301,8 @@ int main(int argc, char *argv[]){
     // Non-compressed SUSY
     WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
     if(!blinded) wgnc.SetBlindLevel(WorkspaceGenerator::BlindLevel::unblinded);
-    if(no_kappa) wgnc.SetKappaCorrected(false);
-    if(!do_syst) wgnc.SetDoSystematics(false);
+    wgnc.SetKappaCorrected(!no_kappa);
+    wgnc.SetDoSystematics(do_syst);
     wgnc.SetToyNum(itoy);
     wgnc.SetLuminosity(lumi);
     wgnc.SetDoDilepton(false); // Applying dilep syst in text file

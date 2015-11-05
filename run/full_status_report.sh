@@ -2,11 +2,11 @@
 
 ./compile.sh 
 
-./run/make_workspace.exe --method m135 -u --nokappa &
-./run/make_workspace.exe --method m135 -u &
-./run/make_workspace.exe --method m135 -u --use_r4 &
-./run/make_workspace.exe --method m2l  -u --lumi 1.264 &
-./run/make_workspace.exe --method m2l  --lumi 3 &
+./run/make_workspace.exe --method m135 -u --nokappa --no_syst &
+./run/make_workspace.exe --method m135 -u --no_syst &
+./run/make_workspace.exe --method m135 -u --use_r4 --no_syst &
+./run/make_workspace.exe --method m2l  -u --lumi 1.264 --no_syst &
+./run/make_workspace.exe --method m2l  --lumi 3 --no_syst &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 &
 ./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1 &
 ./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4 &
