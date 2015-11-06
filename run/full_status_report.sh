@@ -42,7 +42,7 @@ wait
 
 for file in $(ls -A *.root)
 do
-    ./run/extract_yields.exe $file
+    ./run/extract_yields.exe -f $file
 done
 
 texify .
