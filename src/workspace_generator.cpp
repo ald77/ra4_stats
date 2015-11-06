@@ -47,7 +47,6 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   free_systematics_(),
   luminosity_(4.),
   print_level_(PrintLevel::normal),
-  blind_level_(BlindLevel::blinded),
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
@@ -80,18 +79,6 @@ double WorkspaceGenerator::GetLuminosity() const{
 WorkspaceGenerator & WorkspaceGenerator::SetLuminosity(double luminosity){
   if(luminosity != luminosity_){
     luminosity_ = luminosity;
-    w_is_valid_ = false;
-  }
-  return *this;
-}
-
-WorkspaceGenerator::BlindLevel WorkspaceGenerator::GetBlindLevel() const{
-  return blind_level_;
-}
-
-WorkspaceGenerator & WorkspaceGenerator::SetBlindLevel(BlindLevel blind_level){
-  if(blind_level != blind_level_){
-    blind_level_ = blind_level;
     w_is_valid_ = false;
   }
   return *this;
@@ -337,14 +324,12 @@ void WorkspaceGenerator::AddDileptonSystematic(){
         Cut dilep_baseline = baseline_;
         MakeDileptonBin(bin, dilep_bin, dilep_baseline);
         GammaParams dilep_gp(0., 0.);
-        if(blind_level_ == BlindLevel::unblinded
-           || (blind_level_ == BlindLevel::r4_blinded
-               && !Contains(bin.Name(), "4"))){
-          dilep_gp = GetYield(dilep_bin, data_, dilep_baseline);
-        }else{
+        if(dilep_bin.Blind()){
           for(const auto &bkg: backgrounds_){
             dilep_gp += GetYield(dilep_bin, bkg, dilep_baseline);
           }
+        }else{
+          dilep_gp = GetYield(dilep_bin, data_, dilep_baseline);
         }
 
         double strength = 1.;
@@ -483,17 +468,16 @@ void WorkspaceGenerator::AddData(const Block &block){
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
-      if(blind_level_ == BlindLevel::unblinded
-         || (blind_level_ == BlindLevel::r4_blinded
-             && !Contains(bin.Name(),"4"))){
-        gps = GetYield(bin, data_);
-      }else{
+      if(bin.Blind()){
         for(const auto &bkg: backgrounds_){
           gps += GetYield(bin, bkg);
         }
         // Injecting signal
         gps += sig_strength_*GetYield(bin, signal_);
+      }else{
+        gps = GetYield(bin, data_);
       }
+
       ostringstream oss;
       oss << "nobs_BLK_" << block.Name()
           << "_BIN_" << bin.Name() << flush;
@@ -1002,10 +986,10 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
   for(const auto &block: wg.blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
-        wg.PrintComparison(stream, bin, wg.data_, block, true, false);
-        wg.PrintComparison(stream, bin, wg.signal_, block, false, true);
+        wg.PrintComparison(stream, bin, wg.data_, block);
+        wg.PrintComparison(stream, bin, wg.signal_, block);
         for(const auto &bkg: wg.backgrounds_){
-          wg.PrintComparison(stream, bin, bkg, block, false, false);
+          wg.PrintComparison(stream, bin, bkg, block);
         }
       }
     }
@@ -1013,25 +997,23 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
   return stream;
 }
 
-void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin, const Process &process,
-                                         const Block &block, bool is_data, bool is_signal) const{
+void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin,
+                                         const Process &process, const Block &block) const{
   if(print_level_ >= PrintLevel::everything){
     cout << "PrintComparison([stream], " << bin << ", " << process
-         << ", " << block << ", " << is_data << ")" << endl;
+         << ", " << block << ")" << endl;
   }
+  
   GammaParams gp(0., 0.);
-  if(!is_data ||
-     blind_level_ == BlindLevel::unblinded
-     || (blind_level_ == BlindLevel::r4_blinded
-         && !Contains(bin.Name(), "4"))){
+  if(!(process.IsData() && bin.Blind())){
     gp = GetYield(bin, process);
   }
 
   ostringstream name;
-  name << (is_data ? "nobs" : is_signal ? "ymc" : "rate")
+  name << (process.IsData() ? "nobs" : process.IsSignal() ? "ymc" : "rate")
        << "_BLK_" << block.Name()
        << "_BIN_" << bin.Name();
-  if(!is_data){
+  if(!process.IsData()){
     name << "_PRC_" << process.Name();
   }
   name << flush;

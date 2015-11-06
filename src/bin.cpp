@@ -8,14 +8,15 @@
 using namespace std;
 
 Bin::Bin(const string &name, const class Cut &cut,
-	 const SystCollection &systematics):
+	 bool is_blind, const SystCollection &systematics):
   cut_(cut),
   name_(name),
-  systematics_(systematics){
+  systematics_(systematics),
+  is_blind_(is_blind){
   ReplaceAll(name_, " ", "");
   }
 
-const string Bin::Name() const{
+const string & Bin::Name() const{
   return name_;
 }
 
@@ -30,6 +31,14 @@ const class Cut & Bin::Cut() const{
 
 class Cut & Bin::Cut(){
   return cut_;
+}
+
+bool Bin::Blind() const{
+  return is_blind_;
+}
+
+bool & Bin::Blind(){
+  return is_blind_;
 }
 
 const Bin::SystCollection & Bin::Systematics() const{
@@ -91,16 +100,17 @@ Bin & Bin::SetSystematicStrength(const std::string &name, double strength){
 }
 
 bool Bin::operator<(const Bin &b) const{
-  return tie(cut_, systematics_) < tie(b.cut_, b.systematics_);
+  return tie(cut_, systematics_, is_blind_) < tie(b.cut_, b.systematics_, b.is_blind_);
 }
 
 bool Bin::operator==(const Bin &b) const{
-  return tie(cut_, systematics_) == tie(b.cut_, b.systematics_);
+  return tie(cut_, systematics_, is_blind_) == tie(b.cut_, b.systematics_, b.is_blind_);
 }
 
 ostream & operator<<(ostream &stream, const Bin &bin){
   stream << "Bin::" << bin.Name()
 	 << "(cut=" << bin.Cut()
+	 << ",blind=" << bin.Blind()
 	 << ")";
   return stream;
 }

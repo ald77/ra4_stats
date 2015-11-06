@@ -13,13 +13,17 @@ class Bin{
   typedef std::set<Systematic> SystCollection;
 public:
   Bin(const std::string &name, const class Cut &cut,
+      bool is_blind = true,
       const SystCollection &systematics = SystCollection());
 
-  const std::string Name() const;
+  const std::string & Name() const;
   Bin & Name(const std::string &name);
 
   const class Cut & Cut() const;
   class Cut & Cut();
+
+  bool Blind() const;
+  bool & Blind();
 
   const SystCollection & Systematics() const;
   Bin & Systematics(const SystCollection &systematics);
@@ -37,6 +41,7 @@ private:
   class Cut cut_;
   std::string name_;
   SystCollection systematics_;
+  bool is_blind_;
 };
 
 std::ostream & operator<<(std::ostream &stream, const Bin &bin);

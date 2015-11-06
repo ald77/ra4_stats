@@ -26,7 +26,7 @@ using namespace std;
 namespace{
   double lumi = 0.135;
   double sig_strength = 0.;
-  WorkspaceGenerator::BlindLevel blind_level = WorkspaceGenerator::BlindLevel::blinded;
+  BlindLevel blind_level = BlindLevel::blinded;
   bool no_kappa = false;
   bool do_syst = true;
   bool use_r4 = false;
@@ -68,13 +68,13 @@ int main(int argc, char *argv[]){
     }};
   Process signal_nc{"signal", {
       {foldermc+"/*T1tttt*1500*100*.root/tree"}
-    }};
+    }, Cut(), false, true};
   Process signal_c{"signal", {
       {foldermc+"/*T1tttt*1200*800*.root/tree"}
-    }};
+    }, Cut(), false, true};
 
-  string data_cuts("(trig[4]||trig[8])&&pass");
-  if(method=="m2l") {
+  string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");
+  if(method!="m135") {
     data_cuts = "(trig[4]||trig[8])&&pass";
   }
   Process data{"data", {
@@ -92,66 +92,115 @@ int main(int argc, char *argv[]){
 
   //Declare bins
   //Method 2, m1b, and m1bk
-  Bin r1_lowmet_1b{"r1_lowmet_1b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
-  Bin r1_highmet_1b{"r1_highmet_1b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
-  Bin r1_lowmet_2b{"r1_lowmet_2b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
-  Bin r1_lowmet_3b{"r1_lowmet_3b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
-  Bin r1_highmet_2b{"r1_highmet_2b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+  Bin r1_lowmet_1b{"r1_lowmet_1b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r1_highmet_1b{"r1_highmet_1b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r1_lowmet_2b{"r1_lowmet_2b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2",
+      blind_level>=BlindLevel::blinded};
+  Bin r1_lowmet_3b{"r1_lowmet_3b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2",
+      blind_level>=BlindLevel::blinded};
+  Bin r1_highmet_2b{"r1_highmet_2b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2",
+      blind_level>=BlindLevel::blinded};
 
-  Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet};
-  Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet};
-  Bin r1_allnb{"r1_allnb", "mt<=140&&mj<="+mjthresh};
+  Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
+      blind_level>=BlindLevel::blinded};
+  Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet,
+      blind_level>=BlindLevel::blinded};
+  Bin r1_allnb{"r1_allnb", "mt<=140&&mj<="+mjthresh,
+      blind_level>=BlindLevel::blinded};
 
-  Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"};
-  Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"};
-  Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"};
-  Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
-  Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
-  Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
-  Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
-  Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
+  Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
+      blind_level>=BlindLevel::blinded};
 
-  Bin r3_lowmet_1b{"r3_lowmet_1b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1"};
-  Bin r3_highmet_1b{"r3_highmet_1b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1"};
-  Bin r3_lowmet_2b{"r3_lowmet_2b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2"};
-  Bin r3_lowmet_3b{"r3_lowmet_3b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2"};
-  Bin r3_highmet_2b{"r3_highmet_2b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2"};
+  Bin r3_lowmet_1b{"r3_lowmet_1b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r3_highmet_1b{"r3_highmet_1b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r3_lowmet_2b{"r3_lowmet_2b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2",
+      blind_level>=BlindLevel::blinded};
+  Bin r3_lowmet_3b{"r3_lowmet_3b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2",
+      blind_level>=BlindLevel::blinded};
+  Bin r3_highmet_2b{"r3_highmet_2b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2",
+      blind_level>=BlindLevel::blinded};
 
-  Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet};
-  Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet};
-  Bin r3_allnb{"r3_allnb", "mt>140&&mj<="+mjthresh};
+  Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet,
+      blind_level>=BlindLevel::blinded};
+  Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet,
+      blind_level>=BlindLevel::blinded};
+  Bin r3_allnb{"r3_allnb", "mt>140&&mj<="+mjthresh,
+      blind_level>=BlindLevel::blinded};
 
-  Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"};
-  Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"};
-  Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"};
-  Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"};
-  Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"};
-  Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"};
-  Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"};
-  Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"};
-  Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"};
+  Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
+  Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
+  Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
+  Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
+
+  Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
+      blind_level>BlindLevel::unblinded};
+  Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2",
+      blind_level>BlindLevel::unblinded};
+  Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2",
+      blind_level>BlindLevel::unblinded};
+  Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
+      blind_level>BlindLevel::unblinded};
+  Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
+      blind_level>BlindLevel::unblinded};
+  Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
+      blind_level>BlindLevel::unblinded};
 
   // Dilepton blocks
-  Bin r1c_allnj{"r1c_allnj", "mt<=140&&mj<="+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&nleps==1"};
+  Bin r1c_allnj{"r1c_allnj", "mt<=140&&mj<="+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&nleps==1",
+      blind_level>=BlindLevel::blinded};
 
-  Bin r2c_lownj{"r2c_lownj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&njets<="+midjets+"&&nleps==1"};
-  Bin r2c_highnj{"r2c_highnj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>"+midjets+"&&nleps==1"};
+  Bin r2c_lownj{"r2c_lownj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&njets<="+midjets+"&&nleps==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2c_highnj{"r2c_highnj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>"+midjets+"&&nleps==1",
+      blind_level>=BlindLevel::blinded};
 
-  Bin d3_allnj{"d3_allnj", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm<=2&&nleps==2"};
+  Bin d3_allnj{"d3_allnj", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm<=2&&nleps==2",
+      blind_level>=BlindLevel::blinded};
 
-  Bin d4_lownj{"d4_lownj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets<="+midjets2l+"&&nbm<=2&&nleps==2"};
-  Bin d4_highnj{"d4_highnj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets>"+midjets2l+"&&nbm<=2&&nleps==2"};
+  Bin d4_lownj{"d4_lownj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets<="+midjets2l+"&&nbm<=2&&nleps==2",
+      blind_level>=BlindLevel::blinded};
+  Bin d4_highnj{"d4_highnj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets>"+midjets2l+"&&nbm<=2&&nleps==2",
+      blind_level>=BlindLevel::blinded};
 
   //Method 135
-  Bin r1{"r1", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Bin r2{"r2", "mt<=140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Bin r3{"r3", "mt>140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Bin r4{"r4", "mt>140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Bin d3{"d3", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2"};
-  Bin d4{"d4", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2"};
+  Bin r1{"r1", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2{"r2", "mt<=140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r3{"r3", "mt>140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r4{"r4", "mt>140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
+      blind_level>BlindLevel::unblinded};
+  Bin d3{"d3", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2",
+      blind_level>=BlindLevel::blinded};
+  Bin d4{"d4", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2",
+      blind_level>=BlindLevel::blinded};
 
   //// METHOD 1BK: Adding 1b, fat R1/R3 integrated over njets, nb, but not MET
   set<Block> blocks_1bk{
@@ -238,9 +287,11 @@ int main(int argc, char *argv[]){
   TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
   TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
   string blind_name = "";
-  if(blind_level == WorkspaceGenerator::BlindLevel::unblinded){
+  if(blind_level == BlindLevel::unblinded){
     blind_name = "_unblinded";
-  }else if(blind_level == WorkspaceGenerator::BlindLevel::r4_blinded){
+  }else if(blind_level == BlindLevel::unblind_1b){
+    blind_name = "_1bunblinded";
+  }else if(blind_level == BlindLevel::r4_blinded){
     blind_name = "_r4blinded";
   }
   string outname(method+(do_syst ? "" : "_nosys")+(use_r4 ? "" : "_nor4")
@@ -251,7 +302,6 @@ int main(int argc, char *argv[]){
   for(unsigned itoy = 0; itoy <= n_toys; ++itoy){
     // Compressed SUSY
     WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
-    wgc.SetBlindLevel(blind_level);
     wgc.SetKappaCorrected(!no_kappa);
     wgc.SetDoSystematics(do_syst);
     wgc.SetToyNum(itoy);
@@ -263,7 +313,6 @@ int main(int argc, char *argv[]){
 
     // Non-compressed SUSY
     WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
-    wgnc.SetBlindLevel(blind_level);
     wgnc.SetKappaCorrected(!no_kappa);
     wgnc.SetDoSystematics(do_syst);
     wgnc.SetToyNum(itoy);
@@ -308,11 +357,13 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'u':
       if(string(optarg)=="all"){
-        blind_level = WorkspaceGenerator::BlindLevel::unblinded;
+        blind_level = BlindLevel::unblinded;
       }else if(string(optarg)=="sideband"){
-        blind_level = WorkspaceGenerator::BlindLevel::r4_blinded;
+        blind_level = BlindLevel::r4_blinded;
+      }else if(string(optarg)=="1b"){
+        blind_level = BlindLevel::unblind_1b;
       }else{
-        blind_level = WorkspaceGenerator::BlindLevel::blinded;
+        blind_level = BlindLevel::blinded;
       }
       break;
     case 'j':

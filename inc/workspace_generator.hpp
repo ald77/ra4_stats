@@ -30,15 +30,12 @@ public:
                      const double sig_strength = 0.);
 
   enum class PrintLevel{silent, important, normal, everything};
-  enum class BlindLevel{unblinded, r4_blinded, blinded};
+
 
   void WriteToFile(const std::string &file_name);
 
   double GetLuminosity() const;
   WorkspaceGenerator & SetLuminosity(double luminosity);
-
-  BlindLevel GetBlindLevel() const;
-  WorkspaceGenerator & SetBlindLevel(BlindLevel blind_level);
 
   bool GetDoSystematics() const;
   WorkspaceGenerator & SetDoSystematics(bool do_systematics);
@@ -77,7 +74,6 @@ private:
   std::set<FreeSystematic> free_systematics_;
   double luminosity_;
   PrintLevel print_level_;
-  BlindLevel blind_level_;
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
@@ -122,8 +118,8 @@ private:
   void DefineParameterSet(const std::string &cat_name,
                           const std::set<std::string> &var_names);
   void AddModels();
-  void PrintComparison(std::ostream &stream, const Bin &bin, const Process &process,
-                       const Block &block, bool is_data, bool is_signal=false) const;
+  void PrintComparison(std::ostream &stream, const Bin &bin,
+                       const Process &process, const Block &block) const;
 };
 
 #endif

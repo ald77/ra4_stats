@@ -21,12 +21,14 @@ public:
           const std::set<std::string> &file_names,
           const Cut &cut = ::Cut(),
           bool is_data = false,
+          bool is_signal = false,
           bool count_zeros = true,
           const SystCollection &systematics = SystCollection());
   Process(const std::string &name,
           std::initializer_list<std::string> file_names,
           const Cut &cut = ::Cut(),
           bool is_data = false,
+          bool is_signal = false,
           bool count_zeros = true,
           const SystCollection &systematics = SystCollection());
 
@@ -38,6 +40,9 @@ public:
 
   const bool & IsData() const;
   bool & IsData();
+  
+  const bool & IsSignal() const;
+  bool & IsSignal();
   
   const bool & CountZeros() const;
   bool & CountZeros();
@@ -65,6 +70,7 @@ private:
   class Cut cut_;
   std::string name_;
   bool is_data_;
+  bool is_signal_;
   bool count_zeros_;
   SystCollection systematics_;
 

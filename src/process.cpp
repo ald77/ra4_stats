@@ -15,6 +15,7 @@ Process::Process(const string &name,
                  const set<string> &file_names,
                  const class Cut &cut,
                  bool is_data,
+                 bool is_signal,
                  bool count_zeros,
                  const SystCollection &systematics):
   file_names_(file_names),
@@ -22,6 +23,7 @@ Process::Process(const string &name,
   cut_(cut),
   name_(name),
   is_data_(is_data),
+  is_signal_(is_signal),
   count_zeros_(count_zeros),
   systematics_(systematics){
   CleanName();
@@ -32,6 +34,7 @@ Process::Process(const string &name,
                  initializer_list<string> file_names,
                  const class Cut &cut,
                  bool is_data,
+                 bool is_signal,
                  bool count_zeros,
                  const SystCollection &systematics):
   file_names_(file_names),
@@ -39,6 +42,7 @@ Process::Process(const string &name,
   cut_(cut),
   name_(name),
   is_data_(is_data),
+  is_signal_(is_signal),
   count_zeros_(count_zeros),
   systematics_(systematics){
   CleanName();
@@ -85,6 +89,14 @@ const bool & Process::IsData() const{
 
 bool & Process::IsData(){
   return is_data_;
+}
+
+const bool & Process::IsSignal() const{
+  return is_signal_;
+}
+
+bool & Process::IsSignal(){
+  return is_signal_;
 }
 
 const bool & Process::CountZeros() const{
@@ -178,6 +190,7 @@ ostream & operator<<(ostream &stream, const Process &proc){
          << "(cut=" << proc.Cut()
          << ",count_zeros=" << proc.CountZeros()
          << ",is_data=" << proc.IsData()
+         << ",is_signal=" << proc.IsSignal()
          << ")";
   return stream;
 }
