@@ -176,7 +176,7 @@ void PrintTable(RooWorkspace &w,
   out << "\\begin{table}\n";
   out << "\\centering\n";
   out << "\\resizebox{\\textwidth}{!}{\n";
-  out << "\\begin{tabular}{r";
+  out << "\\begin{tabular}{l";
   for(size_t i = 0; i < prc_names.size() + 8; ++i) out << "r";
   out << "}\n";
   out << "\\hline\\hline\n";
@@ -184,20 +184,38 @@ void PrintTable(RooWorkspace &w,
   for(const auto &prc_name: prc_names){
     out << prc_name << " & ";
   }
-  out << "Bkgnd. Tot. & Bkgnd. Pred. & Signal & Sig. Pred. & Tot. Pred. & Observed & $\\lambda$\\\\\n";
-  out << "\\hline\n";
+  bool dosig(Contains(file_name, "sig_table")), blind_all(Contains(file_name, "r4blinded"));
+  bool blind_2b(Contains(file_name, "1bunblinded"));
+  out << "MC Bkg. "<<(dosig?"& Bkgnd. Pred. ":"")<<"& Signal "<<(dosig?"& Sig. Pred. ":"")
+      <<"& Tot. Pred. & Obs. & $\\lambda$\\\\\n";
+  // out << "\\hline\n";
   for(const auto &bin_name: bin_names){
-    out << TexFriendly(bin_name) << " & ";
+    if(Contains(bin_name, "r1")) {
+      out << "\\hline\\hline"<<endl;
+      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<(dosig?10:8)<<"}{c}{$200<\\text{MET}\\leq 400$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<(dosig?10:8)<<"}{c}{$\\text{MET}>400$} \\\\ \\hline"<<endl;
+    }
+    string bin_tex(TexFriendly(bin_name));
+    ReplaceAll(bin_tex, "lowmet\\_","");
+    ReplaceAll(bin_tex, "highmet\\_","");
+    for(int ind(1); ind<=4; ind++){
+      ReplaceAll(bin_tex, "r"+to_string(ind)+"\\_","R"+to_string(ind)+": ");
+      ReplaceAll(bin_tex, "r"+to_string(ind)+"c\\_","R"+to_string(ind)+": ");
+      ReplaceAll(bin_tex, "d"+to_string(ind)+"\\_","D"+to_string(ind)+": ");
+    }
+    out << bin_tex << " & ";
     for(const auto &prc_name: prc_names){
       out << GetMCYield(w, bin_name, prc_name) << " & ";
     }
     out << "$" << GetMCTotal(w, bin_name) << "\\pm" << GetMCTotalErr(w, f, bin_name) <<  "$ & ";
-    out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
+    if(dosig) out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
     out << GetMCYield(w, bin_name, sig_name) << " & ";
-    out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
+    if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
     out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
-    out << GetObserved(w, bin_name) << " & ";
-    out << "$" << GetLambda(w, bin_name) << "\\pm" << GetLambdaErr(w, f, bin_name) <<  "$\\\\\n";
+    if(Contains(bin_name,"4") && (blind_all || (!Contains(bin_name,"1b") && blind_2b))) out << "-- & ";
+    else out << setprecision(0) << GetObserved(w, bin_name) << " & ";
+    out << setprecision(2)<< "$" << GetLambda(w, bin_name) << "\\pm" << GetLambdaErr(w, f, bin_name) <<  "$\\\\\n";
+    if(Contains(bin_name, "r3") || Contains(bin_name, "d3")) out << "\\hline"<<endl;
   }
   out << "\\hline\\hline\n";
   out << "\\end{tabular}\n";
