@@ -10,6 +10,7 @@
 #include <getopt.h>
 
 #include "TFile.h"
+#include "TLine.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include "TLegend.h"
@@ -535,7 +536,7 @@ void MakeYieldPlot(RooWorkspace &w,
   double offset = 0.5;
 
   mid_pad.cd();
-  mid_pad.SetLogy();
+    if(!Contains(file_wspace, "nor4")) mid_pad.SetLogy();
   signal.SetTitleSize(font_size, "Y");
   signal.SetTitleOffset(offset, "Y");
   signal.SetFillColor(2);
@@ -547,8 +548,11 @@ void MakeYieldPlot(RooWorkspace &w,
   for(auto h = histos.rbegin(); h!= histos.rend(); ++h){
     h->Draw("same");
   }
+  
+  double marker_size(1.4);
+  obs.SetMarkerStyle(20); obs.SetMarkerSize(marker_size);
   band.Draw("02 same");
-  obs.Draw("e1p same");
+  obs.Draw("ex0 same");
   signal.Draw("same axis");
 
   top_pad.cd();
@@ -577,15 +581,18 @@ void MakeYieldPlot(RooWorkspace &w,
   l.Draw("same");
 
   bot_pad.cd();
+  TLine line; line.SetLineStyle(2);
   TGraphErrors obs_rat = MakeRatio(obs, signal);
   TGraphErrors pred_rat = MakeRatio(signal, signal);
   TH1D dumb = obs;
+  obs_rat.SetMarkerStyle(20); obs_rat.SetMarkerSize(marker_size);
+  obs_rat.SetMarkerColor(1);
   dumb.SetLineColor(0);
   dumb.SetLineWidth(0);
   dumb.SetFillColor(0);
   dumb.SetFillStyle(4000);
   dumb.SetMinimum(0.);
-  dumb.SetMaximum(2.);
+  dumb.SetMaximum(2.8);
   dumb.SetTitle(";;Obs/Pred ");
   dumb.GetXaxis()->LabelsOption("V");
   dumb.SetTitleSize(font_size, "Y");
@@ -594,7 +601,8 @@ void MakeYieldPlot(RooWorkspace &w,
   pred_rat.SetFillColor(kGray);
   pred_rat.SetFillStyle(3001);
   pred_rat.Draw("02 same");
-  obs_rat.Draw("0 same");
+  obs_rat.Draw("ep0 same");
+  line.DrawLine(0.5, 1, 0.5+dumb.GetNbinsX(), 1);
   c.Print(file_name.c_str());
 }
 
@@ -643,6 +651,7 @@ vector<string> GetBinNames(const RooWorkspace &w){
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
+    if(!Contains(name, "4")  && Contains(file_wspace, "nor4")) continue;
     string bin_name = name.substr(5);
     Append(names, bin_name);
   }
@@ -742,6 +751,8 @@ vector<TH1D> MakeBackgroundHistos(const vector<vector<double> > &yields,
       const string &name = bin_names.at(ibin);
       auto pos = name.find("_BIN_");
       if(pos == string::npos) continue;
+      pos = name.find("4");
+      if(pos != string::npos && Contains(file_wspace, "nor4")) continue;
       string label = name.substr(pos+5);
       h.GetXaxis()->SetBinLabel(ibin+1, label.c_str());
     }
@@ -817,13 +828,20 @@ void SetBounds(TH1D &a,
   lmax += factor*log_diff;
   hmin = exp(lmin);
   hmax = exp(lmax);
-  a.SetMinimum(hmin);
-  a.SetMaximum(hmax);
-  b.SetMinimum(hmin);
-  b.SetMaximum(hmax);
-  for(auto &c: cs){
-    c.SetMinimum(hmin);
-    c.SetMaximum(hmax);
+  if(!Contains(file_wspace, "nor4")){
+    a.SetMinimum(hmin);
+    a.SetMaximum(hmax);
+    b.SetMinimum(hmin);
+    b.SetMaximum(hmax);
+    for(auto &c: cs){
+      c.SetMinimum(hmin);
+      c.SetMaximum(hmax);
+    }
+  } else {
+    a.SetMaximum(hmax+1.1*sqrt(hmax));
+    b.SetMaximum(hmax+1.1*sqrt(hmax));
+    a.SetMinimum(0);
+    b.SetMinimum(0);
   }
 }
 
@@ -896,6 +914,8 @@ TGraphErrors MakeErrorBand(const TH1D &h){
 
 TGraphErrors MakeRatio(const TH1D &num, const TH1D &den){
   TGraphErrors g(num.GetNbinsX());
+  double xerror(0.5);
+  if(&num != &den) xerror = 0;
   for(int bin = 1; bin <= num.GetNbinsX(); ++bin){
     double x = num.GetBinCenter(bin);
     double nc = num.GetBinContent(bin);
@@ -904,13 +924,13 @@ TGraphErrors MakeRatio(const TH1D &num, const TH1D &den){
     double big_num = 0.5*numeric_limits<float>::max();
     if(dc != 0.){
       g.SetPoint(bin, x, nc/dc);
-      g.SetPointError(bin, 0.5, ne/dc);
+      g.SetPointError(bin, xerror, ne/dc);
     }else if(nc == 0.){
       g.SetPoint(bin, x, 1.);
-      g.SetPointError(bin, 0.5, big_num);
+      g.SetPointError(bin, xerror, big_num);
     }else{
       g.SetPoint(bin, x, nc > 0. ? big_num : -big_num);
-      g.SetPointError(bin, 0.5, big_num);
+      g.SetPointError(bin, xerror, big_num);
     }
   }
   return g;
