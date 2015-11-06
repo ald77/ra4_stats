@@ -5,6 +5,9 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <initializer_list>
+#include <stdlib.h>
+#include <getopt.h>
 
 #include "TFile.h"
 #include "TCanvas.h"
@@ -20,35 +23,51 @@
 
 using namespace std;
 
+namespace{
+  string file_wspace("empty");
+  string name_wspace("w");
+}
+
 int main(int argc, char *argv[]){
-  for(int argi = 1; argi < argc; ++argi){
-    execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all "+string(argv[argi]));
+  GetOptionsExtract(argc, argv);
 
-    styles style("RA4");
-    style.setDefaultStyle();
-
-    TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
-    if(!w_file.IsOpen()) continue;
-    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
-    if(w == nullptr) continue;
-
-    TFile fit_file("mlfit.root","read");
-    if(!fit_file.IsOpen()) continue;
-    RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
-    RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-
-    if(fit_b != nullptr){
-      PrintDebug(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_debug.tex"));
-      PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
-      MakeYieldPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_plot.pdf"));
-      if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_correction.pdf"));
-    }
-    if(fit_s != nullptr){
-      PrintDebug(*w, *fit_s, ChangeExtension(argv[argi], "_sig_debug.tex"));
-      PrintTable(*w, *fit_s, ChangeExtension(argv[argi], "_sig_table.tex"));
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_plot.pdf"));
-      if(!Contains(argv[argi], "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(argv[argi], "_sig_correction.pdf"));
-    }
+  if(file_wspace == "empty"){
+    cout<<"You need to specify the file containing the workspace with option -f"<<endl<<endl;
+    return 1;
+  }
+  execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w "+name_wspace+" "+string(file_wspace));
+    
+  styles style("RA4");
+  style.setDefaultStyle();
+  
+  string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
+  TFile w_file(w_name.c_str(),"read");
+  if(!w_file.IsOpen()) {
+    cout<<endl<<"File "<< w_name.c_str()<<" not produced. Exiting"<<endl<<endl;
+    return 1;
+  }
+  RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
+  if(w == nullptr) {
+    cout<<endl<<"Workspace "<< name_wspace.c_str()<<" not found. Exiting"<<endl<<endl;
+    return 1;
+  }
+    
+  TFile fit_file("mlfit.root","read");
+  if(!fit_file.IsOpen()) return 1;
+  RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
+  RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
+  file_wspace = ChangeExtension(file_wspace, "_"+name_wspace+".root");
+  if(fit_b != nullptr){
+    PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
+    PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"));
+    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+  }
+  if(fit_s != nullptr){
+    PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
+    PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"));
+    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
   }
 }
 
@@ -941,7 +960,8 @@ double GetError(const RooAbsReal &var,
     }
   }
 
-  vector<double> errors(paramList.getSize());
+  //vector<double> errors(paramList.getSize());
+  vector<double> errors;
   const TMatrixDSym &corr = f.correlationMatrix();
   for (Int_t ivar=0; ivar<paramList.getSize(); ivar++) {
     RooRealVar& rrv = static_cast<RooRealVar&>(fpf[fpf_idx[ivar]]);
@@ -987,4 +1007,33 @@ double GetError(const RooAbsReal &var,
     sum += errors.at(i)*right.at(i);
   }
   return sqrt(sum);
+}
+
+
+void GetOptionsExtract(int argc, char *argv[]){
+  while(true){
+    static struct option long_options[] = {
+      {"file_wspace", required_argument, 0, 'f'},
+      {"name_wspace", required_argument, 0, 'w'},
+      {0, 0, 0, 0}
+    };
+
+    char opt = -1;
+    int option_index;
+    opt = getopt_long(argc, argv, "f:w:", long_options, &option_index);
+    if( opt == -1) break;
+
+    string optname;
+    switch(opt){
+    case 'w':
+      name_wspace = optarg;
+      break;
+    case 'f':
+      file_wspace = optarg;
+      break;
+    default:
+      printf("Bad option! getopt_long returned character code 0%o\n", opt);
+      break;
+    }
+  }
 }

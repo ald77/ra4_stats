@@ -87,7 +87,7 @@ int main(int argc, char *argv[]){
   //Baseline selection applied to all bins and processes
   Cut baseline{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
   Cut baseline1b{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400&&nbm<=2"};
+  Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400"};
   Cut baseline_135{"mj>250&&ht>450&&met>150"};
 
   //Declare bins

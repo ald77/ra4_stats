@@ -11,6 +11,8 @@
 #include "RooWorkspace.h"
 #include "RooFitResult.h"
 
+void GetOptionsExtract(int argc, char *argv[]);
+
 std::string GetSignalName(const RooWorkspace &w);
 
 std::string TexFriendly(const std::string &s);
