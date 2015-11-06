@@ -22,21 +22,21 @@ using namespace std;
 
 int main(int argc, char *argv[]){
   for(int argi = 1; argi < argc; ++argi){
-    execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace "+string(argv[argi]));
-    
+    execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all "+string(argv[argi]));
+
     styles style("RA4");
     style.setDefaultStyle();
-    
-    TFile w_file("MaxLikelihoodFitResult.root","read");
+
+    TFile w_file("higgsCombineTest.MaxLikelihoodFit.mH120.root","read");
     if(!w_file.IsOpen()) continue;
-    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("MaxLikelihoodFitResult"));
+    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get("w"));
     if(w == nullptr) continue;
-    
+
     TFile fit_file("mlfit.root","read");
     if(!fit_file.IsOpen()) continue;
     RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
     RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-    
+
     if(fit_b != nullptr){
       PrintDebug(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_debug.tex"));
       PrintTable(*w, *fit_b, ChangeExtension(argv[argi], "_bkg_table.tex"));
@@ -101,7 +101,7 @@ void PrintDebug(RooWorkspace &w,
                 const RooFitResult &f,
                 const string &file_name){
   SetVariables(w, f);
-  
+
   vector<string> var_names = GetVarNames(w);
   vector<string> func_names = GetFuncNames(w);
 
@@ -113,19 +113,21 @@ void PrintDebug(RooWorkspace &w,
   out << "\\hline\\hline\n";
   out << "Variable & Fit Value\\\\\n";
   out << "\\hline\n";
-  out << fixed << setprecision(4);
+  out << fixed << setprecision(2);
   for(const auto &var: var_names){
     RooRealVar *varo = w.var(var.c_str());
+    if(varo == nullptr) continue;
     if(!varo->isConstant()){
-      out << TexFriendly(var) << " & $" << varo->getVal() << "\\pm" << varo->getPropagatedError(f) << "$\\\\\n";
+      out << TexFriendly(var) << " & $" << varo->getVal() << "\\pm" << GetError(*varo, f) << "$\\\\\n";
     }else{
       out << TexFriendly(var) << " & $" << varo->getVal() << "$\\\\\n";
     }
   }
   for(const auto &func: func_names){
     RooAbsReal *funco = w.function(func.c_str());
+    if(funco == nullptr) continue;
     if(!funco->isConstant()){
-      out << TexFriendly(func) << " & $" << funco->getVal() << "\\pm" << funco->getPropagatedError(f) << "$\\\\\n";
+      out << TexFriendly(func) << " & $" << funco->getVal() << "\\pm" << GetError(*funco, f) << "$\\\\\n";
     }else{
       out << TexFriendly(func) << " & $" << funco->getVal() << "$\\\\\n";
     }
@@ -143,13 +145,13 @@ void PrintTable(RooWorkspace &w,
                 const RooFitResult &f,
                 const string &file_name){
   SetVariables(w, f);
-  
+
   string sig_name = GetSignalName(w);
   vector<string> prc_names = GetProcessNames(w);
   vector<string> bin_names = GetPlainBinNames(w);
 
   ofstream out(file_name);
-  out << fixed << setprecision(4);
+  out << fixed << setprecision(2);
   out << "\\documentclass{article}\n";
   out << "\\usepackage{amsmath,graphicx,rotating}\n";
   out << "\\usepackage[landscape]{geometry}\n";
@@ -231,7 +233,7 @@ double GetMCTotal(const RooWorkspace &w,
   return -1.;
 }
 
-double GetMCTotalErr(const RooWorkspace &w,
+double GetMCTotalErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -246,7 +248,7 @@ double GetMCTotalErr(const RooWorkspace &w,
     if(name.substr(0,8) != "ymc_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
-    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
   }
   iter.Reset();
   return -1.;
@@ -272,7 +274,7 @@ double GetBkgPred(const RooWorkspace &w,
   return -1.;
 }
 
-double GetBkgPredErr(const RooWorkspace &w,
+double GetBkgPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -287,7 +289,7 @@ double GetBkgPredErr(const RooWorkspace &w,
     if(name.substr(0,9) != "nbkg_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
-    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
   }
   iter.Reset();
   return -1.;
@@ -313,7 +315,7 @@ double GetSigPred(const RooWorkspace &w,
   return -1.;
 }
 
-double GetSigPredErr(const RooWorkspace &w,
+double GetSigPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -328,7 +330,7 @@ double GetSigPredErr(const RooWorkspace &w,
     if(name.substr(0,9) != "nsig_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
-    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
   }
   iter.Reset();
   return -1.;
@@ -354,7 +356,7 @@ double GetTotPred(const RooWorkspace &w,
   return -1.;
 }
 
-double GetTotPredErr(const RooWorkspace &w,
+double GetTotPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -369,7 +371,7 @@ double GetTotPredErr(const RooWorkspace &w,
     if(name.substr(0,9) != "nexp_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
-    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
   }
   iter.Reset();
   return -1.;
@@ -415,7 +417,7 @@ double GetLambda(const RooWorkspace &w,
   return -1.;
 }
 
-double GetLambdaErr(const RooWorkspace &w,
+double GetLambdaErr(RooWorkspace &w,
                     const RooFitResult &f,
                     const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
@@ -430,7 +432,7 @@ double GetLambdaErr(const RooWorkspace &w,
     if(name.substr(0,12) != "kappamc_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
-    return static_cast<RooRealVar*>(arg)->getPropagatedError(f);
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
   }
   iter.Reset();
   return -1.;
@@ -450,6 +452,16 @@ RooRealVar * SetVariables(RooWorkspace &w,
     w_var->setError(fit_var->getError());
     if(fit_var->GetName() == string("r")) set_r = true;
   }
+  vector<string> var_names = GetVarNames(w);
+  vector<string> func_names = GetFuncNames(w);
+  for(const auto &var: var_names){
+    RooRealVar *varo = w.var(var.c_str());
+    if(varo == nullptr) continue;
+    if(!varo->isConstant()){
+      varo->removeRange();
+    }
+  }
+
   RooRealVar *r_var = static_cast<RooRealVar*>(w.var("r"));
   if(r_var != nullptr){
     if(!set_r){
@@ -524,15 +536,15 @@ void MakeYieldPlot(RooWorkspace &w,
   l.AddEntry(&obs, "Observed", "lep");
   l.AddEntry(&signal, "Signal", "f");
   ostringstream oss;
-  oss << setprecision(4) << fixed;
+  oss << setprecision(2) << fixed;
   oss << "r=";
   if(r_var == nullptr){
     oss << "???";
   }else if(r_var->isConstant()){
     oss << r_var->getVal() << " (fixed)";
   }else{
-    oss << r_var->getVal() << "#pm" << r_var->getPropagatedError(f);
-    cout<<"Signal strength: "<<r_var->getVal() << "#pm" << r_var->getPropagatedError(f)<<endl;
+    oss << r_var->getVal() << "#pm" << GetError(*r_var, f);
+    cout<<"Signal strength: "<<r_var->getVal() << "#pm" << GetError(*r_var, f) << endl;
   }
   oss << flush;
   l.AddEntry(&obs, oss.str().c_str(), "");
@@ -727,7 +739,7 @@ vector<TH1D> MakeBackgroundHistos(const vector<vector<double> > &yields,
   return histos;
 }
 
-TH1D MakeTotalHisto(const RooWorkspace &w,
+TH1D MakeTotalHisto(RooWorkspace &w,
                     const RooFitResult &f,
                     const vector<string> &bin_names){
   TH1D h("signal", ";;Yield ", bin_names.size(), 0.5, bin_names.size()+0.5);
@@ -744,7 +756,7 @@ TH1D MakeTotalHisto(const RooWorkspace &w,
     RooRealVar *var = static_cast<RooRealVar*>(w.function(("nexp_"+name).c_str()));
     if(var == nullptr) continue;
     h.SetBinContent(ibin+1, var->getVal());
-    h.SetBinError(ibin+1, var->getPropagatedError(f));
+    h.SetBinError(ibin+1, GetError(*var, f));
   }
 
   return h;
@@ -885,8 +897,8 @@ TGraphErrors MakeRatio(const TH1D &num, const TH1D &den){
 }
 
 void MakeCorrectionPlot(RooWorkspace &w,
-			const RooFitResult &f,
-			const string &file_name){
+                        const RooFitResult &f,
+                        const string &file_name){
   SetVariables(w, f);
 
   vector<string> bin_names = GetBinNames(w);
@@ -902,10 +914,77 @@ void MakeCorrectionPlot(RooWorkspace &w,
     string plain_bin = bin.substr(pos+5);
     h.GetXaxis()->SetBinLabel(ibin+1, plain_bin.c_str());
     h.SetBinContent(ibin+1, static_cast<RooRealVar*>(w.function(("kappamc_"+bin).c_str()))->getVal());
-    h.SetBinError(ibin+1, static_cast<RooRealVar*>(w.function(("kappamc_"+bin).c_str()))->getPropagatedError(f));
+    h.SetBinError(ibin+1, GetError(*w.function(("kappamc_"+bin).c_str()), f));
   }
   h.GetXaxis()->LabelsOption("V");
   h.Draw();
   c.SetMargin(0.1, 0.05, 1./3., 0.05);
   c.Print(file_name.c_str());
+}
+
+double GetError(const RooAbsReal &var,
+                const RooFitResult &f){
+  // Clone self for internal use
+  RooAbsReal* cloneFunc = static_cast<RooAbsReal*>(var.cloneTree());
+  RooArgSet* errorParams = cloneFunc->getObservables(f.floatParsFinal());
+  RooArgSet* nset = cloneFunc->getParameters(*errorParams);
+
+  // Make list of parameter instances of cloneFunc in order of error matrix
+  RooArgList paramList;
+  const RooArgList& fpf = f.floatParsFinal();
+  vector<int> fpf_idx;
+  for (int i=0; i<fpf.getSize(); i++) {
+    RooAbsArg* par = errorParams->find(fpf[i].GetName());
+    if (par) {
+      paramList.add(*par);
+      fpf_idx.push_back(i);
+    }
+  }
+
+  vector<double> errors(paramList.getSize());
+  const TMatrixDSym &corr = f.correlationMatrix();
+  for (Int_t ivar=0; ivar<paramList.getSize(); ivar++) {
+    RooRealVar& rrv = static_cast<RooRealVar&>(fpf[fpf_idx[ivar]]);
+
+    double cenVal = rrv.getVal();
+    double errVal = rrv.getError();
+
+    // Make Plus variation
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal+0.5*errVal);
+    double up = cloneFunc->getVal(nset);
+
+    // Make Minus variation
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal-0.5*errVal);
+    double down = cloneFunc->getVal(nset);
+
+    errors.push_back(up-down);
+
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal);
+  }
+
+  if(cloneFunc != nullptr){
+    delete cloneFunc;
+    cloneFunc = nullptr;
+  }
+  if(errorParams != nullptr){
+    delete errorParams;
+    errorParams = nullptr;
+  }
+  if(nset != nullptr){
+    delete nset;
+    nset = nullptr;
+  }
+
+  vector<double> right(errors.size());
+  for(size_t i = 0; i < right.size(); ++i){
+    right.at(i) = 0.;
+    for(size_t j = 0; j < errors.size(); ++j){
+      right.at(i) += corr(i,j)*errors.at(j);
+    }
+  }
+  double sum = 0.;
+  for(size_t i = 0; i < right.size(); ++i){
+    sum += errors.at(i)*right.at(i);
+  }
+  return sqrt(sum);
 }

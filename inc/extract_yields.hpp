@@ -29,25 +29,25 @@ double GetMCYield(const RooWorkspace &w,
 
 double GetMCTotal(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetMCTotalErr(const RooWorkspace &w,
+double GetMCTotalErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
 double GetBkgPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetBkgPredErr(const RooWorkspace &w,
+double GetBkgPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
 double GetSigPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetSigPredErr(const RooWorkspace &w,
+double GetSigPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
 double GetTotPred(const RooWorkspace &w,
                   const std::string &bin_name);
-double GetTotPredErr(const RooWorkspace &w,
+double GetTotPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const std::string &bin_name);
 
@@ -56,7 +56,7 @@ double GetObserved(const RooWorkspace &w,
 
 double GetLambda(const RooWorkspace &w,
                  const std::string &bin_name);
-double GetLambdaErr(const RooWorkspace &w,
+double GetLambdaErr(RooWorkspace &w,
                     const RooFitResult &f,
                     const std::string &bin_name);
 
@@ -81,7 +81,7 @@ std::vector<TH1D> MakeBackgroundHistos(const std::vector<std::vector<double> > &
                                        const std::vector<std::string> &bin_names,
                                        const std::vector<std::string> &prc_names);
 
-TH1D MakeTotalHisto(const RooWorkspace &w,
+TH1D MakeTotalHisto(RooWorkspace &w,
                     const RooFitResult &f,
                     const std::vector<std::string> &bin_names);
 
@@ -107,7 +107,10 @@ TGraphErrors MakeErrorBand(const TH1D &h);
 TGraphErrors MakeRatio(const TH1D &num, const TH1D &den);
 
 void MakeCorrectionPlot(RooWorkspace &w,
-			const RooFitResult &f,
-			const std::string &file_name);
+                        const RooFitResult &f,
+                        const std::string &file_name);
+
+double GetError(const RooAbsReal &var,
+                const RooFitResult &f);
 
 #endif
