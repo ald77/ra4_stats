@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
   string skim("skim_1lht500met200/");
   if(Contains(method, "m135")) skim = "skim_1lht400/";
   string foldermc("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/mc/"+skim);
-  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_25/data/singlelep/combined/"+skim);
+  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_05/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {

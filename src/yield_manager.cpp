@@ -51,7 +51,6 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
   const Cut &cut = GetCut(key);
 
   GammaParams gps;
-  bool new_entry = false;
 
   if(HaveYield(key)){
     if(verbose_){
@@ -64,8 +63,9 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     }
     gps.SetNEffectiveAndWeight(0., 0.);
   }else{
-    cout << "Computing yield for " << key << endl;
-    new_entry = true;
+    if(verbose_){
+      cout << "Computing yield for " << key << endl;
+    }
     ostringstream oss;
     oss << local_lumi_ << flush;
     Cut lumi_weight = process.IsData() ? Cut() : Cut(oss.str()+"*weight");
@@ -83,7 +83,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
         break;
       }
       Cut &this_cut = cuts.at(icut);
-      if(verbose_ || true){
+      if(verbose_){
         cout << "Trying cut " << this_cut << endl;
       }
       GammaParams temp_gps = process.GetYield(this_cut);
@@ -92,7 +92,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     }
   }
 
-  if(verbose_ || new_entry){
+  if(verbose_){
     cout << "Found yield=" << gps << '\n' << endl;
   }
   double factor = store_lumi_/local_lumi_;
