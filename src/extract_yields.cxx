@@ -74,21 +74,19 @@ int main(int argc, char *argv[]){
 string GetSignalName(const RooWorkspace &w){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nsig_BLK_") continue;
     TIter iter2(arg->getVariables()->createIterator());
     int size2 = arg->getVariables()->getSize();
-    TObject *obj2;
+    RooAbsArg *arg2 = nullptr;
     int i2 = 0;
-    while((obj2 = iter2()) && i2 < size2){
+    while((arg2 = static_cast<RooAbsArg*>(iter2())) && i2 < size2){
       ++i2;
-      RooAbsArg *arg2 = static_cast<RooAbsArg*>(obj2);
       if(arg2 == nullptr) continue;
       string name2 = arg2->GetName();
       auto pos2 = name2.find("_PRC_");
@@ -216,11 +214,10 @@ double GetMCYield(const RooWorkspace &w,
                   const string &prc_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,8) != "ymc_BLK_") continue;
@@ -236,11 +233,10 @@ double GetMCTotal(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,8) != "ymc_BLK_") continue;
@@ -257,11 +253,10 @@ double GetMCTotalErr(RooWorkspace &w,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,8) != "ymc_BLK_") continue;
@@ -277,11 +272,10 @@ double GetBkgPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nbkg_BLK_") continue;
@@ -298,11 +292,10 @@ double GetBkgPredErr(RooWorkspace &w,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nbkg_BLK_") continue;
@@ -318,11 +311,10 @@ double GetSigPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nsig_BLK_") continue;
@@ -339,11 +331,10 @@ double GetSigPredErr(RooWorkspace &w,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nsig_BLK_") continue;
@@ -359,11 +350,10 @@ double GetTotPred(const RooWorkspace &w,
                   const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
@@ -380,11 +370,10 @@ double GetTotPredErr(RooWorkspace &w,
                      const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
@@ -400,11 +389,10 @@ double GetObserved(const RooWorkspace &w,
                    const string &bin_name){
   TIter iter(w.allVars().createIterator());
   int size = w.allVars().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nobs_BLK_") continue;
@@ -420,11 +408,10 @@ double GetLambda(const RooWorkspace &w,
                  const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,12) != "kappamc_BLK_") continue;
@@ -441,11 +428,10 @@ double GetLambdaErr(RooWorkspace &w,
                     const string &bin_name){
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,12) != "kappamc_BLK_") continue;
@@ -598,7 +584,7 @@ vector<string> GetVarNames(const RooWorkspace &w){
   vector<string> names;
   TIter iter(w.allVars().createIterator());
   int size = w.allVars().getSize();
-  TObject *obj;
+  TObject *obj = nullptr;
   int i = 0;
   while((obj = iter()) && i < size){
     ++i;
@@ -615,7 +601,7 @@ vector<string> GetFuncNames(const RooWorkspace &w){
   vector<string> names;
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  TObject *obj = nullptr;
   int i = 0;
   while((obj = iter()) && i < size){
     ++i;
@@ -632,11 +618,10 @@ vector<string> GetBinNames(const RooWorkspace &w){
   vector<string> names;
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
@@ -652,11 +637,10 @@ vector<string> GetPlainBinNames(const RooWorkspace &w){
   vector<string> names;
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
@@ -675,11 +659,10 @@ vector<string> GetProcessNames(const RooWorkspace &w){
   vector<string> names;
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
-  TObject *obj;
+  RooAbsArg *arg = nullptr;
   int i = 0;
-  while((obj = iter()) && i < size){
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
     ++i;
-    RooAbsArg *arg = static_cast<RooAbsArg*>(obj);
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "frac_BIN_") continue;
@@ -960,9 +943,7 @@ double GetError(const RooAbsReal &var,
     }
   }
 
-  //vector<double> errors(paramList.getSize());
-  vector<double> errors;
-  const TMatrixDSym &corr = f.correlationMatrix();
+  vector<double> errors(paramList.getSize());
   for (Int_t ivar=0; ivar<paramList.getSize(); ivar++) {
     RooRealVar& rrv = static_cast<RooRealVar&>(fpf[fpf_idx[ivar]]);
 
@@ -977,9 +958,21 @@ double GetError(const RooAbsReal &var,
     static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal-0.5*errVal);
     double down = cloneFunc->getVal(nset);
 
-    errors.push_back(up-down);
+    errors.at(ivar) = (up-down);
 
     static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal);
+  }
+
+  vector<double> right(errors.size());
+  for(size_t i = 0; i < right.size(); ++i){
+    right.at(i) = 0.;
+    for(size_t j = 0; j < errors.size(); ++j){
+      right.at(i) += f.correlation(paramList.at(i)->GetName(),paramList.at(j)->GetName())*errors.at(j);
+    }
+  }
+  double sum = 0.;
+  for(size_t i = 0; i < right.size(); ++i){
+    sum += errors.at(i)*right.at(i);
   }
 
   if(cloneFunc != nullptr){
@@ -995,17 +988,6 @@ double GetError(const RooAbsReal &var,
     nset = nullptr;
   }
 
-  vector<double> right(errors.size());
-  for(size_t i = 0; i < right.size(); ++i){
-    right.at(i) = 0.;
-    for(size_t j = 0; j < errors.size(); ++j){
-      right.at(i) += corr(i,j)*errors.at(j);
-    }
-  }
-  double sum = 0.;
-  for(size_t i = 0; i < right.size(); ++i){
-    sum += errors.at(i)*right.at(i);
-  }
   return sqrt(sum);
 }
 
