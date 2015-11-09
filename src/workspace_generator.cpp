@@ -264,28 +264,41 @@ void WorkspaceGenerator::ReadSystematicsFile(){
     }else if(line[0] == "PROCESSES"){
       process_list.clear();
       for(size_t iword = 1; iword < line.size(); ++iword){
+        bool found = false;
         vector<string> names = Tokenize(line.at(iword), ", ");
         for(const auto &name: names){
           for(const auto &prc: all_prc){
             if(name == prc.Name()){
               Append(process_list, prc);
+              found = true;
             }
+          }
+          if(!found){
+            throw runtime_error("Systematic "+this_systematic.Name()
+                                +" could not be applied to process "+line.at(iword));
           }
         }
       }
     }else{
+      bool found = false;
+      string clean_line(line.at(0));
+      ReplaceAll(clean_line, " ", "");
+      ReplaceAll(clean_line, "\t", "");
       for(const auto &block: blocks_){
         for(const auto &vbin: block.Bins()){
           for(const auto &bin: vbin){
-            string clean_line(line.at(0));
-            ReplaceAll(clean_line, " ", "");
-            ReplaceAll(clean_line, "\t", "");
-            if(clean_line != bin.Name()) continue;
+            if(bin.Name() != clean_line) continue;
             for(const auto &prc: process_list){
               this_systematic.Strength(bin, prc) = atof(line.at(1).c_str());
+              found = true;
             }
+
           }
         }
+      }
+      if(!found){
+        throw runtime_error("Systematic "+this_systematic.Name()
+                            +" could not be applied to bin "+line.at(0));
       }
     }
   }

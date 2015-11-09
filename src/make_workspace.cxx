@@ -212,30 +212,6 @@ int main(int argc, char *argv[]){
             {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
   };
 
-  //// METHOD 1BKALL: Adding 1b, fat R1/R3 integrated over njets, nb, and MET
-  set<Block> blocks_1bkall{
-    {"all", {{r1_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
-            r2_lowmet_lownj_3b, r2_lowmet_highnj_3b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
-            r2_highmet_lownj_2b, r2_highmet_highnj_2b},
-          {r3_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
-              r4_lowmet_lownj_3b, r4_lowmet_highnj_3b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
-              r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
-  };
-
-  //// METHOD 1BK: Adding 1b, sharing RmT across all dimensions
-  set<Block> blocks_1b{
-    {"all", {{r1_lowmet_1b, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b,
-            r1_lowmet_2b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
-            r1_lowmet_3b, r2_lowmet_lownj_3b, r2_lowmet_highnj_3b,
-            r1_highmet_1b, r2_highmet_lownj_1b, r2_highmet_highnj_1b,
-            r1_highmet_2b, r2_highmet_lownj_2b, r2_highmet_highnj_2b},
-          {r3_lowmet_1b, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b,
-              r3_lowmet_2b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
-              r3_lowmet_3b, r4_lowmet_lownj_3b, r4_lowmet_highnj_3b,
-              r3_highmet_1b, r4_highmet_lownj_1b, r4_highmet_highnj_1b,
-              r3_highmet_2b, r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
-  };
-
   //// METHOD 135: simple ABCD for 135 ipb
   set<Block> blocks_135{
     {"all", {{r1, r2}, {r3, r4}}}
@@ -254,11 +230,7 @@ int main(int argc, char *argv[]){
   Cut *pbaseline(&baseline1b);
   set<Block> *pblocks(&blocks_1bk);
   string sysfile("txt/systematics/m1bk.txt");
-  if(method == "m1b"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1b;
-    sysfile = "txt/systematics/m1b.txt";
-  } else if(method == "m1bk"){
+  if(method == "m1bk"){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
     sysfile = "txt/systematics/m1bk.txt";
@@ -266,10 +238,6 @@ int main(int argc, char *argv[]){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
     sysfile = "txt/systematics/m1bk_nodilep.txt";
-  } else if(method == "m1bkall"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1bkall;
-    sysfile = "txt/systematics/m1bkall.txt";
   }else if(method == "m2l"){
     pbaseline = &baseline2l;
     pblocks = &blocks_2l;

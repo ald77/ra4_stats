@@ -27,22 +27,19 @@ texify(){
 
 ./compile.sh 
 
-#./run/make_workspace.exe --method m135 -u all --nokappa --no_syst &
-#./run/make_workspace.exe --method m135 -u all --no_syst &
-#./run/make_workspace.exe --method m135 -u all --use_r4 --no_syst &
 ./run/make_workspace.exe --method m2l  -u all --lumi 1.264 --no_syst &
-./run/make_workspace.exe --method m2l  --lumi 3 --no_syst &
-./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 &
-./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --sig_strength 1 &
-./run/make_workspace.exe --method m1bk_nodilep --lumi 3 --use_r4 &
-./run/make_workspace.exe --method m1bk --lumi 3 --use_r4 --no_syst &
-./run/make_workspace.exe --method m1bk -u sideband --lumi 1.264 &
+./run/make_workspace.exe --method m1bk --lumi 1.264 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 1.264 --sig_strength 1 --use_r4 &
+./run/make_workspace.exe --method m1bk_nodilep --lumi 1.264 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 1.264 --no_syst --use_r4 &
+./run/make_workspace.exe --method m1bk -u all --lumi 1.264 &
+./run/make_workspace.exe --method m1bk -u all --lumi 1.264 --use_r4 &
 
 wait
 
 for file in $(ls -A *.root)
 do
-    ./run/extract_yields.exe -f $file
+#    ./run/extract_yields.exe -f $file
 done
 
 texify .

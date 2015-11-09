@@ -36,7 +36,7 @@ namespace{
   double min_lumi = 0.;
   double lumi_increment = 0.5;
   double max_lumi = 6.;
-  double lumi_in_file = 3.;
+  double lumi_in_file = 1.264;
   bool do_sys = false;
 }
 
@@ -50,12 +50,12 @@ int main(int argc, char *argv[]){
 
   vector<string> files, names;
   if(!do_sys){
-    files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("T1tttt(1500,100)");
-    files.push_back("m1bk_c_met400_mj400_nj69_sig0_lumi3.root");  names.push_back("T1tttt(1200,800)");
+    files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi1p264_unblinded.root"); names.push_back("T1tttt(1500,100)");
+    files.push_back("m1bk_c_met400_mj400_nj69_sig0_lumi1p264_unblinded.root");  names.push_back("T1tttt(1200,800)");
   } else {
-    files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("All systs");
-    files.push_back("m1bk_nodilep_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("No dilep");
-    files.push_back("m1bk_nosys_nc_met400_mj400_nj69_sig0_lumi3.root"); names.push_back("No systs");
+    files.push_back("m1bk_nc_met400_mj400_nj69_sig0_lumi1p264.root"); names.push_back("All systs");
+    files.push_back("m1bk_nodilep_nc_met400_mj400_nj69_sig0_lumi1p264.root"); names.push_back("No dilep");
+    files.push_back("m1bk_nosys_nc_met400_mj400_nj69_sig0_lumi1p264.root"); names.push_back("No systs");
   }
 
   vector<vector<double> > signif(files.size()), limit(files.size());
