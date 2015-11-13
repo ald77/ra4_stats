@@ -950,7 +950,6 @@ void WorkspaceGenerator::AddParameterSets(){
   DefineParameterSet("observables", observables_);
   DefineParameterSet("globalObservables", set<string>());
   auto xxx = w_.set("observables");
-  const auto & yy = *xxx;
   RooDataSet data_obs{"data_obs", "data_obs", *xxx};
   data_obs.add(*w_.set("observables"));
   w_.import(data_obs);
