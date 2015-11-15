@@ -27,6 +27,7 @@ using namespace std;
 namespace{
   string file_wspace("empty");
   string name_wspace("w");
+  bool table_clean(false);
 }
 
 int main(int argc, char *argv[]){
@@ -126,6 +127,7 @@ void PrintDebug(RooWorkspace &w,
   ofstream out(file_name);
   out << "\\documentclass{article}\n";
   out << "\\usepackage{amsmath,graphicx,rotating,longtable}\n";
+  out << "\\thispagestyle{empty}\n";
   out << "\\begin{document}\n";
   out << "\\begin{longtable}{rr}\n";
   out << "\\hline\\hline\n";
@@ -168,37 +170,56 @@ void PrintTable(RooWorkspace &w,
   vector<string> prc_names = GetProcessNames(w);
   vector<string> bin_names = GetPlainBinNames(w);
 
+  bool dosig(Contains(file_name, "sig_table")), blind_all(Contains(file_name, "r4blinded"));
+  bool blind_2b(Contains(file_name, "1bunblinded"));
+  size_t digits(2), ncols(10);
+  if(!dosig) ncols = 8;
+  if(table_clean) {
+    ncols--;
+    digits = 1;
+  }
+
   ofstream out(file_name);
-  out << fixed << setprecision(2);
+  out << fixed << setprecision(digits);
   out << "\\documentclass{article}\n";
   out << "\\usepackage{amsmath,graphicx,rotating}\n";
   out << "\\usepackage[landscape]{geometry}\n";
+  out << "\\thispagestyle{empty}\n";
   out << "\\begin{document}\n";
   out << "\\begin{table}\n";
   out << "\\centering\n";
   out << "\\resizebox{\\textwidth}{!}{\n";
-  out << "\\begin{tabular}{l";
-  for(size_t i = 0; i < prc_names.size() + 8; ++i) out << "r";
+  out << "\\begin{tabular}{l ";
+  for(size_t i = 0; i < ncols-1; ++i) out << "r";
   out << "}\n";
   out << "\\hline\\hline\n";
   out << "Bin & ";
   for(const auto &prc_name: prc_names){
     out << prc_name << " & ";
   }
-  bool dosig(Contains(file_name, "sig_table")), blind_all(Contains(file_name, "r4blinded"));
-  bool blind_2b(Contains(file_name, "1bunblinded"));
   out << "MC Bkg. "<<(dosig?"& Bkgnd. Pred. ":"")<<"& Signal "<<(dosig?"& Sig. Pred. ":"")
-      <<"& Tot. Pred. & Obs. & $\\lambda$\\\\\n";
+      <<"& Tot. Pred. & Obs.";
+  if(!table_clean) out << " & $\\lambda$";
+  out<<"\\\\\n";
+
   // out << "\\hline\n";
   for(const auto &bin_name: bin_names){
+    
     if(Contains(bin_name, "r1")) {
       out << "\\hline\\hline"<<endl;
-      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<(dosig?10:8)<<"}{c}{$200<\\text{MET}\\leq 400$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<(dosig?10:8)<<"}{c}{$\\text{MET}>400$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 400$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>400$} \\\\ \\hline"<<endl;
     }
     string bin_tex(TexFriendly(bin_name));
     ReplaceAll(bin_tex, "lowmet\\_","");
     ReplaceAll(bin_tex, "highmet\\_","");
+    ReplaceAll(bin_tex, "lownj\\_","$n_j\\leq8$, ");
+    ReplaceAll(bin_tex, "highnj\\_","$n_j\\geq9$, ");
+    ReplaceAll(bin_tex, "allnb","all $n_j,n_b$");
+    ReplaceAll(bin_tex, "1b","$n_b=1$");
+    ReplaceAll(bin_tex, "3b","$n_b\\geq3$");
+    if(Contains(bin_name, "lowmet")) ReplaceAll(bin_tex, "2b","$n_b=2$");
+    else ReplaceAll(bin_tex, "2b","$n_b\\geq2$");
     for(int ind(1); ind<=4; ind++){
       ReplaceAll(bin_tex, "r"+to_string(ind)+"\\_","R"+to_string(ind)+": ");
       ReplaceAll(bin_tex, "r"+to_string(ind)+"c\\_","R"+to_string(ind)+": ");
@@ -208,14 +229,19 @@ void PrintTable(RooWorkspace &w,
     for(const auto &prc_name: prc_names){
       out << GetMCYield(w, bin_name, prc_name) << " & ";
     }
-    out << "$" << GetMCTotal(w, bin_name) << "\\pm" << GetMCTotalErr(w, f, bin_name) <<  "$ & ";
+    out << "$" << GetMCTotal(w, bin_name);
+    if(!table_clean) out << "\\pm" << GetMCTotalErr(w, f, bin_name);
+    out <<  "$ & ";
+
     if(dosig) out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
     out << GetMCYield(w, bin_name, sig_name) << " & ";
     if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
     out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
     if(Contains(bin_name,"4") && (blind_all || (!Contains(bin_name,"1b") && blind_2b))) out << "-- & ";
-    else out << setprecision(0) << GetObserved(w, bin_name) << " & ";
-    out << setprecision(2)<< "$" << GetLambda(w, bin_name) << "\\pm" << GetLambdaErr(w, f, bin_name) <<  "$\\\\\n";
+    else out << setprecision(0) << GetObserved(w, bin_name);
+    out << setprecision(digits);
+    if(!table_clean) out << "& $" << GetLambda(w, bin_name) << "\\pm" << GetLambdaErr(w, f, bin_name) <<  "$";
+    out << "\\\\\n";
     if(Contains(bin_name, "r3") || Contains(bin_name, "d3")) out << "\\hline"<<endl;
   }
   out << "\\hline\\hline\n";
@@ -1035,12 +1061,13 @@ void GetOptionsExtract(int argc, char *argv[]){
     static struct option long_options[] = {
       {"file_wspace", required_argument, 0, 'f'},
       {"name_wspace", required_argument, 0, 'w'},
+      {"table_clean", no_argument, 0, 'c'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:w:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:w:c", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -1050,6 +1077,9 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 'f':
       file_wspace = optarg;
+      break;
+    case 'c':
+      table_clean = true;
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
