@@ -11,6 +11,19 @@ SYSTEMATIC isr_pt
   r2_lowmet_highnj_3b	  0.03
   r2_highmet_highnj_2b	  0.04
 
+SYSTEMATIC jec
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b	  0.01
+  r2_highmet_lownj_1b	  0.04
+  r2_lowmet_highnj_1b	  0.04
+  r2_highmet_highnj_1b	  0.03
+  r2_lowmet_lownj_2b	  0.02
+  r2_lowmet_lownj_3b	  0.01
+  r2_highmet_lownj_2b	  0.02
+  r2_lowmet_highnj_2b	  0.05
+  r2_lowmet_highnj_3b	  0.03
+  r2_highmet_highnj_2b	  0.04
+
 SYSTEMATIC top_pt
  PROCESSES ttbar
   r2_lowmet_lownj_1b	  0.001

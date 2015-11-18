@@ -46,7 +46,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   systematics_(),
   free_systematics_(),
   luminosity_(4.),
-  print_level_(PrintLevel::silent),
+  print_level_(PrintLevel::important),
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
@@ -68,7 +68,7 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
     cout << *this << endl;
   }
   if(print_level_ >= PrintLevel::important){
-    cout << "Wrote workspace to file " << file_name << endl;
+    cout << endl << "Wrote workspace to file " << file_name << endl<< endl;
   }
 }
 
@@ -835,10 +835,6 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
       if(do_systematics_){
         for(const auto &prc: backgrounds_){
           for(const auto &syst: prc.Systematics()){
-            oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
-          }
-          for(const auto &syst: free_systematics_){
-            if(!syst.HasEntry(bin, prc)) continue;
             oss << "," << syst.Name() << "_BIN_" << bin.Name() << "_PRC_" << prc.Name();
           }
         }

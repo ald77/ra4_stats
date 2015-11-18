@@ -238,6 +238,10 @@ int main(int argc, char *argv[]){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
     sysfile = "txt/systematics/m1bk_nodilep.txt";
+  } else if(method == "m1bk_onlydilep"){
+    pbaseline = &baseline1b;
+    pblocks = &blocks_1bk;
+    sysfile = "txt/systematics/m1bk_onlydilep.txt";
   }else if(method == "m2l"){
     pbaseline = &baseline2l;
     pblocks = &blocks_2l;
