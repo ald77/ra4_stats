@@ -289,7 +289,7 @@ void WorkspaceGenerator::ReadSystematicsFile(){
           for(const auto &bin: vbin){
             if(bin.Name() != clean_line) continue;
             for(const auto &prc: process_list){
-              this_systematic.Strength(bin, prc) = atof(line.at(1).c_str());
+              this_systematic.Strength(bin, prc) = log(1+atof(line.at(1).c_str()));
               found = true;
             }
 
