@@ -1,14 +1,13 @@
 SYSTEMATIC dilep_closure
  PROCESSES ttbar,other
-  r2_lowmet_lownj_1b	  0.51
-  r2_lowmet_lownj_1b	  0.51
-  r2_highmet_lownj_1b	  0.51
-  r2_lowmet_highnj_1b	  1.07
-  r2_highmet_highnj_1b	  1.07
-  r2_lowmet_lownj_2b	  0.51
-  r2_lowmet_lownj_3b	  0.51
-  r2_highmet_lownj_2b	  0.51
-  r2_lowmet_highnj_2b	  1.07
-  r2_lowmet_highnj_3b	  1.07
-  r2_highmet_highnj_2b	  1.07
-
+  r2_lowmet_lownj_1b	  0.366
+  r2_lowmet_lownj_1b	  0.366
+  r2_highmet_lownj_1b	  0.366
+  r2_lowmet_highnj_1b	  0.895
+  r2_highmet_highnj_1b	  0.895
+  r2_lowmet_lownj_2b	  0.366
+  r2_lowmet_lownj_3b	  0.366
+  r2_highmet_lownj_2b	  0.366
+  r2_lowmet_highnj_2b	  0.895
+  r2_lowmet_highnj_3b	  0.895
+  r2_highmet_highnj_2b	  0.895
