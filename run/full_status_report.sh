@@ -27,13 +27,13 @@ texify(){
 
 ./compile.sh 
 
-./run/make_workspace.exe --method m2l  -u all --lumi 1.264 --no_syst &
-./run/make_workspace.exe --method m1bk --lumi 1.264 --use_r4 &
-./run/make_workspace.exe --method m1bk --lumi 1.264 --sig_strength 1 --use_r4 &
-./run/make_workspace.exe --method m1bk_nodilep --lumi 1.264 --use_r4 &
-./run/make_workspace.exe --method m1bk --lumi 1.264 --no_syst --use_r4 &
-./run/make_workspace.exe --method m1bk -u all --lumi 1.264 &
-./run/make_workspace.exe --method m1bk -u all --lumi 1.264 --use_r4 &
+./run/make_workspace.exe --method m2l  -u all --lumi 2.094 --no_syst &
+./run/make_workspace.exe --method m1bk --lumi 2.094 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 2.094 --sig_strength 1 --use_r4 &
+./run/make_workspace.exe --method m1bk_nodilep --lumi 2.094 --use_r4 &
+./run/make_workspace.exe --method m1bk --lumi 2.094 --no_syst --use_r4 &
+./run/make_workspace.exe --method m1bk -u all --lumi 2.094 &
+./run/make_workspace.exe --method m1bk -u all --lumi 2.094 --use_r4 &
 
 wait
 
