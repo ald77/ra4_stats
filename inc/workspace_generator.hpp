@@ -31,7 +31,6 @@ public:
 
   enum class PrintLevel{silent, important, normal, everything};
 
-
   void WriteToFile(const std::string &file_name);
 
   double GetLuminosity() const;
@@ -49,15 +48,14 @@ public:
   bool GetKappaCorrected() const;
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
-  unsigned GetToyNum() const;
-  WorkspaceGenerator & SetToyNum(unsigned toy_num);
-
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
                        const Process &process,
                        const Cut &cut) const;
   GammaParams GetYield(const Bin &bin,
                        const Process &process) const;
+
+  size_t AddToys(size_t num_toys = 0);
 
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
 
@@ -66,6 +64,8 @@ private:
   std::set<Process> backgrounds_;
   Process signal_, data_;
   std::set<Block> blocks_;
+  std::map<std::string, double> obs_vals_;
+  std::map<std::string, std::poisson_distribution<> > obs_gens_;
   std::string systematics_file_;
   bool use_r4_;
   double sig_strength_;
@@ -77,7 +77,7 @@ private:
   bool do_systematics_;
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
-  unsigned toy_num_;
+  size_t num_toys_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;
@@ -87,6 +87,9 @@ private:
   static std::mt19937_64 InitializePRNG();
   static int GetPoisson(double rate);
 
+  void SetupToys(const RooArgSet &obs);
+  void GenerateToys(RooArgSet &obs);
+  void ResetToys(RooArgSet &obs);
   void UpdateWorkspace();
   void AddPOI();
   void ReadSystematicsFile();

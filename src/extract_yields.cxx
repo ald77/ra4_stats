@@ -6,6 +6,8 @@
 #include <fstream>
 #include <algorithm>
 #include <initializer_list>
+#include <stdexcept>
+
 #include <stdlib.h>
 #include <getopt.h>
 
@@ -17,7 +19,9 @@
 #include "TColor.h"
 
 #include "RooArgList.h"
+#include "RooArgSet.h"
 #include "RooRealVar.h"
+#include "RooAbsData.h"
 
 #include "utilities.hpp"
 #include "styles.hpp"
@@ -28,6 +32,7 @@ namespace{
   string file_wspace("empty");
   string name_wspace("w");
   bool table_clean(false);
+  int toy_num(-1);
 }
 
 int main(int argc, char *argv[]){
@@ -37,11 +42,16 @@ int main(int argc, char *argv[]){
     cout<<"You need to specify the file containing the workspace with option -f"<<endl<<endl;
     return 1;
   }
-  execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w "+name_wspace+" "+string(file_wspace));
-    
+
+  ostringstream command;
+  command << "export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " " << string(file_wspace) << " --dataset data_obs";
+  if(toy_num >= 0) command << "_" << toy_num;
+  command << flush;
+  execute(command.str());
+
   styles style("RA4");
   style.setDefaultStyle();
-  
+
   string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
   TFile w_file(w_name.c_str(),"read");
   if(!w_file.IsOpen()) {
@@ -53,12 +63,14 @@ int main(int argc, char *argv[]){
     cout<<endl<<"Workspace "<< name_wspace.c_str()<<" not found. Exiting"<<endl<<endl;
     return 1;
   }
-    
+
   TFile fit_file("mlfit.root","read");
   if(!fit_file.IsOpen()) return 1;
   RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
   RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-  file_wspace = ChangeExtension(file_wspace, "_"+name_wspace+".root");
+  string toy_ext = "";
+  if(toy_num >= 0) toy_ext = "_toy_" + to_string(toy_num);
+  file_wspace = ChangeExtension(file_wspace, toy_ext+"_"+name_wspace+".root");
   if(fit_b != nullptr){
     PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
     PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
@@ -204,7 +216,6 @@ void PrintTable(RooWorkspace &w,
 
   // out << "\\hline\n";
   for(const auto &bin_name: bin_names){
-    
     if(Contains(bin_name, "r1")) {
       out << "\\hline\\hline"<<endl;
       if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 400$} \\\\ \\hline"<<endl;
@@ -432,8 +443,16 @@ double GetTotPredErr(RooWorkspace &w,
 
 double GetObserved(const RooWorkspace &w,
                    const string &bin_name){
-  TIter iter(w.allVars().createIterator());
-  int size = w.allVars().getSize();
+  ostringstream oss;
+  oss << "data_obs";
+  if(toy_num >= 0) oss << "_" << toy_num;
+  oss << flush;
+  RooAbsData *data = w.data(oss.str().c_str());
+  if(data == nullptr) throw runtime_error("Could not find dataset "+oss.str());
+  const RooArgSet *args = data->get();
+  if(args == nullptr) throw runtime_error("Could not extract args");
+  TIter iter(args->createIterator());
+  int size = args->getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -562,7 +581,7 @@ void MakeYieldPlot(RooWorkspace &w,
   double offset = 0.5;
 
   mid_pad.cd();
-    if(!Contains(file_wspace, "nor4")) mid_pad.SetLogy();
+  if(!Contains(file_wspace, "nor4")) mid_pad.SetLogy();
   signal.SetTitleSize(font_size, "Y");
   signal.SetTitleOffset(offset, "Y");
   signal.SetFillColor(2);
@@ -574,7 +593,7 @@ void MakeYieldPlot(RooWorkspace &w,
   for(auto h = histos.rbegin(); h!= histos.rend(); ++h){
     h->Draw("same");
   }
-  
+
   double marker_size(1.4);
   obs.SetMarkerStyle(20); obs.SetMarkerSize(marker_size);
   band.Draw("02 same");
@@ -1055,19 +1074,19 @@ double GetError(const RooAbsReal &var,
   return sqrt(sum);
 }
 
-
 void GetOptionsExtract(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"file_wspace", required_argument, 0, 'f'},
       {"name_wspace", required_argument, 0, 'w'},
+      {"toy", required_argument, 0, 't'},
       {"table_clean", no_argument, 0, 'c'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:w:c", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:w:t:c", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -1077,6 +1096,9 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 'f':
       file_wspace = optarg;
+      break;
+    case 't':
+      toy_num = atoi(optarg);
       break;
     case 'c':
       table_clean = true;

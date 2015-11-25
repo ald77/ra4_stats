@@ -271,29 +271,27 @@ int main(int argc, char *argv[]){
                  +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
                  +sig_s+lumi_s.Data()+blind_name+".root");
 
-  for(unsigned itoy = 0; itoy <= n_toys; ++itoy){
-    // Compressed SUSY
-    WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
-    wgc.SetKappaCorrected(!no_kappa);
-    wgc.SetDoSystematics(do_syst);
-    wgc.SetToyNum(itoy);
-    wgc.SetLuminosity(lumi);
-    wgc.SetDoDilepton(false); // Applying dilep syst in text file
-    wgc.SetDoSystematics(do_syst);
-    ReplaceAll(outname, "_nc_", "_c_");
-    wgc.WriteToFile(outname);
+  // Compressed SUSY
+  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
+  wgc.SetKappaCorrected(!no_kappa);
+  wgc.SetDoSystematics(do_syst);
+  wgc.SetLuminosity(lumi);
+  wgc.SetDoDilepton(false); // Applying dilep syst in text file
+  wgc.SetDoSystematics(do_syst);
+  wgc.AddToys(n_toys);
+  ReplaceAll(outname, "_nc_", "_c_");
+  wgc.WriteToFile(outname);
 
-    // Non-compressed SUSY
-    WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
-    wgnc.SetKappaCorrected(!no_kappa);
-    wgnc.SetDoSystematics(do_syst);
-    wgnc.SetToyNum(itoy);
-    wgnc.SetLuminosity(lumi);
-    wgnc.SetDoDilepton(false); // Applying dilep syst in text file
-    wgnc.SetDoSystematics(do_syst);
-    ReplaceAll(outname, "_c_", "_nc_");
-    wgnc.WriteToFile(outname);
-  }
+  // Non-compressed SUSY
+  WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
+  wgnc.SetKappaCorrected(!no_kappa);
+  wgnc.SetDoSystematics(do_syst);
+  wgnc.SetLuminosity(lumi);
+  wgnc.SetDoDilepton(false); // Applying dilep syst in text file
+  wgnc.SetDoSystematics(do_syst);
+  wgnc.AddToys(n_toys);
+  ReplaceAll(outname, "_c_", "_nc_");
+  wgnc.WriteToFile(outname);
 }
 
 void GetOptions(int argc, char *argv[]){

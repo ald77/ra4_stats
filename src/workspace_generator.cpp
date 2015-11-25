@@ -13,6 +13,7 @@
 
 #include "RooPoisson.h"
 #include "RooDataSet.h"
+#include "RooRealVar.h"
 
 #include "RooStats/ModelConfig.h"
 
@@ -36,6 +37,8 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   signal_(signal),
   data_(data),
   blocks_(blocks),
+  obs_vals_(),
+  obs_gens_(),
   systematics_file_(systematics_file),
   use_r4_(use_r4),
   sig_strength_(sig_strength),
@@ -50,7 +53,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_systematics_(true),
   do_dilepton_(true),
   do_mc_kappa_correction_(true),
-  toy_num_(0),
+  num_toys_(0),
   w_is_valid_(false){
   w_.cd();
 }
@@ -60,7 +63,7 @@ void WorkspaceGenerator::WriteToFile(const string &file_name){
     cout << "WriteToFile(" << file_name << ")" << endl;
   }
   if(!w_is_valid_) UpdateWorkspace();
-  w_.writeToFile(file_name.c_str(), toy_num_==0);
+  w_.writeToFile(file_name.c_str());
   if(print_level_ >= PrintLevel::everything){
     w_.Print();
   }
@@ -129,18 +132,6 @@ WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correct
   return *this;
 }
 
-unsigned WorkspaceGenerator::GetToyNum() const{
-  return toy_num_;
-}
-
-WorkspaceGenerator & WorkspaceGenerator::SetToyNum(unsigned toy_num){
-  if(toy_num_ != toy_num){
-    toy_num_ = toy_num;
-    w_is_valid_ = false;
-  }
-  return *this;
-}
-
 GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
   yields_.Luminosity() = luminosity_;
   return yields_.GetYield(key);
@@ -155,6 +146,77 @@ GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
 GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
                                          const Process &process) const{
   return GetYield(bin, process, baseline_);
+}
+
+size_t WorkspaceGenerator::AddToys(size_t num_toys){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "AddToys(" << num_toys << ")" << endl;
+  }
+  if(!w_is_valid_) UpdateWorkspace();
+  if(num_toys == 0) return num_toys_;
+  const RooArgSet *obs_orig = w_.set("observables");
+  if(obs_orig == nullptr) throw runtime_error("Could not get observables list for toy generation");
+  RooArgSet obs(*obs_orig);
+  SetupToys(obs);
+  for(size_t itoy = num_toys_; itoy < num_toys_+num_toys; ++itoy){
+    GenerateToys(obs);
+    RooDataSet data_new(("data_obs_"+to_string(itoy)).c_str(), ("data_obs_"+to_string(itoy)).c_str(), obs);
+    data_new.add(obs);
+    w_.import(data_new);
+  }
+  ResetToys(obs);
+  num_toys_ += num_toys;
+  return num_toys_;
+}
+
+void WorkspaceGenerator::SetupToys(const RooArgSet &obs){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "SetupToys(const RooArgSet &)" << endl;
+  }
+  obs_vals_.clear();
+  obs_gens_.clear();
+  TIterator *iter_ptr = obs.createIterator();
+  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
+    RooAbsReal *arg = static_cast<RooAbsReal*>(*(*iter_ptr));
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    double value = arg->getVal();
+    obs_vals_[name] = value;
+    obs_gens_[name] = poisson_distribution<>(value);
+  }
+  iter_ptr->Reset();
+}
+
+void WorkspaceGenerator::GenerateToys(RooArgSet &obs){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "GenerateToys(const RooArgSet &)" << endl;
+  }
+  TIterator *iter_ptr = obs.createIterator();
+  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
+    RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    arg->setVal(obs_gens_[name](prng_));
+  }
+  iter_ptr->Reset();
+}
+
+void WorkspaceGenerator::ResetToys(RooArgSet &obs){
+  if(print_level_ >= PrintLevel::everything){
+    cout << "ResetToys(const RooArgSet &)" << endl;
+  }
+  TIterator *iter_ptr = obs.createIterator();
+  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
+    RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    double value = obs_vals_.at(name);
+    arg->setVal(value);
+  }
+  iter_ptr->Reset();
 }
 
 mt19937_64 WorkspaceGenerator::InitializePRNG(){
@@ -179,8 +241,8 @@ void WorkspaceGenerator::UpdateWorkspace(){
   w_.Delete();
   gDirectory->Delete(old_name.c_str());
   w_.Clear();
-  w_ = RooWorkspace(toy_num_ !=0 ? ("w_"+to_string(toy_num_)).c_str() : "w");
-  w_.SetName(toy_num_ !=0 ? ("w_"+to_string(toy_num_)).c_str() : "w");
+  w_ = RooWorkspace("w");
+  w_.SetName("w");
   w_.cd();
 
   if(do_dilepton_){
@@ -497,7 +559,7 @@ void WorkspaceGenerator::AddData(const Block &block){
       if(use_r4_ || !Contains(bin.Name(), "4")){
         Append(observables_, oss.str());
       }
-      oss << "[" << (toy_num_!=0 ? GetPoisson(gps.Yield()) : gps.Yield()) << "]" << flush;
+      oss << "[" << gps.Yield() << "]" << flush;
       w_.factory(oss.str().c_str());
     }
   }
@@ -651,7 +713,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
         Append(observables_, oss.str());
-        oss << "[" << (toy_num_!=0 ? GetPoisson(gp.NEffective()) : gp.NEffective()) << "]" << flush;
+        oss << "[" << gp.NEffective() << "]" << flush;
         w_.factory(oss.str().c_str());
         oss.str("");
         oss << "nmc_" << bbp_name << flush;
@@ -1011,7 +1073,7 @@ void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin,
     cout << "PrintComparison([stream], " << bin << ", " << process
          << ", " << block << ")" << endl;
   }
-  
+
   GammaParams gp(0., 0.);
   if(!(process.IsData() && bin.Blind())){
     gp = GetYield(bin, process);
