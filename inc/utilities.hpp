@@ -35,6 +35,8 @@ std::vector<std::string> Tokenize(const std::string& input,
 
 std::string ChangeExtension(std::string path, const std::string &new_ext);
 
+std::string MakeDir(std::string prefix);
+
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){
   collection.insert(collection.end(), value);

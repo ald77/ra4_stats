@@ -1,5 +1,7 @@
 #include "extract_yields.hpp"
 
+#include <cstdlib>
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -8,7 +10,6 @@
 #include <initializer_list>
 #include <stdexcept>
 
-#include <stdlib.h>
 #include <getopt.h>
 
 #include "TFile.h"
@@ -38,34 +39,39 @@ namespace{
 int main(int argc, char *argv[]){
   GetOptionsExtract(argc, argv);
 
-  if(file_wspace == "empty"){
-    cout<<"You need to specify the file containing the workspace with option -f"<<endl<<endl;
-    return 1;
-  }
+  if(file_wspace == "empty") throw runtime_error("You need to specify the file containing the workspace with option -f");
+
+  string workdir = MakeDir("extract_yields_");
 
   ostringstream command;
-  command << "export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " " << string(file_wspace) << " --dataset data_obs";
+  command << "export blah=$(pwd); "
+          << "cd ~/cmssw/CMSSW_7_1_5/src; "
+          << "eval `scramv1 runtime -sh`; "
+          << "cd $blah; "
+          << "cp " << file_wspace << ' ' << workdir << "; "
+          << "cd " << workdir << "; "
+          << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
   if(toy_num >= 0) command << "_" << toy_num;
-  command << flush;
+  command << " " << file_wspace << "; "
+          << "cd $blah; "
+          << flush;
+  cout << "Executing " << command.str() << endl;
   execute(command.str());
 
   styles style("RA4");
   style.setDefaultStyle();
 
   string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
+  w_name = workdir+'/'+w_name;
   TFile w_file(w_name.c_str(),"read");
-  if(!w_file.IsOpen()) {
-    cout<<endl<<"File "<< w_name.c_str()<<" not produced. Exiting"<<endl<<endl;
-    return 1;
-  }
+  if(!w_file.IsOpen()) throw runtime_error("File "+w_name+" not produced");
   RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
-  if(w == nullptr) {
-    cout<<endl<<"Workspace "<< name_wspace.c_str()<<" not found. Exiting"<<endl<<endl;
-    return 1;
-  }
+  if(w == nullptr) throw runtime_error("Workspace "+name_wspace+" not found");
 
-  TFile fit_file("mlfit.root","read");
-  if(!fit_file.IsOpen()) return 1;
+  string fit_name = "mlfit.root";
+  string full_fit_name = workdir+'/'+fit_name;
+  TFile fit_file(full_fit_name.c_str(),"read");
+  if(!fit_file.IsOpen()) throw runtime_error("Could not open "+full_fit_name);
   RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
   RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
   string toy_ext = "";
@@ -83,6 +89,11 @@ int main(int argc, char *argv[]){
     MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"));
     if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
   }
+
+  w_file.Close();
+  fit_file.Close();
+
+  execute("rm -rf "+workdir);
 }
 
 string GetSignalName(const RooWorkspace &w){

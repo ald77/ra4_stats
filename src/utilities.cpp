@@ -1,7 +1,11 @@
 #include "utilities.hpp"
 
+#include <cstdlib>
+#include <cstring>
+
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "TTree.h"
 #include "TH1D.h"
@@ -108,4 +112,15 @@ string ChangeExtension(string path, const string &new_ext){
     path = path.replace(pos, count, new_ext);
   }
   return path;
+}
+
+string MakeDir(string prefix){
+  prefix += "XXXXXX";
+  char *dir_name = new char[prefix.size()];
+  if(dir_name == nullptr) throw runtime_error("Could not allocate directory name");
+  strcpy(dir_name, prefix.c_str());
+  mkdtemp(dir_name);
+  prefix = dir_name;
+  delete dir_name;
+  return prefix;
 }
