@@ -256,8 +256,10 @@ int main(int argc, char *argv[]){
     sysfile = "txt/systematics/m135_2l.txt";
   }
 
-  TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); lumi_s.ReplaceAll("00000000000001","");
-  TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); sig_s.ReplaceAll("00000000000001","");
+  TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); 
+  lumi_s.ReplaceAll("00000000000001",""); lumi_s.ReplaceAll("39999999999999","4");
+  TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); 
+  sig_s.ReplaceAll("00000000000001","");
   string blind_name = "";
   if(blind_level == BlindLevel::unblinded){
     blind_name = "_unblinded";
