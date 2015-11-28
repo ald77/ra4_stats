@@ -72,6 +72,7 @@ int main(int argc, char *argv[]){
       yvals_c.at(i).at(toy) = toyed.at(toy).at(i).get();
     }
   }
+  execute("rm -f *_sig_inj_*.root");
 
   cout << "Generating plots..." << endl;
   MakePlot(injections, yvals_nc, true);
@@ -126,8 +127,6 @@ double ExtractSignal(size_t index, size_t toy, bool is_nc){
   string output = execute(oss.str());
   {
     lock_guard<mutex> lock(global_mutex);
-    cout << "Done with " << oss.str() << endl;
-    cout << "Result was:" << endl << output << endl;
     TFile r_file((workdir+"/mlfit.root").c_str(),"read");
     if(!r_file.IsOpen()) return -1.;
     RooFitResult *f = static_cast<RooFitResult*>(r_file.Get("fit_s"));
@@ -139,8 +138,10 @@ double ExtractSignal(size_t index, size_t toy, bool is_nc){
       double val = var->getVal();
       cout << "Extracted strength " << val << " given strength " << injections.at(index) << " in toy " << toy << endl;
       r_file.Close();
+      execute("rm -rf "+workdir);
       return val;
     }
+    execute("rm -rf "+workdir);
     r_file.Close();
   }
   return -999.;
