@@ -7,7 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <future>
-#include <memory>
+#include <utility>
 #include <mutex>
 
 #include <stdlib.h>
@@ -51,32 +51,40 @@ int main(int argc, char *argv[]){
   }
 
   cout << "Extracting signal strength from toys..." << endl;
-  vector<vector<future<double> > > toyed(ntoys);
+  vector<vector<future<pair<double,double> > > > toyed(ntoys);
   for(size_t i = 0; i < toyed.size(); ++i){
-    vector<future<double> > (injections.size()).swap(toyed.at(i));
+    vector<future<pair<double,double> > > (injections.size()).swap(toyed.at(i));
   }
   vector<vector<double> > yvals_nc(injections.size(), vector<double>(ntoys));
   vector<vector<double> > yvals_c(injections.size(), vector<double>(ntoys));
+  vector<vector<double> > pulls_nc(injections.size(), vector<double>(ntoys));
+  vector<vector<double> > pulls_c(injections.size(), vector<double>(ntoys));
   for(int toy = 0; toy < ntoys; ++toy){
     //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
     for(size_t i = 0; i < injections.size(); ++i){
       toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, true);
     }
     for(size_t i = 0; i < injections.size(); ++i){
-      yvals_nc.at(i).at(toy) = toyed.at(toy).at(i).get();
+      auto res = toyed.at(toy).at(i).get();
+      yvals_nc.at(i).at(toy) = res.first;
+      pulls_nc.at(i).at(toy) = res.second;
     }
     for(size_t i = 0; i < injections.size(); ++i){
       toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, false);
     }
     for(size_t i = 0; i < injections.size(); ++i){
-      yvals_c.at(i).at(toy) = toyed.at(toy).at(i).get();
+      auto res = toyed.at(toy).at(i).get();
+      yvals_c.at(i).at(toy) = res.first;
+      pulls_c.at(i).at(toy) = res.second;
     }
   }
   execute("rm -f *_sig_inj_*.root");
 
   cout << "Generating plots..." << endl;
-  MakePlot(injections, yvals_nc, true);
-  MakePlot(injections, yvals_c, false);
+  MakePlot(injections, yvals_nc, true, false);
+  MakePlot(injections, yvals_c, false, false);
+  MakePlot(injections, pulls_nc, true, true);
+  MakePlot(injections, pulls_c, false, true);
 }
 
 void InjectSignal(double inject, size_t index){
@@ -98,7 +106,7 @@ void InjectSignal(double inject, size_t index){
   }
 }
 
-double ExtractSignal(size_t index, size_t toy, bool is_nc){
+pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
   {
     lock_guard<mutex> lock(global_mutex);
     cout << "Extracting signal given strength " << injections.at(index) << " in toy " << toy << endl;
@@ -111,14 +119,14 @@ double ExtractSignal(size_t index, size_t toy, bool is_nc){
   }
   oss.str("");
   string workdir = MakeDir("sig_inj_");
-  oss << "export blah=$(pwd); "
+  oss << "export origdir=$(pwd); "
       << "cd ~/cmssw/CMSSW_7_1_5/src; "
       << "eval `scramv1 runtime -sh` &> /dev/null; "
-      << "cd $blah; "
+      << "cd $origdir; "
       << "cp " << file_name << ' ' << workdir << "; "
       << "cd " << workdir << "; "
-      << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all --dataset data_obs_" << toy << " " << file_name << " &> /dev/null; "
-      << "cd $blah; "
+      << "combine -M MaxLikelihoodFit --skipBOnlyFit --dataset data_obs_" << toy << " " << file_name << " &> /dev/null; "
+      << "cd $origdir; "
       << flush;
   {
     lock_guard<mutex> lock(global_mutex);
@@ -128,7 +136,7 @@ double ExtractSignal(size_t index, size_t toy, bool is_nc){
   {
     lock_guard<mutex> lock(global_mutex);
     TFile r_file((workdir+"/mlfit.root").c_str(),"read");
-    if(!r_file.IsOpen()) return -1.;
+    if(!r_file.IsOpen()) return pair<double, double>(-1., -1.);
     RooFitResult *f = static_cast<RooFitResult*>(r_file.Get("fit_s"));
     RooArgList pars = f->floatParsFinal();
     for(int ipar = 0; ipar < pars.getSize(); ++ipar){
@@ -136,15 +144,19 @@ double ExtractSignal(size_t index, size_t toy, bool is_nc){
       if(var == nullptr) continue;
       if(var->GetName() != string("r")) continue;
       double val = var->getVal();
-      cout << "Extracted strength " << val << " given strength " << injections.at(index) << " in toy " << toy << endl;
+      double delta = val - injections.at(index);
+      double ehi = fabs(var->getErrorHi());
+      double elo = fabs(var->getErrorLo());
+      double pull = delta > 0. ? delta/elo : delta/ehi;
+      cout << "Extracted strength " << val << " + " << ehi << " - " << elo << " given strength " << injections.at(index) << " in toy " << toy << ". pull=" << pull << endl;
       r_file.Close();
       execute("rm -rf "+workdir);
-      return val;
+      return pair<double, double>(val, pull);
     }
     execute("rm -rf "+workdir);
     r_file.Close();
   }
-  return -999.;
+  return pair<double, double>(-1., -1.);
 }
 
 void GetStats(vector<double> vals, double &center, double &up, double &down){
@@ -240,7 +252,7 @@ void GetOptions(int argc, char *argv[]){
 
 void MakePlot(const vector<double> &injections,
 	      const vector<vector<double> > &yvals,
-	      bool is_nc){
+	      bool is_nc, bool is_pull){
   vector<double> centers(injections.size()), ups(injections.size()), downs(injections.size()), zeros(injections.size(), 0.);
   vector<double> bots(centers.size()), tops(centers.size());
   for(size_t i = 0; i < injections.size(); ++i){
@@ -269,9 +281,14 @@ void MakePlot(const vector<double> &injections,
   double themax = max(xmax+margin*xdelta, ymax+margin*ydelta);
   ostringstream oss;
   oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << "Signal Strength" << flush;
-  TH1D h("", oss.str().c_str(), 1, themin, themax);
-  h.SetMinimum(themin);
-  h.SetMaximum(themax);
+  TH1D h("", oss.str().c_str(), 1, is_pull ? xmin-margin*xdelta : themin, is_pull ? xmax+margin*xdelta : themax);
+  if(is_pull){
+    h.SetMinimum(-5.);
+    h.SetMaximum(5.);
+  }else{
+    h.SetMinimum(themin);
+    h.SetMaximum(themax);
+  }
   h.Fill(0.5, 1.0);
   TF1 f("", "x", themin, themax);
   f.SetLineColor(2);
@@ -279,13 +296,21 @@ void MakePlot(const vector<double> &injections,
   f.SetLineStyle(2);
   TCanvas c;
   h.Draw("axis");
-  f.Draw("same");
+  if(!is_pull) f.Draw("same");
   g.Draw("p same");
   oss.str("");
-  oss << "siginj_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
+  if(!is_pull){
+    oss << "siginj_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
+  }else{
+    oss << "pull_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
+  }
   c.Print(oss.str().c_str());
 
-  cout << "Extracted signal strengths:" << endl;
+  if(!is_pull){
+    cout << "Extracted signal strengths for " << (is_nc ? "NC" : "C") << ':' << endl;
+  }else{
+    cout << "Pulls for " << (is_nc ? "NC" : "C") << ':' << endl;
+  }
   for(size_t i = 0; i < injections.size(); ++i){
     cout << injections.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
     for(const auto &y: yvals.at(i)){
