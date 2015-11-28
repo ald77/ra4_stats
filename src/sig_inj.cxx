@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <future>
+#include <memory>
+#include <mutex>
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -29,6 +32,8 @@ using namespace std;
 namespace{
   int ntoys = 5;
   vector<double> injections;
+
+  mutex global_mutex;
 }
 
 int main(int argc, char *argv[]){
@@ -36,85 +41,109 @@ int main(int argc, char *argv[]){
   styles style("RA4");
   style.setDefaultStyle();
 
-  vector<vector<double> > yvals(injections.size());
+  cout << "Creating workspaces..." << endl;
+  vector<future<void> > injected(injections.size());
   for(size_t i = 0; i < injections.size(); ++i){
-    cout << "Injecting signal with strength " << injections.at(i) << endl;
-    double x = injections.at(i);
-    ostringstream oss;
-    oss << "./run/make_workspace.exe --method m1bk --lumi 1.264 --use_r4 --toys " << ntoys-1
-	<< " --sig_strength " << x << flush;
-    execute(oss.str());
-    string file_name = execute("ls -rt m1bk*.root | tail -n 1");
-    for(int itoy = 0; itoy < ntoys; ++itoy){
-      cout << "Evaluating toy " << (itoy+1) << " of " << ntoys << endl;
-      oss.str("");
-      oss << "export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w w";
-      if(itoy != 0) oss << '_' << itoy;
-      oss << " " << file_name << flush;
-      execute(oss.str());
-      TFile r_file("mlfit.root","read");
-      if(!r_file.IsOpen()) continue;
-      oss.str("");
-      RooFitResult *f = static_cast<RooFitResult*>(r_file.Get("fit_s"));
-      if(f == nullptr) continue;
-      RooArgList pars = f->floatParsFinal();
-      for(int ipar = 0; ipar < pars.getSize(); ++ipar){
-	RooRealVar *var = static_cast<RooRealVar*>(pars.at(ipar));
-	if(var == nullptr) continue;
-	if(var->GetName() != string("r")) continue;
-	yvals.at(i).push_back(var->getVal());
-      }
+    injected.at(i) =  async(launch::async, InjectSignal, injections.at(i), i);
+  }
+  for(size_t i = 0; i < injected.size(); ++i){
+    injected.at(i).get();
+  }
+
+  cout << "Extracting signal strength from toys..." << endl;
+  vector<vector<future<double> > > toyed(ntoys);
+  for(size_t i = 0; i < toyed.size(); ++i){
+    vector<future<double> > (injections.size()).swap(toyed.at(i));
+  }
+  vector<vector<double> > yvals_nc(injections.size(), vector<double>(ntoys));
+  vector<vector<double> > yvals_c(injections.size(), vector<double>(ntoys));
+  for(int toy = 0; toy < ntoys; ++toy){
+    //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
+    for(size_t i = 0; i < injections.size(); ++i){
+      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, true);
+    }
+    for(size_t i = 0; i < injections.size(); ++i){
+      yvals_nc.at(i).at(toy) = toyed.at(toy).at(i).get();
+    }
+    for(size_t i = 0; i < injections.size(); ++i){
+      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, false);
+    }
+    for(size_t i = 0; i < injections.size(); ++i){
+      yvals_c.at(i).at(toy) = toyed.at(toy).at(i).get();
     }
   }
 
-  vector<double> centers(injections.size()), ups(injections.size()), downs(injections.size()), zeros(injections.size(), 0.);
-  vector<double> bots(centers.size()), tops(centers.size());
-  for(size_t i = 0; i < injections.size(); ++i){
-    GetStats(yvals.at(i), centers.at(i), ups.at(i), downs.at(i));
-    tops.at(i) = centers.at(i) + ups.at(i);
-    bots.at(i) = centers.at(i) - downs.at(i);
+  cout << "Generating plots..." << endl;
+  MakePlot(injections, yvals_nc, true);
+  MakePlot(injections, yvals_c, false);
+}
+
+void InjectSignal(double inject, size_t index){
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Starting to inject signal with strength " << inject << endl;
   }
+  ostringstream oss;
+  oss << "./run/make_workspace.exe --method m1bk --lumi 2.094 --use_r4 --toys " << ntoys
+      << " --sig_strength " << inject << " --identifier sig_inj_" << index << " &> /dev/null" << flush;
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Executing " << oss.str() << endl;
+  }
+  execute(oss.str());
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Done injecting signal with strength " << inject << endl;
+  }
+}
 
-  TGraphAsymmErrors g(injections.size(), &injections.at(0), &centers.at(0),
-		      &zeros.at(0), &zeros.at(0),
-		      &downs.at(0), &ups.at(0));
-  g.SetMarkerStyle(20);
-  g.SetMarkerSize(2);
-  g.SetMarkerColor(1);
-  g.SetLineStyle(1);
-  g.SetLineWidth(5);
-  g.SetLineColor(1);
-  double xmin = *min_element(injections.cbegin(), injections.cend());
-  double xmax = *max_element(injections.cbegin(), injections.cend());
-  double xdelta = xmax-xmin;
-  double ymin = *min_element(bots.cbegin(), bots.cend());
-  double ymax = *max_element(tops.cbegin(), tops.cend());
-  double ydelta = ymax-ymin;
-  double margin = 0.05;
-  double themin = min(xmin-margin*xdelta, ymin-margin*ydelta);
-  double themax = max(xmax+margin*xdelta, ymax+margin*ydelta);
-  TH1D h("", ";Injected Signal Strength;Extracted Signal Strength", 1, themin, themax);
-  h.SetMinimum(themin);
-  h.SetMaximum(themax);
-  h.Fill(0.5, 1.0);
-  TF1 f("", "x", themin, themax);
-  f.SetLineColor(2);
-  f.SetLineWidth(4);
-  f.SetLineStyle(2);
-  TCanvas c;
-  h.Draw("axis");
-  f.Draw("same");
-  g.Draw("p same");
-  c.Print("siginj.pdf");
-
-  cout << "Extracted signal strengths:" << endl;
-  for(size_t i = 0; i < injections.size(); ++i){
-    cout << injections.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
-    for(const auto &y: yvals.at(i)){
-      cout << y << " ";
+double ExtractSignal(size_t index, size_t toy, bool is_nc){
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Extracting signal given strength " << injections.at(index) << " in toy " << toy << endl;
+  }
+  ostringstream oss;
+  oss << "ls -rt m1bk*" << (is_nc ? "_nc_" : "_c_") << "*sig_inj_" << index << ".root | tail -n 1" << flush;
+  string file_name = execute(oss.str());
+  while(file_name.back() == '\n' || file_name.back() == ' '){
+    file_name.pop_back();
+  }
+  oss.str("");
+  string workdir = MakeDir("sig_inj_");
+  oss << "export blah=$(pwd); "
+      << "cd ~/cmssw/CMSSW_7_1_5/src; "
+      << "eval `scramv1 runtime -sh` &> /dev/null; "
+      << "cd $blah; "
+      << "cp " << file_name << ' ' << workdir << "; "
+      << "cd " << workdir << "; "
+      << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all --dataset data_obs_" << toy << " " << file_name << " &> /dev/null; "
+      << "cd $blah; "
+      << flush;
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Executing " << oss.str() << endl;
+  }
+  string output = execute(oss.str());
+  {
+    lock_guard<mutex> lock(global_mutex);
+    cout << "Done with " << oss.str() << endl;
+    cout << "Result was:" << endl << output << endl;
+    TFile r_file((workdir+"/mlfit.root").c_str(),"read");
+    if(!r_file.IsOpen()) return -1.;
+    RooFitResult *f = static_cast<RooFitResult*>(r_file.Get("fit_s"));
+    RooArgList pars = f->floatParsFinal();
+    for(int ipar = 0; ipar < pars.getSize(); ++ipar){
+      RooRealVar *var = static_cast<RooRealVar*>(pars.at(ipar));
+      if(var == nullptr) continue;
+      if(var->GetName() != string("r")) continue;
+      double val = var->getVal();
+      cout << "Extracted strength " << val << " given strength " << injections.at(index) << " in toy " << toy << endl;
+      r_file.Close();
+      return val;
     }
-    cout << endl;
+    r_file.Close();
   }
+  return -999.;
 }
 
 void GetStats(vector<double> vals, double &center, double &up, double &down){
@@ -205,5 +234,62 @@ void GetOptions(int argc, char *argv[]){
     injections.at(1) = 1.;
   }else{
     injections = vector<double>(injection_set.cbegin(), injection_set.cend());
+  }
+}
+
+void MakePlot(const vector<double> &injections,
+	      const vector<vector<double> > &yvals,
+	      bool is_nc){
+  vector<double> centers(injections.size()), ups(injections.size()), downs(injections.size()), zeros(injections.size(), 0.);
+  vector<double> bots(centers.size()), tops(centers.size());
+  for(size_t i = 0; i < injections.size(); ++i){
+    GetStats(yvals.at(i), centers.at(i), ups.at(i), downs.at(i));
+    tops.at(i) = centers.at(i) + ups.at(i);
+    bots.at(i) = centers.at(i) - downs.at(i);
+  }
+
+  TGraphAsymmErrors g(injections.size(), &injections.at(0), &centers.at(0),
+		      &zeros.at(0), &zeros.at(0),
+		      &downs.at(0), &ups.at(0));
+  g.SetMarkerStyle(20);
+  g.SetMarkerSize(2);
+  g.SetMarkerColor(1);
+  g.SetLineStyle(1);
+  g.SetLineWidth(5);
+  g.SetLineColor(1);
+  double xmin = *min_element(injections.cbegin(), injections.cend());
+  double xmax = *max_element(injections.cbegin(), injections.cend());
+  double xdelta = xmax-xmin;
+  double ymin = *min_element(bots.cbegin(), bots.cend());
+  double ymax = *max_element(tops.cbegin(), tops.cend());
+  double ydelta = ymax-ymin;
+  double margin = 0.05;
+  double themin = min(xmin-margin*xdelta, ymin-margin*ydelta);
+  double themax = max(xmax+margin*xdelta, ymax+margin*ydelta);
+  ostringstream oss;
+  oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << "Signal Strength" << flush;
+  TH1D h("", oss.str().c_str(), 1, themin, themax);
+  h.SetMinimum(themin);
+  h.SetMaximum(themax);
+  h.Fill(0.5, 1.0);
+  TF1 f("", "x", themin, themax);
+  f.SetLineColor(2);
+  f.SetLineWidth(4);
+  f.SetLineStyle(2);
+  TCanvas c;
+  h.Draw("axis");
+  f.Draw("same");
+  g.Draw("p same");
+  oss.str("");
+  oss << "siginj_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
+  c.Print(oss.str().c_str());
+
+  cout << "Extracted signal strengths:" << endl;
+  for(size_t i = 0; i < injections.size(); ++i){
+    cout << injections.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
+    for(const auto &y: yvals.at(i)){
+      cout << y << " ";
+    }
+    cout << endl;
   }
 }

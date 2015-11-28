@@ -36,6 +36,7 @@ namespace{
   string himet("400");
   string mjthresh("400");
   unsigned n_toys = 0;
+  string identifier = "";
 }
 
 int main(int argc, char *argv[]){
@@ -266,10 +267,11 @@ int main(int argc, char *argv[]){
   }else if(blind_level == BlindLevel::r4_blinded){
     blind_name = "_r4blinded";
   }
+  if(identifier != "") identifier = "_" + identifier;
   string outname(method+(do_syst ? "" : "_nosys")+(use_r4 ? "" : "_nor4")
                  +(no_kappa ? "_nokappa" : "")+string("_c_met")
                  +himet+"_mj"+mjthresh+"_nj"+minjets+hijets
-                 +sig_s+lumi_s.Data()+blind_name+".root");
+                 +sig_s+lumi_s.Data()+blind_name+identifier+".root");
 
   // Compressed SUSY
   WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal_c, data, sysfile, use_r4, sig_strength);
@@ -309,12 +311,13 @@ void GetOptions(int argc, char *argv[]){
       {"use_r4", no_argument, 0, '4'},
       {"toys", required_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
+      {"identifier", required_argument, 0, 'i'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:kt:4g:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:kt:4g:i:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -356,6 +359,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 't':
       method = optarg;
+      break;
+    case 'i':
+      identifier = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;
