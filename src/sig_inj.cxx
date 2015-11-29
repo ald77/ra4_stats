@@ -9,6 +9,8 @@
 #include <future>
 #include <utility>
 #include <mutex>
+#include <limits>
+#include <functional>
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -81,6 +83,10 @@ int main(int argc, char *argv[]){
   execute("rm -f *_sig_inj_*.root");
 
   cout << "Generating plots..." << endl;
+  for(size_t i = 0; i < injections.size(); ++i){
+    RemoveBadResults(yvals_nc.at(i), pulls_nc.at(i));
+    RemoveBadResults(yvals_c.at(i), pulls_c.at(i));
+  }
   MakePlot(injections, yvals_nc, true, false);
   MakePlot(injections, yvals_c, false, false);
   MakePlot(injections, pulls_nc, true, true);
@@ -163,9 +169,23 @@ void GetStats(vector<double> vals, double &center, double &up, double &down){
   sort(vals.begin(), vals.end());
   double se = erf(1./sqrt(2.));
   vector<double> vband = GetSmallestRange(vals, se);
-  center = GetMode(vband, se);
+  center = GetMedian(vband);
   up = vband.back()-center;
   down = center-vband.front();
+}
+
+double GetMedian(vector<double> v){
+  if(v.size() == 0){
+    return 0.;
+  }else{
+    sort(v.begin(), v.end());
+    size_t n = floor(0.5*(v.size()-1));
+    if(v.size()%2 == 0){
+      return v.at(n)+0.5*(v.at(n+1)-v.at(n));
+    }else{
+      return v.at(n);
+    }
+  }
 }
 
 double GetMode(const vector<double> &v, double frac){
@@ -297,7 +317,7 @@ void MakePlot(const vector<double> &injections,
   TCanvas c;
   h.Draw("axis");
   if(!is_pull) f.Draw("same");
-  g.Draw("p same");
+  g.Draw("p 0 same");
   oss.str("");
   if(!is_pull){
     oss << "siginj_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
@@ -317,5 +337,22 @@ void MakePlot(const vector<double> &injections,
       cout << y << " ";
     }
     cout << endl;
+  }
+}
+
+void RemoveBadResults(vector<double> &vals, vector<double> &pulls){
+  if(vals.size() != pulls.size()) throw runtime_error("Vals and pull must have same length");
+  vector<size_t> bad_indices;
+  for(size_t i = 0; i < vals.size(); ++i){
+    if(vals.at(i) < 0.
+       || fabs(pulls.at(i)) >= 1000.){
+      bad_indices.push_back(i);
+    }
+  }
+  sort(bad_indices.begin(), bad_indices.end(), greater<size_t>());
+  for(size_t ii = 0; ii < bad_indices.size(); ++ii){
+    size_t i = bad_indices.at(ii);
+    vals.erase(vals.begin()+i);
+    pulls.erase(pulls.begin()+i);
   }
 }
