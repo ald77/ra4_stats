@@ -234,7 +234,7 @@ int main(int argc, char *argv[]){
   if(method == "m1bk"){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
-    sysfile = "txt/systematics/m1bk.txt";
+    sysfile = "txt/systematics/m1bk_c.txt";
   } else if(method == "m1bk_nodilep"){
     pbaseline = &baseline1b;
     pblocks = &blocks_1bk;
@@ -287,6 +287,7 @@ int main(int argc, char *argv[]){
   wgc.WriteToFile(outname);
 
   // Non-compressed SUSY
+  ReplaceAll(sysfile, "_c", "_nc");
   WorkspaceGenerator wgnc(*pbaseline, *pblocks, backgrounds, signal_nc, data, sysfile, use_r4, sig_strength);
   wgnc.SetKappaCorrected(!no_kappa);
   wgnc.SetDoSystematics(do_syst);
