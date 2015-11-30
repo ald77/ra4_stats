@@ -68,14 +68,14 @@ SYSTEMATIC dilep_closure
   r2_lowmet_lownj_1b	  0.366
   r2_lowmet_lownj_1b	  0.366
   r2_highmet_lownj_1b	  0.366
-  r2_lowmet_highnj_1b	  -0.895
-  r2_highmet_highnj_1b	  -0.895
+  r2_lowmet_highnj_1b	  0.895
+  r2_highmet_highnj_1b	  0.895
   r2_lowmet_lownj_2b	  0.366
   r2_lowmet_lownj_3b	  0.366
   r2_highmet_lownj_2b	  0.366
-  r2_lowmet_highnj_2b	  -0.895
-  r2_lowmet_highnj_3b	  -0.895
-  r2_highmet_highnj_2b	  -0.895
+  r2_lowmet_highnj_2b	  0.895
+  r2_lowmet_highnj_3b	  0.895
+  r2_highmet_highnj_2b	  0.895
 
 SYSTEMATIC lumi
   PROCESSES signal
@@ -268,30 +268,30 @@ SYSTEMATIC jec
 
 SYSTEMATIC pdf
   PROCESSES signal
-    r1_lowmet_allnb	  	0.05
-    r2_lowmet_lownj_1b  	0.03
-    r2_lowmet_highnj_1b  	0.23
-    r2_lowmet_lownj_2b  	0.16
-    r2_lowmet_highnj_2b  	0.15
-    r2_lowmet_lownj_3b  	0.08
-    r2_lowmet_highnj_3b  	0.15
-    r3_lowmet_allnb	  	-0.03
-    r4_lowmet_lownj_1b  	0.28
-    r4_lowmet_highnj_1b  	0.14
-    r4_lowmet_lownj_2b  	0.06
-    r4_lowmet_highnj_2b  	0.20
-    r4_lowmet_lownj_3b  	0.03
-    r4_lowmet_highnj_3b  	0.11
-    r1_highmet_allnb	  	-0.02
-    r2_highmet_lownj_1b  	0.11
-    r2_highmet_highnj_1b  	0.25
-    r2_highmet_lownj_2b  	0.10
-    r2_highmet_highnj_2b  	0.21
-    r3_highmet_allnb	  	0.03
-    r4_highmet_lownj_1b  	0.08
-    r4_highmet_highnj_1b  	0.20
-    r4_highmet_lownj_2b  	0.05
-    r4_highmet_highnj_2b  	0.18
+    r1_lowmet_allnb		 -0.14
+    r2_lowmet_lownj_1b  	 -0.06
+    r2_lowmet_highnj_1b  	 -0.15
+    r2_lowmet_lownj_2b  	 0.07
+    r2_lowmet_highnj_2b  	 0.09
+    r2_lowmet_lownj_3b  	 -0.06
+    r2_lowmet_highnj_3b  	 -0.09
+    r3_lowmet_allnb  		 -0.11
+    r4_lowmet_lownj_1b  	 0.18
+    r4_lowmet_highnj_1b  	 -0.06
+    r4_lowmet_lownj_2b  	 -0.05
+    r4_lowmet_highnj_2b  	 0.14
+    r4_lowmet_lownj_3b  	 -0.05
+    r4_lowmet_highnj_3b  	 -0.04
+    r1_highmet_allnb  		 -0.11
+    r2_highmet_lownj_1b  	 0.08
+    r2_highmet_highnj_1b  	 0.19
+    r2_highmet_lownj_2b  	 0.03
+    r2_highmet_highnj_2b  	 0.14
+    r3_highmet_allnb  		 -0.11
+    r4_highmet_lownj_1b  	 -0.05
+    r4_highmet_highnj_1b  	 0.15
+    r4_highmet_lownj_2b  	 -0.05
+    r4_highmet_highnj_2b  	 0.11
 
 SYSTEMATIC murf
   PROCESSES signal
@@ -346,30 +346,3 @@ SYSTEMATIC isr
     r4_highmet_highnj_1b  	0.03
     r4_highmet_lownj_2b  	-0.01
     r4_highmet_highnj_2b  	0.02
-
-SYSTEMATIC xsec
-  PROCESSES signal
-    r1_lowmet_allnb	  	0.29
-    r2_lowmet_lownj_1b  	0.29
-    r2_lowmet_highnj_1b  	0.29
-    r2_lowmet_lownj_2b  	0.29
-    r2_lowmet_highnj_2b  	0.29
-    r2_lowmet_lownj_3b  	0.29
-    r2_lowmet_highnj_3b  	0.29
-    r3_lowmet_allnb	  	0.29
-    r4_lowmet_lownj_1b  	0.29
-    r4_lowmet_highnj_1b  	0.29
-    r4_lowmet_lownj_2b  	0.29
-    r4_lowmet_highnj_2b  	0.29
-    r4_lowmet_lownj_3b  	0.29
-    r4_lowmet_highnj_3b  	0.29
-    r1_highmet_allnb	  	0.29
-    r2_highmet_lownj_1b  	0.29
-    r2_highmet_highnj_1b  	0.29
-    r2_highmet_lownj_2b  	0.29
-    r2_highmet_highnj_2b  	0.29
-    r3_highmet_allnb	  	0.29
-    r4_highmet_lownj_1b  	0.29
-    r4_highmet_highnj_1b  	0.29
-    r4_highmet_lownj_2b  	0.29
-    r4_highmet_highnj_2b  	0.29

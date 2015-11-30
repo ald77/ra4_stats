@@ -48,6 +48,7 @@ int main(int argc, char *argv[]){
 
   string skim("skim_1lht500met200/");
   if(Contains(method, "m135")) skim = "skim_1lht400/";
+  string foldersig("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_28/mc/");
   string foldermc("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/mc/"+skim);
   string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_20/data/singlelep/combined/"+skim);
 
@@ -68,10 +69,10 @@ int main(int argc, char *argv[]){
                       {foldermc+"/*ttHJetTobb*.root/tree"}
     }};
   Process signal_nc{"signal", {
-      {foldermc+"/*T1tttt*1500*100*.root/tree"}
+      {foldersig+"/*T1tttt*1500*100*.root/tree"}
     }, Cut(), false, true};
   Process signal_c{"signal", {
-      {foldermc+"/*T1tttt*1200*800*.root/tree"}
+      {foldersig+"/*T1tttt*1200*800*.root/tree"}
     }, Cut(), false, true};
 
   string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");
