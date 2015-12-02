@@ -7,6 +7,7 @@
 #include "bin.hpp"
 #include "process.hpp"
 #include "cut.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 
@@ -68,7 +69,8 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     }
     ostringstream oss;
     oss << local_lumi_ << flush;
-    Cut lumi_weight = process.IsData() ? Cut() : Cut(oss.str()+"*weight");
+    Cut lumi_weight = process.IsData() ? Cut() : 
+      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight"):Cut(oss.str()+"*weight"));
 
     array<Cut, 5> cuts;
     cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());
