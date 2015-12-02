@@ -270,18 +270,18 @@ void GetOptions(int argc, char *argv[]){
   }
 }
 
-void MakePlot(const vector<double> &injections,
+void MakePlot(const vector<double> &injections_list,
 	      const vector<vector<double> > &yvals,
 	      bool is_nc, bool is_pull){
-  vector<double> centers(injections.size()), ups(injections.size()), downs(injections.size()), zeros(injections.size(), 0.);
+  vector<double> centers(injections_list.size()), ups(injections_list.size()), downs(injections_list.size()), zeros(injections_list.size(), 0.);
   vector<double> bots(centers.size()), tops(centers.size());
-  for(size_t i = 0; i < injections.size(); ++i){
+  for(size_t i = 0; i < injections_list.size(); ++i){
     GetStats(yvals.at(i), centers.at(i), ups.at(i), downs.at(i));
     tops.at(i) = centers.at(i) + ups.at(i);
     bots.at(i) = centers.at(i) - downs.at(i);
   }
 
-  TGraphAsymmErrors g(injections.size(), &injections.at(0), &centers.at(0),
+  TGraphAsymmErrors g(injections_list.size(), &injections_list.at(0), &centers.at(0),
 		      &zeros.at(0), &zeros.at(0),
 		      &downs.at(0), &ups.at(0));
   g.SetMarkerStyle(20);
@@ -290,8 +290,8 @@ void MakePlot(const vector<double> &injections,
   g.SetLineStyle(1);
   g.SetLineWidth(5);
   g.SetLineColor(1);
-  double xmin = *min_element(injections.cbegin(), injections.cend());
-  double xmax = *max_element(injections.cbegin(), injections.cend());
+  double xmin = *min_element(injections_list.cbegin(), injections_list.cend());
+  double xmax = *max_element(injections_list.cbegin(), injections_list.cend());
   double xdelta = xmax-xmin;
   double ymin = *min_element(bots.cbegin(), bots.cend());
   double ymax = *max_element(tops.cbegin(), tops.cend());
@@ -331,8 +331,8 @@ void MakePlot(const vector<double> &injections,
   }else{
     cout << "Pulls for " << (is_nc ? "NC" : "C") << ':' << endl;
   }
-  for(size_t i = 0; i < injections.size(); ++i){
-    cout << injections.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
+  for(size_t i = 0; i < injections_list.size(); ++i){
+    cout << injections_list.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
     for(const auto &y: yvals.at(i)){
       cout << y << " ";
     }
