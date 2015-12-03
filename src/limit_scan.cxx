@@ -16,6 +16,7 @@
 #include "TStyle.h"
 #include "TLegend.h"
 
+#include "utilities.hpp"
 #include "styles.hpp"
 
 using namespace std;
@@ -35,17 +36,22 @@ int main(int argc, char *argv[]){
 
   ifstream infile(filename);
   string line;
+  bool start_read = false;
   while(getline(infile, line)){
-    istringstream iss(line);
-    double pmx, pmy, pxsec, pobs, pexp, pup, pdown;
-    iss >> pmx >> pmy >> pxsec >> pobs >> pexp >> pup >> pdown;
-    vmx.push_back(pmx);
-    vmy.push_back(pmy);
-    vxsec.push_back(pxsec);
-    vobs.push_back(pobs);
-    vexp.push_back(pexp);
-    vup.push_back(pup);
-    vdown.push_back(pdown);
+    if(Contains(line, "---")){
+      start_read = true;
+    }else if(start_read){
+      istringstream iss(line);
+      double pmx, pmy, pxsec, pobs, pexp, pup, pdown;
+      iss >> pmx >> pmy >> pxsec >> pobs >> pexp >> pup >> pdown;
+      vmx.push_back(pmx);
+      vmy.push_back(pmy);
+      vxsec.push_back(pxsec);
+      vobs.push_back(pobs);
+      vexp.push_back(pexp);
+      vup.push_back(pup);
+      vdown.push_back(pdown);
+    }
   }
   infile.close();
 
