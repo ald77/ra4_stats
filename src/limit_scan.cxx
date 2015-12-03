@@ -68,11 +68,11 @@ int main(int argc, char *argv[]){
     vlim.at(i) = vxsec.at(i) * vobs.at(i);
   }
 
-  TGraph2D glim(vlim.size(), &vmx.at(0), &vmy.at(0), &vlim.at(0));
-  TGraph2D gobs(vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
-  TGraph2D gexp(vexp.size(), &vmx.at(0), &vmy.at(0), &vexp.at(0));
-  TGraph2D gup(vup.size(), &vmx.at(0), &vmy.at(0), &vup.at(0));
-  TGraph2D gdown(vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
+  TGraph2D glim("glim", "Cross-Section Limit", vlim.size(), &vmx.at(0), &vmy.at(0), &vlim.at(0));
+  TGraph2D gobs("gobs", "Observed Limit", vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
+  TGraph2D gexp("gexp", "Expected Limit", vexp.size(), &vmx.at(0), &vmy.at(0), &vexp.at(0));
+  TGraph2D gup("gup", "Expected +1#sigma Limit", vup.size(), &vmx.at(0), &vmy.at(0), &vup.at(0));
+  TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
 
   glim.SetNpx(500);
   glim.SetNpy(500);
