@@ -14,6 +14,8 @@
 #include <getopt.h>
 
 #include "TString.h"
+#include "TSystem.h"
+#include "TDirectory.h"
 
 #include "bin.hpp"
 #include "process.hpp"
@@ -27,7 +29,7 @@
 using namespace std;
 
 namespace{
-  double lumi = 2.1;
+  double lumi = 2.138;
   double sig_strength = 0.;
   BlindLevel blind_level = BlindLevel::unblinded;
   bool no_kappa = false;
@@ -39,6 +41,7 @@ namespace{
   string mjthresh("400");
   unsigned n_toys = 0;
   string sigfile = "";
+  string outfolder = "out/";
 }
 
 int main(int argc, char *argv[]){
@@ -161,16 +164,17 @@ int main(int argc, char *argv[]){
   set<Block> *pblocks(&blocks_1bk);
   string sysfolder("/net/cms2/cms2r0/babymaker/sys/2015_11_28/scan/");
   if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
-  string sysfile(sysfolder+"sys_"+glu_lsp+".txt");
+  string sysfile(sysfolder+"sys_SMS-T1tttt_"+glu_lsp+".txt");
   // If systematic file does not exist, use m1bk_nc for tests
   struct stat buffer;   
   if(stat (sysfile.c_str(), &buffer) != 0) {
-    cout<<"WARNING: "<<sysfile<<" does not exist. Using ";
+    cout<<endl<<"WARNING: "<<sysfile<<" does not exist. Using ";
     sysfile = "txt/systematics/m1bk_nc.txt";
     cout<<sysfile<<" instead"<<endl<<endl;
   }
 
-  string outname("wspace_"+glu_lsp+"_xsecNom.root");
+  gSystem->mkdir(outfolder.c_str(), kTRUE);
+  string outname(outfolder+"/wspace_"+glu_lsp+"_xsecNom.root");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
   wgNom.SetKappaCorrected(!no_kappa);
@@ -219,12 +223,13 @@ void GetOptions(int argc, char *argv[]){
       {"use_r4", no_argument, 0, '4'},
       {"toys", required_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
+      {"outfolder", required_argument, 0, 'o'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4g:f:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4g:f:o:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -245,6 +250,9 @@ void GetOptions(int argc, char *argv[]){
       }else{
         blind_level = BlindLevel::blinded;
       }
+      break;
+    case 'o':
+      outfolder = optarg;
       break;
     case 'f':
       sigfile = optarg;
