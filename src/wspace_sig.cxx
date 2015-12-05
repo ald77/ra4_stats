@@ -8,6 +8,7 @@
 #include <string>
 #include <stdlib.h>
 #include <ctime>
+#include <sys/stat.h>
 
 #include <unistd.h>
 #include <getopt.h>
@@ -19,6 +20,7 @@
 #include "utilities.hpp"
 #include "systematic.hpp"
 #include "cut.hpp"
+#include "cross_sections.hpp"
 
 #include "workspace_generator.hpp"
 
@@ -31,13 +33,11 @@ namespace{
   bool no_kappa = false;
   bool do_syst = true;
   bool use_r4 = true;
-  string method("m1bk");
   string minjets("6");
   string hijets("9");
   string himet("400");
   string mjthresh("400");
   unsigned n_toys = 0;
-  string identifier = "";
   string sigfile = "";
 }
 
@@ -54,9 +54,12 @@ int main(int argc, char *argv[]){
   string minjets2l(""); minjets2l += to_string(atoi(minjets.c_str())-1);
   string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1);
 
+  string hostname = execute("echo $HOSTNAME");
+  string basefolder("/net/cms2/cms2r0/babymaker/");
+  if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string skim("skim_abcd/");
-  string foldermc("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/mc/merged_abcd/");
-  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_20/data/singlelep/combined/"+skim);
+  string foldermc(basefolder+"babies/2015_10_19/mc/merged_abcd/");
+  string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
   Process ttbar{"ttbar", {
@@ -69,10 +72,8 @@ int main(int argc, char *argv[]){
       {sigfile+"/tree"}
     }, Cut(), false, true};
 
-  string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");
-  if(method!="m135") {
-    data_cuts = "(trig[4]||trig[8])&&pass";
-  }
+  string data_cuts("(trig[4]||trig[8])&&pass");
+
   Process data{"data", {
       {folderdata+"/*.root/tree"}
     }, data_cuts, true};
@@ -81,38 +82,17 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
-  Cut baseline1b{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400"};
-  Cut baseline_135{"mj>250&&ht>450&&met>150"};
+  Cut baseline1b{"1"};
 
-  //Declare bins
-  //Method 2, m1b, and m1bk
-  Bin r1_lowmet_1b{"r1_lowmet_1b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r1_highmet_1b{"r1_highmet_1b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r1_lowmet_2b{"r1_lowmet_2b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2",
-      blind_level>=BlindLevel::blinded};
-  Bin r1_lowmet_3b{"r1_lowmet_3b", "mt<=140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2",
-      blind_level>=BlindLevel::blinded};
-  Bin r1_highmet_2b{"r1_highmet_2b", "mt<=140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2",
-      blind_level>=BlindLevel::blinded};
-
+  //Declare bins 
   Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
       blind_level>=BlindLevel::blinded};
   Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet,
       blind_level>=BlindLevel::blinded};
-  Bin r1_allnb{"r1_allnb", "mt<=140&&mj<="+mjthresh,
-      blind_level>=BlindLevel::blinded};
 
   Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
       blind_level>=BlindLevel::blinded};
-  Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
   Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
       blind_level>=BlindLevel::blinded};
   Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
       blind_level>=BlindLevel::blinded};
@@ -122,38 +102,25 @@ int main(int argc, char *argv[]){
       blind_level>=BlindLevel::blinded};
   Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
       blind_level>=BlindLevel::blinded};
+
+  Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
+  Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>=BlindLevel::blinded};
   Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
       blind_level>=BlindLevel::blinded};
   Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
-      blind_level>=BlindLevel::blinded};
-
-  Bin r3_lowmet_1b{"r3_lowmet_1b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r3_highmet_1b{"r3_highmet_1b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r3_lowmet_2b{"r3_lowmet_2b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm==2",
-      blind_level>=BlindLevel::blinded};
-  Bin r3_lowmet_3b{"r3_lowmet_3b", "mt>140&&mj<="+mjthresh+"&&met<="+himet+"&&nbm>2",
-      blind_level>=BlindLevel::blinded};
-  Bin r3_highmet_2b{"r3_highmet_2b", "mt>140&&mj<="+mjthresh+"&&met>"+himet+"&&nbm>=2",
       blind_level>=BlindLevel::blinded};
 
   Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet,
       blind_level>=BlindLevel::blinded};
   Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet,
       blind_level>=BlindLevel::blinded};
-  Bin r3_allnb{"r3_allnb", "mt>140&&mj<="+mjthresh,
-      blind_level>=BlindLevel::blinded};
 
   Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
       blind_level>BlindLevel::unblind_1b};
-  Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
-      blind_level>BlindLevel::unblind_1b};
   Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
       blind_level>BlindLevel::unblind_1b};
-  Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
-      blind_level>BlindLevel::unblind_1b};
-
   Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
       blind_level>BlindLevel::unblinded};
   Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2",
@@ -162,41 +129,15 @@ int main(int argc, char *argv[]){
       blind_level>BlindLevel::unblinded};
   Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
       blind_level>BlindLevel::unblinded};
+
+  Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
+  Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+      blind_level>BlindLevel::unblind_1b};
   Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
       blind_level>BlindLevel::unblinded};
   Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
       blind_level>BlindLevel::unblinded};
-
-  // Dilepton blocks
-  Bin r1c_allnj{"r1c_allnj", "mt<=140&&mj<="+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-
-  Bin r2c_lownj{"r2c_lownj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>="+minjets+"&&njets<="+midjets+"&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r2c_highnj{"r2c_highnj", "mt<=140&&mj>"+mjthresh+"&&nbm>=1&&njets>"+midjets+"&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-
-  Bin d3_allnj{"d3_allnj", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm<=2&&nleps==2",
-      blind_level>=BlindLevel::blinded};
-
-  Bin d4_lownj{"d4_lownj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets<="+midjets2l+"&&nbm<=2&&nleps==2",
-      blind_level>=BlindLevel::blinded};
-  Bin d4_highnj{"d4_highnj", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&njets>"+midjets2l+"&&nbm<=2&&nleps==2",
-      blind_level>=BlindLevel::blinded};
-
-  //Method 135
-  Bin r1{"r1", "mt<=140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r2{"r2", "mt<=140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r3{"r3", "mt>140&&mj<="+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
-      blind_level>=BlindLevel::blinded};
-  Bin r4{"r4", "mt>140&&mj>"+mjthresh+"&&njets>="+minjets+"&&nbm>=1&&nleps==1",
-      blind_level>BlindLevel::unblinded};
-  Bin d3{"d3", "mj<="+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2",
-      blind_level>=BlindLevel::blinded};
-  Bin d4{"d4", "mj>"+mjthresh+"&&njets>="+minjets2l+"&&nbm>=0&&nleps==2",
-      blind_level>=BlindLevel::blinded};
 
   //// METHOD 1BK: Adding 1b, fat R1/R3 integrated over njets, nb, but not MET
   set<Block> blocks_1bk{
@@ -208,80 +149,60 @@ int main(int argc, char *argv[]){
             {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj_2b, r4_highmet_highnj_2b}}}
   };
 
-  //// METHOD 135: simple ABCD for 135 ipb
-  set<Block> blocks_135{
-    {"all", {{r1, r2}, {r3, r4}}}
-  };
-
-  set<Block> blocks_135_2l{
-    {"all", {{r1, r2}, {d3, d4}}}
-  };
-
-  //// METHOD 2l: Dilepton closure
-  set<Block> blocks_2l{
-    {"all", {{r1c_allnj, r2c_lownj, r2c_highnj},
-          {d3_allnj, d4_lownj, d4_highnj}}}
-  };
-
-  Cut *pbaseline(&baseline1b);
-  set<Block> *pblocks(&blocks_1bk);
-  string sysfile("txt/systematics/m1bk.txt");
-  if(method == "m1bk"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1bk;
-    sysfile = "txt/systematics/m1bk_c.txt";
-  } else if(method == "m1bk_nodilep"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1bk;
-    sysfile = "txt/systematics/m1bk_nodilep.txt";
-  } else if(method == "m1bk_onlydilep"){
-    pbaseline = &baseline1b;
-    pblocks = &blocks_1bk;
-    sysfile = "txt/systematics/m1bk_onlydilep.txt";
-  }else if(method == "m2l"){
-    pbaseline = &baseline2l;
-    pblocks = &blocks_2l;
-    sysfile = "txt/systematics/m2l.txt";
-  }else if(method == "m135"){
-    pbaseline = &baseline_135;
-    pblocks = &blocks_135;
-    sysfile = "txt/systematics/m135.txt";
-  }else if(method == "m135_2l"){
-    pbaseline = &baseline_135;
-    pblocks = &blocks_135_2l;
-    sysfile = "txt/systematics/m135_2l.txt";
-  }
-
-  TString lumi_s("_lumi"); lumi_s += lumi; lumi_s.ReplaceAll(".","p"); 
-  lumi_s.ReplaceAll("00000000000001",""); lumi_s.ReplaceAll("39999999999999","4");
-  TString sig_s("_sig"); sig_s += sig_strength; sig_s.ReplaceAll(".","p"); 
-  sig_s.ReplaceAll("00000000000001","");
-  string blind_name = "";
-  if(blind_level == BlindLevel::unblinded){
-    blind_name = "_unblinded";
-  }else if(blind_level == BlindLevel::unblind_1b){
-    blind_name = "_1bunblinded";
-  }else if(blind_level == BlindLevel::r4_blinded){
-    blind_name = "_r4blinded";
-  }
-  if(identifier != "") identifier = "_" + identifier;
+  //// Parsing the gluino and LSP masses
   int mglu, mlsp;
   parseMasses(sigfile, mglu, mlsp);
-  string outname("wspace_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"_xsecNom.root");
+  string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
+  double xsec, xsec_unc;
+  xsec::signalCrossSection(mglu, xsec, xsec_unc);
 
-  WorkspaceGenerator wgc(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength);
-  wgc.SetKappaCorrected(!no_kappa);
-  wgc.SetDoSystematics(do_syst);
-  wgc.SetLuminosity(lumi);
-  wgc.SetDoDilepton(false); // Applying dilep syst in text file
-  wgc.SetDoSystematics(do_syst);
-  wgc.AddToys(n_toys);
-  ReplaceAll(outname, "_nc_", "_c_");
-  wgc.WriteToFile(outname);
+  //// Creating workspaces for the Nominal, uncert Up, and uncert Down signal cross sections
+  Cut *pbaseline(&baseline1b);
+  set<Block> *pblocks(&blocks_1bk);
+  string sysfolder("/net/cms2/cms2r0/babymaker/sys/2015_11_28/scan/");
+  if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
+  string sysfile(sysfolder+"sys_"+glu_lsp+".txt");
+  // If systematic file does not exist, use m1bk_nc for tests
+  struct stat buffer;   
+  if(stat (sysfile.c_str(), &buffer) != 0) {
+    cout<<"WARNING: "<<sysfile<<" does not exist. Using ";
+    sysfile = "txt/systematics/m1bk_nc.txt";
+    cout<<sysfile<<" instead"<<endl<<endl;
+  }
+
+  string outname("wspace_"+glu_lsp+"_xsecNom.root");
+
+  WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
+  wgNom.SetKappaCorrected(!no_kappa);
+  wgNom.SetDoSystematics(do_syst);
+  wgNom.SetLuminosity(lumi);
+  wgNom.SetDoSystematics(do_syst);
+  wgNom.AddToys(n_toys);
+  wgNom.WriteToFile(outname);
+
+  ReplaceAll(outname, "Nom", "Up");
+  WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
+  wgUp.SetKappaCorrected(!no_kappa);
+  wgUp.SetDoSystematics(do_syst);
+  wgUp.SetLuminosity(lumi);
+  wgUp.SetDoSystematics(do_syst);
+  wgUp.AddToys(n_toys);
+  wgUp.WriteToFile(outname);
+
+  ReplaceAll(outname, "Up", "Down");
+  WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
+  wgDown.SetKappaCorrected(!no_kappa);
+  wgDown.SetDoSystematics(do_syst);
+  wgDown.SetLuminosity(lumi);
+  wgDown.SetDoSystematics(do_syst);
+  wgDown.AddToys(n_toys);
+  wgDown.WriteToFile(outname);
 
   time(&endtime); 
   cout<<"Finding workspaces took "<<fixed<<setprecision(0)<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;  
 }
+
+
 
 void GetOptions(int argc, char *argv[]){
   while(true){
@@ -295,17 +216,15 @@ void GetOptions(int argc, char *argv[]){
       {"himet", required_argument, 0, 'm'},
       {"mj", required_argument, 0, 's'},
       {"nokappa", no_argument, 0, 'k'},
-      {"method", required_argument, 0, 't'},
       {"use_r4", no_argument, 0, '4'},
       {"toys", required_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
-      {"identifier", required_argument, 0, 'i'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:kt:4g:i:f:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4g:f:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -347,12 +266,6 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 's':
       mjthresh = optarg;
-      break;
-    case 't':
-      method = optarg;
-      break;
-    case 'i':
-      identifier = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;

@@ -27,7 +27,8 @@ public:
                      const Process &data,
                      const std::string &systematics_file = "",
                      const bool use_r4 = true,
-                     const double sig_strength = 0.);
+                     const double sig_strength = 0.,
+                     const double sig_xsec_f = 1.);
 
   enum class PrintLevel{silent, important, normal, everything};
 
@@ -68,7 +69,7 @@ private:
   std::map<std::string, std::poisson_distribution<> > obs_gens_;
   std::string systematics_file_;
   bool use_r4_;
-  double sig_strength_;
+  double sig_strength_, sig_xsec_f_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;

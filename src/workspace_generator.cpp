@@ -31,7 +31,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
                                        const Process &signal,
                                        const Process &data,
                                        const string &systematics_file,
-                                       const bool use_r4, const double sig_strength):
+                                       const bool use_r4, const double sig_strength, const double sig_xsec_f):
   baseline_(baseline),
   backgrounds_(backgrounds),
   signal_(signal),
@@ -42,6 +42,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   systematics_file_(systematics_file),
   use_r4_(use_r4),
   sig_strength_(sig_strength),
+  sig_xsec_f_(sig_xsec_f),
   w_("w"),
   poi_(),
   observables_(),
@@ -51,7 +52,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   luminosity_(4.),
   print_level_(PrintLevel::important),
   do_systematics_(true),
-  do_dilepton_(true),
+  do_dilepton_(false),
   do_mc_kappa_correction_(true),
   num_toys_(0),
   w_is_valid_(false){
@@ -711,6 +712,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
       Append(all_prcs, signal_);
       for(const auto &bkg: all_prcs){
         GammaParams gp = GetYield(bin, bkg);
+	if(Contains(bkg.Name(), "sig")) gp *= sig_xsec_f_;
         string bbp_name = bb_name + "_PRC_"+bkg.Name();
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
