@@ -37,6 +37,8 @@ std::string ChangeExtension(std::string path, const std::string &new_ext);
 
 std::string MakeDir(std::string prefix);
 
+void parseMasses(const std::string &str, int &mglu, int &mlsp);
+
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){
   collection.insert(collection.end(), value);
