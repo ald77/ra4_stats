@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <sstream>
+#include <limits>
 
 #include <getopt.h>
 
@@ -24,7 +25,7 @@ namespace{
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
   if(file_name == "") throw runtime_error("Must supply an input file name");
-  
+
   string workdir = MakeDir("scan_point_");
 
   TFile file(file_name.c_str(), "read");
@@ -37,11 +38,18 @@ int main(int argc, char *argv[]){
   
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
+  //Need to get modify these file names
+  string up_file_name = file_name;
+  string down_file_name = file_name;
   command
     << "export origdir=$(pwd); "
     << "cp " << file_name << ' ' << workdir << done
+    << "cp " << up_file_name << ' ' << workdir << done
+    << "cp " << down_file_name << ' ' << workdir << done
     << "cd " << workdir << done
     << "combine -M Asymptotic " << file_name << done
+    << "combine -M Asymptotic --run observed --name Up " << up_file_name << done
+    << "combine -M Asymptotic --run observed --name Down " << down_file_name << done
     << flush;
   execute(command.str());
   
@@ -62,15 +70,36 @@ int main(int argc, char *argv[]){
   double exp_up = limit;
   tree->GetEntry(5);
   double obs = limit;
-  //Need to implement the observed bands
-  double obs_up = obs;
-  double obs_down = obs;
   limits_file.Close();
+
+  string up_limits_file_name = workdir+"/higgsCombineUp.Asymptotic.mH120.root";
+  TFile up_limits_file(up_limits_file_name.c_str(), "read");
+  if(!up_limits_file.IsOpen()) throw runtime_error("No \"up\" file "+up_limits_file_name);
+  tree = static_cast<TTree*>(up_limits_file.Get("limit"));
+  if(tree == nullptr) throw runtime_error("Could not get \"up\" limits tree");
+  tree->SetBranchAddress("limit", &limit);
+  num_entries = tree->GetEntries();
+  if(num_entries != 1) throw runtime_error("Expected 1 \"up\" tree entry. Saw "+to_string(num_entries));
+  tree->GetEntry(0);
+  double obs_up = limit;
+  up_limits_file.Close();
+
+  string down_limits_file_name = workdir+"/higgsCombineDown.Asymptotic.mH120.root";
+  TFile down_limits_file(down_limits_file_name.c_str(), "read");
+  if(!down_limits_file.IsOpen()) throw runtime_error("No \"down\" file "+down_limits_file_name);
+  tree = static_cast<TTree*>(down_limits_file.Get("limit"));
+  if(tree == nullptr) throw runtime_error("Could not get \"down\" limits tree");
+  tree->SetBranchAddress("limit", &limit);
+  num_entries = tree->GetEntries();
+  if(num_entries != 1) throw runtime_error("Expected 1 \"down\" tree entry. Saw "+to_string(num_entries));
+  tree->GetEntry(0);
+  double obs_down = limit;
+  down_limits_file.Close();
 
   execute("rm -rf "+workdir);
 
   cout
-    << fixed << showpoint << setprecision(8)
+    << setprecision(numeric_limits<double>::max_digits10)
     << ' ' << x
     << ' ' << y
     << ' ' << xsec
