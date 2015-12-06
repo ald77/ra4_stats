@@ -81,8 +81,8 @@ int main(int argc, char *argv[]){
   TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
   TGraph dots(vmx.size(), &vmx.at(0), &vmy.at(0));
 
-  glim.SetNpx(500);
-  glim.SetNpy(500);
+  glim.SetNpx(200);
+  glim.SetNpy(200);
 
   TH2D *hlim = glim.GetHistogram();
   if(hlim == nullptr) throw runtime_error("Could not retrieve histogram");
