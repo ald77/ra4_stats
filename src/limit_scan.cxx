@@ -15,6 +15,7 @@
 #include "TH2D.h"
 #include "TStyle.h"
 #include "TLegend.h"
+#include "TFile.h"
 
 #include "utilities.hpp"
 #include "styles.hpp"
@@ -81,8 +82,15 @@ int main(int argc, char *argv[]){
   TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
   TGraph dots(vmx.size(), &vmx.at(0), &vmy.at(0));
 
-  glim.SetNpx(200);
-  glim.SetNpy(200);
+  double xmin = *min_element(vmx.cbegin(), vmx.cend());
+  double xmax = *max_element(vmx.cbegin(), vmx.cend());
+  double ymin = *min_element(vmy.cbegin(), vmy.cend());
+  double ymax = *max_element(vmy.cbegin(), vmy.cend());
+  double bin_size = 12.5;
+  int nxbins = max(1, min(500, static_cast<int>(ceil((xmax-xmin)/bin_size))));
+  int nybins = max(1, min(500, static_cast<int>(ceil((ymax-ymin)/bin_size))));
+  glim.SetNpx(nxbins);
+  glim.SetNpy(nybins);
 
   TH2D *hlim = glim.GetHistogram();
   if(hlim == nullptr) throw runtime_error("Could not retrieve histogram");
@@ -97,25 +105,42 @@ int main(int argc, char *argv[]){
             1.-gStyle->GetPadRightMargin(), 1.);
   l.SetNColumns(2);
   l.SetBorderSize(0);
-  DrawContours(gup, 2, 2);
-  DrawContours(gdown, 2, 2);
-  DrawContours(gexp, 2, 1, &l, "Expected");
-  DrawContours(gobsup, 1, 2);
-  DrawContours(gobsdown, 1, 2);
-  DrawContours(gobs, 1, 1, &l, "Observed");
+  TGraph cup = DrawContours(gup, 2, 2);
+  TGraph cdown = DrawContours(gdown, 2, 2);
+  TGraph cexp = DrawContours(gexp, 2, 1, &l, "Expected");
+  TGraph cobsup = DrawContours(gobsup, 1, 2);
+  TGraph cobsdown = DrawContours(gobsdown, 1, 2);
+  TGraph cobs = DrawContours(gobs, 1, 1, &l, "Observed");
   l.Draw("same");
   dots.Draw("p same");
   c.Print("limit_scan.pdf");
+
+  TFile file("limit_scan.root","recreate");
+  hlim->Write("hXsec_exp_corr");
+  cobs.Write("graph_smoothed_Obs");
+  cobsup.Write("graph_smoothed_ObsP");
+  cobsdown.Write("graph_smoothed_ObsM");
+  cexp.Write("graph_smoothed_Exp");
+  cup.Write("graph_smoothed_ExpP");
+  cdown.Write("graph_smoothed_ExpM");
+  file.Close();
 }
 
-void DrawContours(TGraph2D &g2, int color, int style,
-                  TLegend *leg, const string &name){
+TGraph DrawContours(TGraph2D &g2, int color, int style,
+                    TLegend *leg, const string &name){
+  TGraph out;
   TList *l = g2.GetContourList(1.);
-  if(l == nullptr) return;
+  if(l == nullptr) return out;
   bool added = false;
+  int max_points = -1;
   for(int i = 0; i < l->GetSize(); ++i){
     TGraph *g = static_cast<TGraph*>(l->At(i));
     if(g == nullptr) continue;
+    int n_points = g->GetN();
+    if(n_points > max_points){
+      out = *g;
+      max_points = n_points;
+    }
     g->SetLineColor(color);
     g->SetLineStyle(style);
     g->SetLineWidth(5);
@@ -125,6 +150,7 @@ void DrawContours(TGraph2D &g2, int color, int style,
       added = true;
     }
   }
+  return out;
 }
   
 void SetupColors(){
