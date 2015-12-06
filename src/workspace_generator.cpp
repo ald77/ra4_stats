@@ -182,6 +182,7 @@ void WorkspaceGenerator::SetupToys(const RooArgSet &obs){
     RooAbsReal *arg = static_cast<RooAbsReal*>(*(*iter_ptr));
     if(arg == nullptr) continue;
     string name = arg->GetName();
+    if(Contains(name,"nobsmc")) continue;
     double value = arg->getVal();
     obs_vals_[name] = value;
     obs_gens_[name] = poisson_distribution<>(value);
@@ -199,6 +200,7 @@ void WorkspaceGenerator::GenerateToys(RooArgSet &obs){
     RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
     if(arg == nullptr) continue;
     string name = arg->GetName();
+    if(Contains(name,"nobsmc")) continue;
     arg->setVal(obs_gens_[name](prng_));
   }
   iter_ptr->Reset();
@@ -214,6 +216,7 @@ void WorkspaceGenerator::ResetToys(RooArgSet &obs){
     RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
     if(arg == nullptr) continue;
     string name = arg->GetName();
+    if(Contains(name,"nobsmc")) continue;
     double value = obs_vals_.at(name);
     arg->setVal(value);
   }
