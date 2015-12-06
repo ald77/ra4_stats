@@ -27,12 +27,12 @@ namespace{
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
-  styles style("RA4");
-  style.setDefaultStyle();
+  //styles style("RA4");
+  //style.setDefaultStyle();
   SetupColors();
   
   if(filename == "") throw runtime_error("No input file provided");
-  vector<double> vmx, vmy, vxsec, vobs, vexp, vup, vdown;
+  vector<double> vmx, vmy, vxsec, vobs, vobsup, vobsdown, vexp, vup, vdown;
 
   ifstream infile(filename);
   string line;
@@ -42,12 +42,14 @@ int main(int argc, char *argv[]){
       start_read = true;
     }else if(start_read){
       istringstream iss(line);
-      double pmx, pmy, pxsec, pobs, pexp, pup, pdown;
-      iss >> pmx >> pmy >> pxsec >> pobs >> pexp >> pup >> pdown;
+      double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown;
+      iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown;
       vmx.push_back(pmx);
       vmy.push_back(pmy);
       vxsec.push_back(pxsec);
       vobs.push_back(pobs);
+      vobsup.push_back(pobsup);
+      vobsdown.push_back(pobsdown);
       vexp.push_back(pexp);
       vup.push_back(pup);
       vdown.push_back(pdown);
@@ -59,6 +61,8 @@ int main(int argc, char *argv[]){
   if(vmx.size() != vmy.size()
      || vmx.size() != vxsec.size()
      || vmx.size() != vobs.size()
+     || vmx.size() != vobsup.size()
+     || vmx.size() != vobsdown.size()
      || vmx.size() != vexp.size()
      || vmx.size() != vup.size()
      || vmx.size() != vdown.size()) throw runtime_error("Error parsing text file. Model point not fully specified");
@@ -70,9 +74,12 @@ int main(int argc, char *argv[]){
 
   TGraph2D glim("glim", "Cross-Section Limit", vlim.size(), &vmx.at(0), &vmy.at(0), &vlim.at(0));
   TGraph2D gobs("gobs", "Observed Limit", vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
+  TGraph2D gobsup("gobsup", "Observed +1#sigma Limit", vobsup.size(), &vmx.at(0), &vmy.at(0), &vobsup.at(0));
+  TGraph2D gobsdown("gobsdown", "Observed -1#sigma Limit", vobsdown.size(), &vmx.at(0), &vmy.at(0), &vobsdown.at(0));
   TGraph2D gexp("gexp", "Expected Limit", vexp.size(), &vmx.at(0), &vmy.at(0), &vexp.at(0));
   TGraph2D gup("gup", "Expected +1#sigma Limit", vup.size(), &vmx.at(0), &vmy.at(0), &vup.at(0));
   TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
+  TGraph dots(vmx.size(), &vmx.at(0), &vmy.at(0));
 
   glim.SetNpx(500);
   glim.SetNpy(500);
@@ -81,17 +88,23 @@ int main(int argc, char *argv[]){
   if(hlim == nullptr) throw runtime_error("Could not retrieve histogram");
   hlim->SetTitle(";m_{gluino} [GeV];m_{LSP} [GeV]");
   
-  TCanvas c;
+  TCanvas c("","",800,800);
+  c.SetLogz();
+  hlim->SetMinimum(*min_element(vlim.cbegin(), vlim.cend()));
+  hlim->SetMaximum(*max_element(vlim.cbegin(), vlim.cend()));
   glim.Draw("colz");
   TLegend l(gStyle->GetPadLeftMargin(), 1.-gStyle->GetPadTopMargin(),
             1.-gStyle->GetPadRightMargin(), 1.);
   l.SetNColumns(2);
   l.SetBorderSize(0);
-  DrawContours(gobs, 1, 1, &l, "Observed");
-  DrawContours(gexp, 2, 1, &l, "Expected");
   DrawContours(gup, 2, 2);
   DrawContours(gdown, 2, 2);
+  DrawContours(gexp, 2, 1, &l, "Expected");
+  DrawContours(gobsup, 1, 2);
+  DrawContours(gobsdown, 1, 2);
+  DrawContours(gobs, 1, 1, &l, "Observed");
   l.Draw("same");
+  dots.Draw("p same");
   c.Print("limit_scan.pdf");
 }
 
@@ -115,13 +128,18 @@ void DrawContours(TGraph2D &g2, int color, int style,
 }
   
 void SetupColors(){
-  const int bands = 999;
+  const unsigned num = 5;
+  const int bands = 255;
   int colors[bands];
-  const unsigned num = 6;
+  double stops[num] = {0.00, 0.34, 0.61, 0.84, 1.00};
+  double red[num] = {0.50, 0.50, 1.00, 1.00, 1.00};
+  double green[num] = {0.50, 1.00, 1.00, 0.60, 0.50};
+  double blue[num] = {1.00, 1.00, 0.50, 0.40, 0.50};
+  /*const unsigned num = 6;
   double red[num] =   {1.,0.,0.,0.,1.,1.};
   double green[num] = {0.,0.,1.,1.,1.,0.};
   double blue[num] =  {1.,1.,1.,0.,0.,0.};
-  double stops[num] = {0.,0.2,0.4,0.6,0.8,1.};
+  double stops[num] = {0.,0.2,0.4,0.6,0.8,1.};*/
   int fi = TColor::CreateGradientColorTable(num,stops,red,green,blue,bands);
   for(int i = 0; i < bands; ++i){
     colors[i] = fi+i;
