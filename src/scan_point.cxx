@@ -40,9 +40,7 @@ int main(int argc, char *argv[]){
   xsec::signalCrossSection(mglu, xsec, xsec_unc);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
 
-  string workdir = "scan_point_"+glu_lsp+"/";
-  gSystem->mkdir(workdir.c_str(), kTRUE);
-
+  string workdir = MakeDir("scan_point_"+glu_lsp);
 
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
@@ -51,9 +49,9 @@ int main(int argc, char *argv[]){
   string down_file_name = file_name; ReplaceAll(down_file_name, "xsecNom", "xsecDown");
   command
     << "export origdir=$(pwd); "
-    << "cp " << file_name << ' ' << workdir << done
-    << "cp " << up_file_name << ' ' << workdir << done
-    << "cp " << down_file_name << ' ' << workdir << done
+    << "ln -s " << file_name << ' ' << workdir << done
+    << "ln -s " << up_file_name << ' ' << workdir << done
+    << "ln -s " << down_file_name << ' ' << workdir << done
     << "cd " << workdir << done
     << "combine -M Asymptotic " << file_name << done
     << "combine -M Asymptotic --run observed --name Up " << up_file_name << done
@@ -119,7 +117,7 @@ int main(int argc, char *argv[]){
     << ' ' << exp_down
     << endl;
 
-  string txtname(workdir+"limits_"+glu_lsp+".txt");
+  string txtname(workdir+"/limits_"+glu_lsp+".txt");
   ofstream txtfile(txtname);
   txtfile
     << setprecision(numeric_limits<double>::max_digits10)

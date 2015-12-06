@@ -17,7 +17,7 @@ fi
 
 index=0
 echo "-----" > txt/limits.txt
-for file in $(ls -A $lim_dir/*.root)
+for file in $(ls -A $lim_dir/*_xsecNom.root)
 do
     echo "Processing $file"
     index=$((index+1))
