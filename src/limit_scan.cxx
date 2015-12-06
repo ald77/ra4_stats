@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
 #include <unistd.h>
 #include <getopt.h>
