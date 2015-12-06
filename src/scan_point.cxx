@@ -7,14 +7,18 @@
 #include <iomanip>
 #include <stdexcept>
 #include <sstream>
+#include <fstream>
 #include <limits>
 
 #include <getopt.h>
 
 #include "TFile.h"
 #include "TTree.h"
+#include "TSystem.h"
+#include "TDirectory.h"
 
 #include "utilities.hpp"
+#include "cross_sections.hpp"
 
 using namespace std;
 
@@ -26,21 +30,25 @@ int main(int argc, char *argv[]){
   GetOptions(argc, argv);
   if(file_name == "") throw runtime_error("Must supply an input file name");
 
-  string workdir = MakeDir("scan_point_");
-
   TFile file(file_name.c_str(), "read");
   if(!file.IsOpen()) throw runtime_error("Could not open "+file_name);
-  //Need to read these from workspace file
-  double x = 1500.;
-  double y = 100.;
-  double xsec = 0.0141903;
-  file.Close();
-  
+
+  //// Parsing the gluino and LSP masses
+  int mglu, mlsp;
+  parseMasses(file_name, mglu, mlsp);
+  double xsec, xsec_unc;
+  xsec::signalCrossSection(mglu, xsec, xsec_unc);
+  string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
+
+  string workdir = "scan_point_"+glu_lsp+"/";
+  gSystem->mkdir(workdir.c_str(), kTRUE);
+
+
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
   //Need to get modify these file names
-  string up_file_name = file_name;
-  string down_file_name = file_name;
+  string up_file_name = file_name;   ReplaceAll(up_file_name, "xsecNom", "xsecUp");
+  string down_file_name = file_name; ReplaceAll(down_file_name, "xsecNom", "xsecDown");
   command
     << "export origdir=$(pwd); "
     << "cp " << file_name << ' ' << workdir << done
@@ -96,12 +104,27 @@ int main(int argc, char *argv[]){
   double obs_down = limit;
   down_limits_file.Close();
 
-  execute("rm -rf "+workdir);
+  //execute("rm -rf "+workdir);
 
   cout
     << setprecision(numeric_limits<double>::max_digits10)
-    << ' ' << x
-    << ' ' << y
+    << ' ' << mglu
+    << ' ' << mlsp
+    << ' ' << xsec
+    << ' ' << obs
+    << ' ' << obs_up
+    << ' ' << obs_down
+    << ' ' << exp
+    << ' ' << exp_up
+    << ' ' << exp_down
+    << endl;
+
+  string txtname(workdir+"limits_"+glu_lsp+".txt");
+  ofstream txtfile(txtname);
+  txtfile
+    << setprecision(numeric_limits<double>::max_digits10)
+    << ' ' << mglu
+    << ' ' << mlsp
     << ' ' << xsec
     << ' ' << obs
     << ' ' << obs_up
