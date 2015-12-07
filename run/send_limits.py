@@ -27,10 +27,14 @@ for file in inputfiles:
   # Creating executable
   if ifile % files_job == 1:
     ijob += 1
-    exename = runfolder+"/wspace_sig_"+str(ijob)+".sh"
+    exename = runfolder+"/find_limit_sig_"+str(ijob)+".sh"
     fexe = open(exename,"w")
     os.system("chmod u+x "+exename)
     fexe.write("#!/bin/bash\n\n")
+    fexe.write(". /cvmfs/cms.cern.ch/cmsset_default.sh \n")
+    fexe.write("cd ~/cmssw/stats/CMSSW_7_4_14/src/ \n")
+    fexe.write("eval `scramv1 runtime -sh` \n")
+    fexe.write("cd ~/code/ra4_stats ; \n\n")
   fexe.write("./run/scan_point.exe -f "+infolder+'/'+file+' >> limits_'+str(ijob)+'.txt\n')
   if ifile % files_job == 0 or ifile == len(inputfiles): 
     fexe.close()
