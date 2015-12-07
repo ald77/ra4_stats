@@ -49,6 +49,9 @@ public:
   bool GetKappaCorrected() const;
   WorkspaceGenerator & SetKappaCorrected(bool do_kappa_correction);
 
+  double GetRMax() const;
+  WorkspaceGenerator & SetRMax(double rmax);
+
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
                        const Process &process,
@@ -70,6 +73,7 @@ private:
   std::string systematics_file_;
   bool use_r4_;
   double sig_strength_, sig_xsec_f_;
+  double rmax_;
   RooWorkspace w_;
   std::set<std::string>  poi_, observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;

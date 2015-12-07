@@ -158,6 +158,8 @@ int main(int argc, char *argv[]){
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
   double xsec, xsec_unc;
   xsec::signalCrossSection(mglu, xsec, xsec_unc);
+  double rmax = 20.;
+  if(mglu <= 1100. && mlsp <= 450.) rmax = 5.;
 
   //// Creating workspaces for the Nominal, uncert Up, and uncert Down signal cross sections
   Cut *pbaseline(&baseline1b);
@@ -177,6 +179,7 @@ int main(int argc, char *argv[]){
   string outname(outfolder+"/wspace_"+glu_lsp+"_xsecNom.root");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
+  wgNom.SetRMax(rmax);
   wgNom.SetKappaCorrected(!no_kappa);
   wgNom.SetDoSystematics(do_syst);
   wgNom.SetLuminosity(lumi);
@@ -186,6 +189,7 @@ int main(int argc, char *argv[]){
 
   ReplaceAll(outname, "Nom", "Up");
   WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
+  wgUp.SetRMax(rmax);
   wgUp.SetKappaCorrected(!no_kappa);
   wgUp.SetDoSystematics(do_syst);
   wgUp.SetLuminosity(lumi);
@@ -195,6 +199,7 @@ int main(int argc, char *argv[]){
 
   ReplaceAll(outname, "Up", "Down");
   WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
+  wgDown.SetRMax(rmax);
   wgDown.SetKappaCorrected(!no_kappa);
   wgDown.SetDoSystematics(do_syst);
   wgDown.SetLuminosity(lumi);

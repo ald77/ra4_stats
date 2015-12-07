@@ -43,6 +43,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   use_r4_(use_r4),
   sig_strength_(sig_strength),
   sig_xsec_f_(sig_xsec_f),
+  rmax_(20.),
   w_("w"),
   poi_(),
   observables_(),
@@ -128,6 +129,18 @@ bool WorkspaceGenerator::GetKappaCorrected() const{
 WorkspaceGenerator & WorkspaceGenerator::SetKappaCorrected(bool do_kappa_correction){
   if(do_mc_kappa_correction_ != do_kappa_correction){
     do_mc_kappa_correction_ = do_kappa_correction;
+    w_is_valid_ = false;
+  }
+  return *this;
+}
+
+double WorkspaceGenerator::GetRMax() const{
+  return rmax_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetRMax(double rmax){
+  if(rmax != rmax_){
+    rmax_ = rmax;
     w_is_valid_ = false;
   }
   return *this;
@@ -284,7 +297,7 @@ void WorkspaceGenerator::AddPOI(){
   if(print_level_ >= PrintLevel::everything){
     cout << "AddPOI()" << endl;
   }
-  w_.factory("r[1.,0.,20.]");
+  w_.factory(("r[1.,0.,"+to_string(rmax_)+"]").c_str());
   Append(poi_, "r");
 }
 
