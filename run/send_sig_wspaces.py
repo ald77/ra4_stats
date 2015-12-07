@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-###### Script to send 50 jobs to the batch producing workspaces for each signal mass point
+###### Script to send 58 jobs to the batch producing workspaces for each signal mass point
 import os, sys, subprocess
 import pprint
 import glob
@@ -19,14 +19,14 @@ if not os.path.exists(runfolder):
 inputfiles = [i for i in os.listdir(infolder) if "SMS" in i]
 
 os.system("JobSetup.csh")
-njobs = 50
+njobs = 60
 files_job = (len(inputfiles)+njobs-1)/njobs
 ifile = 0
 ijob = 0
 for file in inputfiles:
   ifile += 1
   # Creating executable
-  if ifile % files_job == 1:
+  if ifile % files_job == 1 || files_job == 1:
     ijob += 1
     exename = runfolder+"/wspace_sig_"+str(ijob)+".sh"
     fexe = open(exename,"w")

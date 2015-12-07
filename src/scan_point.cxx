@@ -40,8 +40,10 @@ int main(int argc, char *argv[]){
   xsec::signalCrossSection(mglu, xsec, xsec_unc);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
 
-  string workdir = MakeDir("scan_point_"+glu_lsp);
-
+  //string workdir = MakeDir("scan_point_"+glu_lsp);
+  string workdir = "scan_point_"+glu_lsp+"/";
+  gSystem->mkdir(workdir.c_str(), kTRUE);
+ 
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
   //Need to get modify these file names

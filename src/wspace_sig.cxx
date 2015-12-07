@@ -159,9 +159,9 @@ int main(int argc, char *argv[]){
   double xsec, xsec_unc;
   xsec::signalCrossSection(mglu, xsec, xsec_unc);
   double rmax = 20.;
-  if(mglu <= 1100. && mlsp <= 450.){
+  if(mglu <= 1100 && mlsp <= 450){
     rmax = 5.;
-    if(mglu <= 625 && mlsp <= 375.){
+    if(mglu <= 725 && mlsp <= 375){
       rmax = 1.5;
     }
   }
