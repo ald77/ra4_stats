@@ -4,8 +4,13 @@
 #include <vector>
 #include <utility>
 
+#include "RooAbsReal.h"
+#include "RooFitResult.h"
+
 void InjectSignal(double inject, std::size_t index);
 std::pair<double,double> ExtractSignal(std::size_t index, std::size_t toy, bool is_nc);
+double GetAsymError(const RooRealVar &var, double &ehi, double &elo);
+double GetError(const RooAbsReal &var, const RooFitResult &f);
 void GetOptions(int argc, char *argv[]);
 void GetStats(std::vector<double> vals, double &center, double &up, double &down);
 double GetMode(const std::vector<double> &v, double frac);

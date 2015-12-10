@@ -101,7 +101,7 @@ void InjectSignal(double inject, size_t index){
     cout << "Starting to inject signal with strength " << inject << endl;
   }
   ostringstream oss;
-  oss << "./run/make_workspace.exe --method m1bk --lumi " << lumi << " --use_r4 --toys " << ntoys
+  oss << "./run/make_workspace.exe --method m1bk --no_syst --lumi " << lumi << " --use_r4 --toys " << ntoys
       << " --sig_strength " << inject << " --identifier sig_inj_" << index << " &> /dev/null" << flush;
   {
     lock_guard<mutex> lock(global_mutex);
@@ -146,6 +146,7 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
     TFile r_file((workdir+"/mlfit.root").c_str(),"read");
     if(!r_file.IsOpen()) return pair<double, double>(-1., -1.);
     RooFitResult *f = static_cast<RooFitResult*>(r_file.Get("fit_s"));
+    if(f == nullptr) return pair<double, double>(-1., -1.);
     RooArgList pars = f->floatParsFinal();
     for(int ipar = 0; ipar < pars.getSize(); ++ipar){
       RooRealVar *var = static_cast<RooRealVar*>(pars.at(ipar));
@@ -153,19 +154,19 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
       if(var->GetName() != string("r")) continue;
       double val = var->getVal();
       double delta = val - injections.at(index);
-      double pull = 0., ehi = 0., elo = 0.;
-      if(var->hasAsymError()){
-	ehi = var->getAsymErrorHi();
-	elo = var->getAsymErrorLo();
-	if(delta < 0.){
-	  pull = delta/ehi;
-	}else{
-	  pull = -delta/elo;
-	}
-      }else if(var->hasError()){
-	ehi = var->getError();
-	elo = var->getError();
-	pull = delta/ehi;
+      double ehi, elo;
+      bool do_asym = false;
+      if(do_asym){
+	GetAsymError(*var, ehi, elo);
+      }else{
+	ehi = GetError(*var, *f);
+	elo = ehi;
+      }
+      double pull = 0.;
+      if(delta < 0.){
+	pull = -fabs(delta)/fabs(ehi);
+      }else{
+	pull = fabs(delta)/fabs(elo);
       }
       cout << "Extracted strength " << val << " + " << ehi << " - " << fabs(elo) << " given strength " << injections.at(index) << " in toy " << toy << ". pull=" << pull << endl;
       r_file.Close();
@@ -176,6 +177,92 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
     r_file.Close();
   }
   return pair<double, double>(-1., -1.);
+}
+
+double GetAsymError(const RooRealVar& var, double &ehi, double &elo){
+  if(var.hasAsymError()){
+    ehi = var.getAsymErrorHi();
+    elo = var.getAsymErrorLo();
+    double aehi = fabs(ehi);
+    double aelo = fabs(elo);
+    double delta = aehi - aelo;
+    return aelo + 0.5*delta;
+  }else if(var.hasError()){
+    ehi = var.getError();
+    elo = ehi;
+    return ehi;
+  }else{
+    ehi = 0.;
+    elo = 0.;
+    return 0.;
+  }
+}
+
+double GetError(const RooAbsReal &var,
+                const RooFitResult &f){
+  // Clone self for internal use
+  RooAbsReal* cloneFunc = static_cast<RooAbsReal*>(var.cloneTree());
+  RooArgSet* errorParams = cloneFunc->getObservables(f.floatParsFinal());
+  RooArgSet* nset = cloneFunc->getParameters(*errorParams);
+
+  // Make list of parameter instances of cloneFunc in order of error matrix
+  RooArgList paramList;
+  const RooArgList& fpf = f.floatParsFinal();
+  vector<int> fpf_idx;
+  for (int i=0; i<fpf.getSize(); i++) {
+    RooAbsArg* par = errorParams->find(fpf[i].GetName());
+    if (par) {
+      paramList.add(*par);
+      fpf_idx.push_back(i);
+    }
+  }
+
+  vector<double> errors(paramList.getSize());
+  for (Int_t ivar=0; ivar<paramList.getSize(); ivar++) {
+    RooRealVar& rrv = static_cast<RooRealVar&>(fpf[fpf_idx[ivar]]);
+
+    double cenVal = rrv.getVal();
+    double errVal = rrv.getError();
+
+    // Make Plus variation
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal+0.5*errVal);
+    double up = cloneFunc->getVal(nset);
+
+    // Make Minus variation
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal-0.5*errVal);
+    double down = cloneFunc->getVal(nset);
+
+    errors.at(ivar) = (up-down);
+
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal);
+  }
+
+  vector<double> right(errors.size());
+  for(size_t i = 0; i < right.size(); ++i){
+    right.at(i) = 0.;
+    for(size_t j = 0; j < errors.size(); ++j){
+      right.at(i) += f.correlation(paramList.at(i)->GetName(),paramList.at(j)->GetName())*errors.at(j);
+    }
+  }
+  double sum = 0.;
+  for(size_t i = 0; i < right.size(); ++i){
+    sum += errors.at(i)*right.at(i);
+  }
+
+  if(cloneFunc != nullptr){
+    delete cloneFunc;
+    cloneFunc = nullptr;
+  }
+  if(errorParams != nullptr){
+    delete errorParams;
+    errorParams = nullptr;
+  }
+  if(nset != nullptr){
+    delete nset;
+    nset = nullptr;
+  }
+
+  return sqrt(sum);
 }
 
 void GetStats(vector<double> vals, double &center, double &up, double &down){
