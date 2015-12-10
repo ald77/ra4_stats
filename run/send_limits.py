@@ -25,7 +25,7 @@ ijob = 0
 for file in inputfiles:
   ifile += 1
   # Creating executable
-  if ifile % files_job == 1 || files_job == 1:
+  if ifile % files_job == 1 or files_job == 1:
     ijob += 1
     exename = runfolder+"/find_limit_sig_"+str(ijob)+".sh"
     fexe = open(exename,"w")

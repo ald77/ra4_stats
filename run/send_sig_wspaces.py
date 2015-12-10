@@ -10,7 +10,7 @@ import time
 
 # Setting folders
 infolder  = "/net/cms2/cms2r0/babymaker/babies/2015_11_28/mc/scan/skim_abcd/"
-outfolder = "wspaces/" 
+outfolder = "new_wspaces/" 
 runfolder = outfolder+"run/" 
 if not os.path.exists(runfolder):
   os.system("mkdir -p "+runfolder)
@@ -26,7 +26,7 @@ ijob = 0
 for file in inputfiles:
   ifile += 1
   # Creating executable
-  if ifile % files_job == 1 || files_job == 1:
+  if ifile % files_job == 1 or files_job == 1:
     ijob += 1
     exename = runfolder+"/wspace_sig_"+str(ijob)+".sh"
     fexe = open(exename,"w")

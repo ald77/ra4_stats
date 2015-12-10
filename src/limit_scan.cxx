@@ -130,6 +130,7 @@ int main(int argc, char *argv[]){
 TGraph DrawContours(TGraph2D &g2, int color, int style,
                     TLegend *leg, const string &name){
   TGraph out;
+  g2.GetHistogram();
   TList *l = g2.GetContourList(1.);
   if(l == nullptr) return out;
   bool added = false;
