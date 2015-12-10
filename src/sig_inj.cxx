@@ -20,6 +20,7 @@
 #include "TH1D.h"
 #include "TCanvas.h"
 #include "TF1.h"
+#include "TLine.h"
 
 #include "RooWorkspace.h"
 #include "RooRealVar.h"
@@ -34,6 +35,7 @@ using namespace std;
 namespace{
   int ntoys = 5;
   vector<double> injections;
+  double lumi = 2.1;
 
   mutex global_mutex;
 }
@@ -99,7 +101,7 @@ void InjectSignal(double inject, size_t index){
     cout << "Starting to inject signal with strength " << inject << endl;
   }
   ostringstream oss;
-  oss << "./run/make_workspace.exe --method m1bk --lumi 2.094 --use_r4 --toys " << ntoys
+  oss << "./run/make_workspace.exe --method m1bk --lumi " << lumi << " --use_r4 --toys " << ntoys
       << " --sig_strength " << inject << " --identifier sig_inj_" << index << " &> /dev/null" << flush;
   {
     lock_guard<mutex> lock(global_mutex);
@@ -125,17 +127,17 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
   }
   oss.str("");
   string workdir = MakeDir("sig_inj_");
-  oss << "export origdir=$(pwd); "
-      << "cd ~/cmssw/CMSSW_7_1_5/src; "
-      << "eval `scramv1 runtime -sh` &> /dev/null; "
-      << "cd $origdir; "
-      << "cp " << file_name << ' ' << workdir << "; "
-      << "cd " << workdir << "; "
-      << "combine -M MaxLikelihoodFit --skipBOnlyFit --dataset data_obs_" << toy << " " << file_name << " &> /dev/null; "
-      << "cd $origdir; "
-      << flush;
   {
     lock_guard<mutex> lock(global_mutex);
+    oss << "export origdir=$(pwd); "
+	<< "cd ~/cmssw/CMSSW_7_1_5/src; "
+	<< "eval `scramv1 runtime -sh` &> /dev/null; "
+	<< "cd $origdir; "
+	<< "cp " << file_name << ' ' << workdir << "; "
+	<< "cd " << workdir << "; "
+	<< "combine -M MaxLikelihoodFit --skipBOnlyFit --dataset data_obs_" << toy << " --preFitValue " << max(injections.at(index),0.01) << ' ' << file_name << " &> /dev/null; "
+	<< "cd $origdir; "
+	<< flush;
     cout << "Executing " << oss.str() << endl;
   }
   string output = execute(oss.str());
@@ -151,10 +153,21 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
       if(var->GetName() != string("r")) continue;
       double val = var->getVal();
       double delta = val - injections.at(index);
-      double ehi = fabs(var->getErrorHi());
-      double elo = fabs(var->getErrorLo());
-      double pull = delta > 0. ? delta/elo : delta/ehi;
-      cout << "Extracted strength " << val << " + " << ehi << " - " << elo << " given strength " << injections.at(index) << " in toy " << toy << ". pull=" << pull << endl;
+      double pull = 0., ehi = 0., elo = 0.;
+      if(var->hasAsymError()){
+	ehi = var->getAsymErrorHi();
+	elo = var->getAsymErrorLo();
+	if(delta < 0.){
+	  pull = delta/ehi;
+	}else{
+	  pull = -delta/elo;
+	}
+      }else if(var->hasError()){
+	ehi = var->getError();
+	elo = var->getError();
+	pull = delta/ehi;
+      }
+      cout << "Extracted strength " << val << " + " << ehi << " - " << fabs(elo) << " given strength " << injections.at(index) << " in toy " << toy << ". pull=" << pull << endl;
       r_file.Close();
       execute("rm -rf "+workdir);
       return pair<double, double>(val, pull);
@@ -169,6 +182,7 @@ void GetStats(vector<double> vals, double &center, double &up, double &down){
   sort(vals.begin(), vals.end());
   double se = erf(1./sqrt(2.));
   vector<double> vband = GetSmallestRange(vals, se);
+  cout << vband.size() << '/' << vals.size() << "~=" << se << endl;
   center = GetMedian(vband);
   up = vband.back()-center;
   down = center-vband.front();
@@ -240,12 +254,13 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"toys", required_argument, 0, 't'},
       {"inject", required_argument, 0, 'i'},
+      {"lumi", required_argument, 0, 'l'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "t:i:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "t:i:l:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -255,6 +270,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'i':
       injection_set.insert(atof(optarg));
+      break;
+    case 'l':
+      lumi = atof(optarg);
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
@@ -303,20 +321,40 @@ void MakePlot(const vector<double> &injections_list,
   oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << "Signal Strength" << flush;
   TH1D h("", oss.str().c_str(), 1, is_pull ? xmin-margin*xdelta : themin, is_pull ? xmax+margin*xdelta : themax);
   if(is_pull){
-    h.SetMinimum(-5.);
-    h.SetMaximum(5.);
+    h.SetMinimum(-3.);
+    h.SetMaximum(3.);
   }else{
     h.SetMinimum(themin);
     h.SetMaximum(themax);
   }
-  h.Fill(0.5, 1.0);
+  h.Fill(0.5, 1.0); 
+  double xleft = xmin - margin*xdelta;
+  double xright = xmax + margin*xdelta;
   TF1 f("", "x", themin, themax);
   f.SetLineColor(2);
   f.SetLineWidth(4);
   f.SetLineStyle(2);
+  TLine center(xleft, 0., xright, 0.);
+  TLine up(xleft, 1., xright, 1.);
+  TLine down(xleft, -1., xright, -1.);
+  center.SetLineColor(2);
+  center.SetLineWidth(4);
+  center.SetLineStyle(1);
+  up.SetLineColor(2);
+  up.SetLineWidth(4);
+  up.SetLineStyle(2);
+  down.SetLineColor(2);
+  down.SetLineWidth(4);
+  down.SetLineStyle(2);
   TCanvas c;
   h.Draw("axis");
-  if(!is_pull) f.Draw("same");
+  if(!is_pull){
+    f.Draw("same");
+  }else{
+    center.Draw("same");
+    up.Draw("same");
+    down.Draw("same");
+  }
   g.Draw("p 0 same");
   oss.str("");
   if(!is_pull){
