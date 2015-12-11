@@ -24,7 +24,7 @@
 using namespace std;
 
 namespace{
-  string filename = "";
+  string filename = "txt/t1tttt_limit_scan.txt";
 }
 
 int main(int argc, char *argv[]){
