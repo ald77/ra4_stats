@@ -47,10 +47,19 @@ int main(int argc, char *argv[]){
   styles style("RA4");
   style.setDefaultStyle();
 
+  ostringstream oss;
+  oss
+    << "toys_" << ntoys
+    << "_lumi_" << lumi
+    << (do_asymmetric_error ? "_asym_error" : "")
+    << (do_systematics ? "_with_syst" : "")
+    << flush;
+  string id_string = oss.str();
+
   cout << "Creating workspaces..." << endl;
   vector<future<void> > injected(injections.size());
   for(size_t i = 0; i < injections.size(); ++i){
-    injected.at(i) =  async(launch::async, InjectSignal, injections.at(i), i);
+    injected.at(i) =  async(launch::async, InjectSignal, id_string, injections.at(i), i);
   }
   for(size_t i = 0; i < injected.size(); ++i){
     injected.at(i).get();
@@ -68,7 +77,7 @@ int main(int argc, char *argv[]){
   for(int toy = 0; toy < ntoys; ++toy){
     //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
     for(size_t i = 0; i < injections.size(); ++i){
-      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, true);
+      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, true);
     }
     for(size_t i = 0; i < injections.size(); ++i){
       auto res = toyed.at(toy).at(i).get();
@@ -76,7 +85,7 @@ int main(int argc, char *argv[]){
       pulls_nc.at(i).at(toy) = res.second;
     }
     for(size_t i = 0; i < injections.size(); ++i){
-      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, i, toy, false);
+      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, false);
     }
     for(size_t i = 0; i < injections.size(); ++i){
       auto res = toyed.at(toy).at(i).get();
@@ -97,7 +106,7 @@ int main(int argc, char *argv[]){
   MakePlot(injections, pulls_c, false, true);
 }
 
-void InjectSignal(double inject, size_t index){
+void InjectSignal(const string id_string, double inject, size_t index){
   {
     lock_guard<mutex> lock(global_mutex);
     cout << "Starting to inject signal with strength " << inject << endl;
@@ -105,7 +114,8 @@ void InjectSignal(double inject, size_t index){
   ostringstream oss;
   oss << "./run/make_workspace.exe --method m1bk"
       << (do_systematics ? "" : " --no_syst") << " --lumi " << lumi << " --use_r4 --toys " << ntoys
-      << " --sig_strength " << inject << " --identifier sig_inj_" << index << " &> /dev/null" << flush;
+      << " --sig_strength " << inject << " --identifier sig_inj_" << id_string << "_" << index
+      << " < /dev/null &> /dev/null" << flush;
   {
     lock_guard<mutex> lock(global_mutex);
     cout << "Executing " << oss.str() << endl;
@@ -117,13 +127,14 @@ void InjectSignal(double inject, size_t index){
   }
 }
 
-pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
+pair<double, double> ExtractSignal(const string id_string, size_t index, size_t toy, bool is_nc){
   {
     lock_guard<mutex> lock(global_mutex);
     cout << "Extracting signal given strength " << injections.at(index) << " in toy " << toy << endl;
   }
   ostringstream oss;
-  oss << "ls -rt m1bk*" << (is_nc ? "_nc_" : "_c_") << "*sig_inj_" << index << ".root | tail -n 1" << flush;
+  oss << "ls -rt m1bk*" << (is_nc ? "_nc_" : "_c_")
+      << "*sig_inj_" << id_string << "_" << index << ".root | tail -n 1" << flush;
   string file_name = execute(oss.str());
   while(file_name.back() == '\n' || file_name.back() == ' '){
     file_name.pop_back();

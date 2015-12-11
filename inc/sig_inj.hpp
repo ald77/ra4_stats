@@ -2,13 +2,14 @@
 #define H_SIG_INJ
 
 #include <vector>
+#include <string>
 #include <utility>
 
 #include "RooAbsReal.h"
 #include "RooFitResult.h"
 
-void InjectSignal(double inject, std::size_t index);
-std::pair<double,double> ExtractSignal(std::size_t index, std::size_t toy, bool is_nc);
+void InjectSignal(const std::string id_string, double inject, std::size_t index);
+std::pair<double,double> ExtractSignal(const std::string id_string, std::size_t index, std::size_t toy, bool is_nc);
 double GetAsymError(const RooRealVar &var, double &ehi, double &elo);
 double GetError(const RooAbsReal &var, const RooFitResult &f);
 void GetOptions(int argc, char *argv[]);
