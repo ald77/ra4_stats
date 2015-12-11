@@ -36,6 +36,8 @@ namespace{
   int ntoys = 5;
   vector<double> injections;
   double lumi = 2.1;
+  bool do_asymmetric_error = false;
+  bool do_systematics = false;
 
   mutex global_mutex;
 }
@@ -101,7 +103,8 @@ void InjectSignal(double inject, size_t index){
     cout << "Starting to inject signal with strength " << inject << endl;
   }
   ostringstream oss;
-  oss << "./run/make_workspace.exe --method m1bk --no_syst --lumi " << lumi << " --use_r4 --toys " << ntoys
+  oss << "./run/make_workspace.exe --method m1bk"
+      << (do_systematics ? "" : " --no_syst") << " --lumi " << lumi << " --use_r4 --toys " << ntoys
       << " --sig_strength " << inject << " --identifier sig_inj_" << index << " &> /dev/null" << flush;
   {
     lock_guard<mutex> lock(global_mutex);
@@ -155,8 +158,7 @@ pair<double, double> ExtractSignal(size_t index, size_t toy, bool is_nc){
       double val = var->getVal();
       double delta = val - injections.at(index);
       double ehi, elo;
-      bool do_asym = false;
-      if(do_asym){
+      if(do_asymmetric_error){
 	GetAsymError(*var, ehi, elo);
       }else{
 	ehi = GetError(*var, *f);
@@ -342,12 +344,14 @@ void GetOptions(int argc, char *argv[]){
       {"toys", required_argument, 0, 't'},
       {"inject", required_argument, 0, 'i'},
       {"lumi", required_argument, 0, 'l'},
+      {"asym", no_argument, 0, 'a'},
+      {"syst", no_argument, 0, 's'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "t:i:l:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "t:i:l:as", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -360,6 +364,12 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'l':
       lumi = atof(optarg);
+      break;
+    case 'a':
+      do_asymmetric_error = true;
+      break;
+    case 's':
+      do_systematics = true;
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
@@ -444,12 +454,20 @@ void MakePlot(const vector<double> &injections_list,
   }
   g.Draw("p 0 same");
   oss.str("");
-  if(!is_pull){
-    oss << "siginj_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
-  }else{
-    oss << "pull_" << (is_nc ? "nc" : "c") << ".pdf" << flush;
+  oss
+    << "siginj"
+    << (is_nc ? "_nc" : "_c")
+    << "_toys_" << ntoys
+    << "_lumi_" << lumi
+    << (do_asymmetric_error ? "_asym_error" : "")
+    << (do_systematics ? "_with_syst" : "")
+    << ".pdf"
+    << flush;
+  string plot_name = oss.str();
+  if(is_pull){
+    ReplaceAll(plot_name, "siginj", "pull");
   }
-  c.Print(oss.str().c_str());
+  c.Print(plot_name.c_str());
 
   if(!is_pull){
     cout << "Extracted signal strengths for " << (is_nc ? "NC" : "C") << ':' << endl;
