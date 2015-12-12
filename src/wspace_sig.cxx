@@ -183,6 +183,7 @@ int main(int argc, char *argv[]){
 
   gSystem->mkdir(outfolder.c_str(), kTRUE);
   string outname(outfolder+"/wspace_"+glu_lsp+"_xsecNom.root");
+  if(!use_r4) ReplaceAll(outname, "wspace_","wspace_nor4_");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
   wgNom.SetRMax(rmax);
@@ -231,7 +232,7 @@ void GetOptions(int argc, char *argv[]){
       {"himet", required_argument, 0, 'm'},
       {"mj", required_argument, 0, 's'},
       {"nokappa", no_argument, 0, 'k'},
-      {"use_r4", no_argument, 0, '4'},
+      {"no_r4", no_argument, 0, '4'},
       {"toys", required_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
       {"outfolder", required_argument, 0, 'o'},
@@ -281,7 +282,7 @@ void GetOptions(int argc, char *argv[]){
       no_kappa = true;
       break;
     case '4':
-      use_r4 = true;
+      use_r4 = false;
       break;
     case 's':
       mjthresh = optarg;

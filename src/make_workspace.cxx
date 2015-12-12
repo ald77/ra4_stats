@@ -46,17 +46,19 @@ int main(int argc, char *argv[]){
   string minjets2l(""); minjets2l += to_string(atoi(minjets.c_str())-1);
   string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1);
 
+  string hostname = execute("echo $HOSTNAME");
+  string basefolder("/net/cms2/cms2r0/babymaker/");
+  if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string skim("skim_1lht500met200/");
-  if(Contains(method, "m135")) skim = "skim_1lht400/";
-  string foldersig("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_28/mc/");
-  string foldermc("/afs/cern.ch/user/m/manuelf/work/babies/2015_10_19/mc/"+skim);
-  string folderdata("/afs/cern.ch/user/m/manuelf/work/babies/2015_11_20/data/singlelep/combined/"+skim);
+  string foldermc(basefolder+"babies/2015_11_28/mc/"+skim);
+  string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
+  string ttjets_cuts("stitch");
   Process ttbar{"ttbar", {
       {foldermc+"/*TTJets*Lept*.root/tree"},
         {foldermc+"/*TTJets_HT*.root/tree"}
-    }};
+    },ttjets_cuts};
   Process other{"other", {
       {foldermc+"/*_WJetsToLNu*.root/tree"},
         {foldermc+"/*_TTWJets*.root/tree"},
@@ -69,10 +71,10 @@ int main(int argc, char *argv[]){
                       {foldermc+"/*ttHJetTobb*.root/tree"}
     }};
   Process signal_nc{"signal", {
-      {foldersig+"/*T1tttt*1500*100*.root/tree"}
+      {foldermc+"/*T1tttt*1500*100*.root/tree"}
     }, Cut(), false, true};
   Process signal_c{"signal", {
-      {foldersig+"/*T1tttt*1200*800*.root/tree"}
+      {foldermc+"/*T1tttt*1200*800*.root/tree"}
     }, Cut(), false, true};
 
   string data_cuts("(trig[4]||trig[8])&&pass&&nonblind");

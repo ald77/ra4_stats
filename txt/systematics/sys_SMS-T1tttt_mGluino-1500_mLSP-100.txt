@@ -1,0 +1,499 @@
+SYSTEMATIC isr_pt
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b    0.04
+  r2_highmet_lownj_1b   0.03
+  r2_lowmet_highnj_1b   0.05
+  r2_highmet_highnj_1b  0.04
+  r2_lowmet_lownj_2b    0.04
+  r2_lowmet_lownj_3b    0.04
+  r2_highmet_lownj_2b   0.04
+  r2_lowmet_highnj_2b   0.03
+  r2_lowmet_highnj_3b   0.03
+  r2_highmet_highnj_2b  0.04
+
+SYSTEMATIC jec
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b    0.01
+  r2_highmet_lownj_1b   0.04
+  r2_lowmet_highnj_1b   0.04
+  r2_highmet_highnj_1b  0.03
+  r2_lowmet_lownj_2b    0.02
+  r2_lowmet_lownj_3b    0.01
+  r2_highmet_lownj_2b   0.02
+  r2_lowmet_highnj_2b   0.05
+  r2_lowmet_highnj_3b   0.03
+  r2_highmet_highnj_2b  0.04
+
+SYSTEMATIC top_pt
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b    0.001
+  r2_highmet_lownj_1b   0.03
+  r2_lowmet_highnj_1b   0.02
+  r2_highmet_highnj_1b  0.02
+  r2_lowmet_lownj_2b    0.001
+  r2_lowmet_lownj_3b    0.001
+  r2_highmet_lownj_2b   0.03
+  r2_lowmet_highnj_2b   0.002
+  r2_lowmet_highnj_3b   0.002
+  r2_highmet_highnj_2b  0.01
+
+SYSTEMATIC jet_mismeas
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b    0.03
+  r2_highmet_lownj_1b   0.01
+  r2_lowmet_highnj_1b   0.02
+  r2_highmet_highnj_1b  0.07
+  r2_lowmet_lownj_2b    0.03
+  r2_lowmet_lownj_3b    0.04
+  r2_highmet_lownj_2b   0.01
+  r2_lowmet_highnj_2b   0.02
+  r2_lowmet_highnj_3b   0.07
+  r2_highmet_highnj_2b  0.07
+
+SYSTEMATIC non_ttbar
+ PROCESSES other
+  r2_lowmet_lownj_1b    1.00
+  r2_highmet_lownj_1b   1.00
+  r2_lowmet_highnj_1b   1.00
+  r2_highmet_highnj_1b  1.00
+  r2_lowmet_lownj_2b    1.00
+  r2_lowmet_lownj_3b    1.00
+  r2_highmet_lownj_2b   1.00
+  r2_lowmet_highnj_2b   1.00
+  r2_lowmet_highnj_3b   1.00
+  r2_highmet_highnj_2b  1.00
+
+SYSTEMATIC dilep_closure
+ PROCESSES ttbar
+  r2_lowmet_lownj_1b    0.366
+  r2_lowmet_lownj_1b    0.366
+  r2_highmet_lownj_1b   0.366
+  r2_lowmet_highnj_1b   0.895
+  r2_highmet_highnj_1b  0.895
+  r2_lowmet_lownj_2b    0.366
+  r2_lowmet_lownj_3b    0.366
+  r2_highmet_lownj_2b   0.366
+  r2_lowmet_highnj_2b   0.895
+  r2_lowmet_highnj_3b   0.895
+  r2_highmet_highnj_2b  0.895
+
+SYSTEMATIC lepeff
+  PROCESSES signal
+    r1_lowmet_allnb                 0.01
+    r2_lowmet_lownj_1b              0.01
+    r2_lowmet_highnj_1b             0.01
+    r2_lowmet_lownj_2b              0.01
+    r2_lowmet_highnj_2b             0.01
+    r2_lowmet_lownj_3b              0.01
+    r2_lowmet_highnj_3b             0.01
+    r3_lowmet_allnb                 0.01
+    r4_lowmet_lownj_1b              0.01
+    r4_lowmet_highnj_1b             0.01
+    r4_lowmet_lownj_2b              0.01
+    r4_lowmet_highnj_2b             0.01
+    r4_lowmet_lownj_3b              0.01
+    r4_lowmet_highnj_3b             0.01
+    r1_highmet_allnb                0.01
+    r2_highmet_lownj_1b             0.01
+    r2_highmet_highnj_1b            0.01
+    r2_highmet_lownj_2b             0.01
+    r2_highmet_highnj_2b            0.01
+    r3_highmet_allnb                0.01
+    r4_highmet_lownj_1b             0.01
+    r4_highmet_highnj_1b            0.01
+    r4_highmet_lownj_2b             0.01
+    r4_highmet_highnj_2b            0.01
+
+SYSTEMATIC fs_lepeff
+  PROCESSES signal
+    r1_lowmet_allnb                 0.06
+    r2_lowmet_lownj_1b              0.05
+    r2_lowmet_highnj_1b             0.05
+    r2_lowmet_lownj_2b              0.05
+    r2_lowmet_highnj_2b             0.06
+    r2_lowmet_lownj_3b              0.05
+    r2_lowmet_highnj_3b             0.05
+    r3_lowmet_allnb                 0.06
+    r4_lowmet_lownj_1b              0.05
+    r4_lowmet_highnj_1b             0.06
+    r4_lowmet_lownj_2b              0.06
+    r4_lowmet_highnj_2b             0.06
+    r4_lowmet_lownj_3b              0.06
+    r4_lowmet_highnj_3b             0.06
+    r1_highmet_allnb                0.06
+    r2_highmet_lownj_1b             0.05
+    r2_highmet_highnj_1b            0.05
+    r2_highmet_lownj_2b             0.05
+    r2_highmet_highnj_2b            0.06
+    r3_highmet_allnb                0.06
+    r4_highmet_lownj_1b             0.06
+    r4_highmet_highnj_1b            0.06
+    r4_highmet_lownj_2b             0.05
+    r4_highmet_highnj_2b            0.06
+
+SYSTEMATIC trig
+  PROCESSES signal
+    r1_lowmet_allnb                 0.01
+    r2_lowmet_lownj_1b              0.01
+    r2_lowmet_highnj_1b             0.01
+    r2_lowmet_lownj_2b              0.01
+    r2_lowmet_highnj_2b             0.01
+    r2_lowmet_lownj_3b              0.01
+    r2_lowmet_highnj_3b             0.01
+    r3_lowmet_allnb                 0.01
+    r4_lowmet_lownj_1b              0.01
+    r4_lowmet_highnj_1b             0.01
+    r4_lowmet_lownj_2b              0.01
+    r4_lowmet_highnj_2b             0.01
+    r4_lowmet_lownj_3b              0.01
+    r4_lowmet_highnj_3b             0.01
+    r1_highmet_allnb                0.01
+    r2_highmet_lownj_1b             0.01
+    r2_highmet_highnj_1b            0.01
+    r2_highmet_lownj_2b             0.01
+    r2_highmet_highnj_2b            0.01
+    r3_highmet_allnb                0.01
+    r4_highmet_lownj_1b             0.01
+    r4_highmet_highnj_1b            0.01
+    r4_highmet_lownj_2b             0.01
+    r4_highmet_highnj_2b            0.01
+
+SYSTEMATIC bctag
+  PROCESSES signal
+    r1_lowmet_allnb                -0.01
+    r2_lowmet_lownj_1b             -0.15
+    r2_lowmet_highnj_1b            -0.16
+    r2_lowmet_lownj_2b             -0.04
+    r2_lowmet_highnj_2b            -0.06
+    r2_lowmet_lownj_3b              0.09
+    r2_lowmet_highnj_3b             0.08
+    r3_lowmet_allnb                -0.01
+    r4_lowmet_lownj_1b             -0.14
+    r4_lowmet_highnj_1b            -0.16
+    r4_lowmet_lownj_2b             -0.02
+    r4_lowmet_highnj_2b            -0.05
+    r4_lowmet_lownj_3b              0.10
+    r4_lowmet_highnj_3b             0.08
+    r1_highmet_allnb               -0.00
+    r2_highmet_lownj_1b            -0.14
+    r2_highmet_highnj_1b           -0.18
+    r2_highmet_lownj_2b             0.03
+    r2_highmet_highnj_2b            0.02
+    r3_highmet_allnb               -0.00
+    r4_highmet_lownj_1b            -0.13
+    r4_highmet_highnj_1b           -0.15
+    r4_highmet_lownj_2b             0.03
+    r4_highmet_highnj_2b            0.02
+
+SYSTEMATIC fs_bctag
+  PROCESSES signal
+    r1_lowmet_allnb                 0.00
+    r2_lowmet_lownj_1b             -0.05
+    r2_lowmet_highnj_1b            -0.04
+    r2_lowmet_lownj_2b             -0.01
+    r2_lowmet_highnj_2b            -0.02
+    r2_lowmet_lownj_3b              0.03
+    r2_lowmet_highnj_3b             0.02
+    r3_lowmet_allnb                 0.00
+    r4_lowmet_lownj_1b             -0.04
+    r4_lowmet_highnj_1b            -0.04
+    r4_lowmet_lownj_2b             -0.01
+    r4_lowmet_highnj_2b            -0.01
+    r4_lowmet_lownj_3b              0.03
+    r4_lowmet_highnj_3b             0.02
+    r1_highmet_allnb                0.00
+    r2_highmet_lownj_1b            -0.04
+    r2_highmet_highnj_1b           -0.05
+    r2_highmet_lownj_2b             0.01
+    r2_highmet_highnj_2b            0.01
+    r3_highmet_allnb                0.00
+    r4_highmet_lownj_1b            -0.04
+    r4_highmet_highnj_1b           -0.04
+    r4_highmet_lownj_2b             0.01
+    r4_highmet_highnj_2b            0.01
+
+SYSTEMATIC udsgtag
+  PROCESSES signal
+    r1_lowmet_allnb                 0.01
+    r2_lowmet_lownj_1b             -0.01
+    r2_lowmet_highnj_1b            -0.01
+    r2_lowmet_lownj_2b              0.00
+    r2_lowmet_highnj_2b            -0.00
+    r2_lowmet_lownj_3b              0.02
+    r2_lowmet_highnj_3b             0.02
+    r3_lowmet_allnb                 0.00
+    r4_lowmet_lownj_1b             -0.00
+    r4_lowmet_highnj_1b            -0.00
+    r4_lowmet_lownj_2b             -0.00
+    r4_lowmet_highnj_2b            -0.00
+    r4_lowmet_lownj_3b              0.02
+    r4_lowmet_highnj_3b             0.02
+    r1_highmet_allnb                0.01
+    r2_highmet_lownj_1b            -0.01
+    r2_highmet_highnj_1b           -0.01
+    r2_highmet_lownj_2b             0.01
+    r2_highmet_highnj_2b            0.01
+    r3_highmet_allnb                0.00
+    r4_highmet_lownj_1b            -0.00
+    r4_highmet_highnj_1b           -0.01
+    r4_highmet_lownj_2b             0.01
+    r4_highmet_highnj_2b            0.01
+
+SYSTEMATIC fs_udsgtag
+  PROCESSES signal
+    r1_lowmet_allnb                 0.00
+    r2_lowmet_lownj_1b             -0.00
+    r2_lowmet_highnj_1b            -0.00
+    r2_lowmet_lownj_2b             -0.00
+    r2_lowmet_highnj_2b            -0.00
+    r2_lowmet_lownj_3b              0.01
+    r2_lowmet_highnj_3b             0.01
+    r3_lowmet_allnb                 0.00
+    r4_lowmet_lownj_1b             -0.00
+    r4_lowmet_highnj_1b             0.00
+    r4_lowmet_lownj_2b             -0.00
+    r4_lowmet_highnj_2b            -0.00
+    r4_lowmet_lownj_3b              0.01
+    r4_lowmet_highnj_3b             0.01
+    r1_highmet_allnb                0.00
+    r2_highmet_lownj_1b            -0.00
+    r2_highmet_highnj_1b           -0.00
+    r2_highmet_lownj_2b             0.00
+    r2_highmet_highnj_2b            0.00
+    r3_highmet_allnb                0.00
+    r4_highmet_lownj_1b            -0.00
+    r4_highmet_highnj_1b           -0.00
+    r4_highmet_lownj_2b             0.00
+    r4_highmet_highnj_2b            0.00
+
+SYSTEMATIC jec
+  PROCESSES signal
+    r1_lowmet_allnb                 0.10
+    r2_lowmet_lownj_1b             -0.02
+    r2_lowmet_highnj_1b            -0.03
+    r2_lowmet_lownj_2b             -0.04
+    r2_lowmet_highnj_2b            -0.01
+    r2_lowmet_lownj_3b             -0.04
+    r2_lowmet_highnj_3b            -0.01
+    r3_lowmet_allnb                 0.07
+    r4_lowmet_lownj_1b             -0.02
+    r4_lowmet_highnj_1b            -0.01
+    r4_lowmet_lownj_2b             -0.03
+    r4_lowmet_highnj_2b            -0.02
+    r4_lowmet_lownj_3b             -0.03
+    r4_lowmet_highnj_3b            -0.01
+    r1_highmet_allnb                0.12
+    r2_highmet_lownj_1b            -0.02
+    r2_highmet_highnj_1b            0.01
+    r2_highmet_lownj_2b            -0.02
+    r2_highmet_highnj_2b           -0.01
+    r3_highmet_allnb                0.13
+    r4_highmet_lownj_1b            -0.02
+    r4_highmet_highnj_1b           -0.00
+    r4_highmet_lownj_2b            -0.02
+    r4_highmet_highnj_2b           -0.01
+
+SYSTEMATIC murf
+  PROCESSES signal
+    r1_lowmet_allnb                 0.01
+    r2_lowmet_lownj_1b              0.00
+    r2_lowmet_highnj_1b             0.01
+    r2_lowmet_lownj_2b              0.01
+    r2_lowmet_highnj_2b             0.01
+    r2_lowmet_lownj_3b              0.01
+    r2_lowmet_highnj_3b             0.01
+    r3_lowmet_allnb                 0.01
+    r4_lowmet_lownj_1b              0.01
+    r4_lowmet_highnj_1b             0.01
+    r4_lowmet_lownj_2b              0.01
+    r4_lowmet_highnj_2b             0.01
+    r4_lowmet_lownj_3b              0.01
+    r4_lowmet_highnj_3b             0.01
+    r1_highmet_allnb                0.01
+    r2_highmet_lownj_1b             0.00
+    r2_highmet_highnj_1b            0.01
+    r2_highmet_lownj_2b             0.01
+    r2_highmet_highnj_2b            0.01
+    r3_highmet_allnb                0.01
+    r4_highmet_lownj_1b             0.00
+    r4_highmet_highnj_1b            0.01
+    r4_highmet_lownj_2b             0.00
+    r4_highmet_highnj_2b            0.01
+
+SYSTEMATIC isr
+  PROCESSES signal
+    r1_lowmet_allnb                -0.02
+    r2_lowmet_lownj_1b             -0.01
+    r2_lowmet_highnj_1b             0.01
+    r2_lowmet_lownj_2b             -0.01
+    r2_lowmet_highnj_2b             0.02
+    r2_lowmet_lownj_3b             -0.01
+    r2_lowmet_highnj_3b             0.01
+    r3_lowmet_allnb                -0.02
+    r4_lowmet_lownj_1b             -0.01
+    r4_lowmet_highnj_1b             0.01
+    r4_lowmet_lownj_2b             -0.01
+    r4_lowmet_highnj_2b             0.01
+    r4_lowmet_lownj_3b             -0.01
+    r4_lowmet_highnj_3b             0.01
+    r1_highmet_allnb               -0.01
+    r2_highmet_lownj_1b            -0.00
+    r2_highmet_highnj_1b            0.03
+    r2_highmet_lownj_2b            -0.00
+    r2_highmet_highnj_2b            0.03
+    r3_highmet_allnb               -0.02
+    r4_highmet_lownj_1b            -0.00
+    r4_highmet_highnj_1b            0.03
+    r4_highmet_lownj_2b            -0.01
+    r4_highmet_highnj_2b            0.02
+
+SYSTEMATIC pu
+  PROCESSES signal
+    r1_lowmet_allnb                 0.05
+    r2_lowmet_lownj_1b              0.05
+    r2_lowmet_highnj_1b             0.05
+    r2_lowmet_lownj_2b              0.05
+    r2_lowmet_highnj_2b             0.05
+    r2_lowmet_lownj_3b              0.05
+    r2_lowmet_highnj_3b             0.05
+    r3_lowmet_allnb                 0.05
+    r4_lowmet_lownj_1b              0.05
+    r4_lowmet_highnj_1b             0.05
+    r4_lowmet_lownj_2b              0.05
+    r4_lowmet_highnj_2b             0.05
+    r4_lowmet_lownj_3b              0.05
+    r4_lowmet_highnj_3b             0.05
+    r1_highmet_allnb                0.05
+    r2_highmet_lownj_1b             0.05
+    r2_highmet_highnj_1b            0.05
+    r2_highmet_lownj_2b             0.05
+    r2_highmet_highnj_2b            0.05
+    r3_highmet_allnb                0.05
+    r4_highmet_lownj_1b             0.05
+    r4_highmet_highnj_1b            0.05
+    r4_highmet_lownj_2b             0.05
+    r4_highmet_highnj_2b            0.05
+
+
+SYSTEMATIC pdf0
+  PROCESSES signal
+    r1_lowmet_allnb            0.10
+
+SYSTEMATIC pdf1
+  PROCESSES signal
+    r2_lowmet_lownj_1b            0.10
+
+SYSTEMATIC pdf2
+  PROCESSES signal
+    r2_lowmet_highnj_1b            0.10
+
+SYSTEMATIC pdf3
+  PROCESSES signal
+    r2_lowmet_lownj_2b            0.10
+
+SYSTEMATIC pdf4
+  PROCESSES signal
+    r2_lowmet_highnj_2b            0.10
+
+SYSTEMATIC pdf5
+  PROCESSES signal
+    r2_lowmet_lownj_3b            0.10
+
+SYSTEMATIC pdf6
+  PROCESSES signal
+    r2_lowmet_highnj_3b            0.10
+
+SYSTEMATIC pdf7
+  PROCESSES signal
+    r3_lowmet_allnb            0.10
+
+SYSTEMATIC pdf8
+  PROCESSES signal
+    r4_lowmet_lownj_1b            0.10
+
+SYSTEMATIC pdf9
+  PROCESSES signal
+    r4_lowmet_highnj_1b            0.10
+
+SYSTEMATIC pdf10
+  PROCESSES signal
+    r4_lowmet_lownj_2b            0.10
+
+SYSTEMATIC pdf11
+  PROCESSES signal
+    r4_lowmet_highnj_2b            0.10
+
+SYSTEMATIC pdf12
+  PROCESSES signal
+    r4_lowmet_lownj_3b            0.10
+
+SYSTEMATIC pdf13
+  PROCESSES signal
+    r4_lowmet_highnj_3b            0.10
+
+SYSTEMATIC pdf14
+  PROCESSES signal
+    r1_highmet_allnb            0.10
+
+SYSTEMATIC pdf15
+  PROCESSES signal
+    r2_highmet_lownj_1b            0.10
+
+SYSTEMATIC pdf16
+  PROCESSES signal
+    r2_highmet_highnj_1b            0.10
+
+SYSTEMATIC pdf17
+  PROCESSES signal
+    r2_highmet_lownj_2b            0.10
+
+SYSTEMATIC pdf18
+  PROCESSES signal
+    r2_highmet_highnj_2b            0.10
+
+SYSTEMATIC pdf19
+  PROCESSES signal
+    r3_highmet_allnb            0.10
+
+SYSTEMATIC pdf20
+  PROCESSES signal
+    r4_highmet_lownj_1b            0.10
+
+SYSTEMATIC pdf21
+  PROCESSES signal
+    r4_highmet_highnj_1b            0.10
+
+SYSTEMATIC pdf22
+  PROCESSES signal
+    r4_highmet_lownj_2b            0.10
+
+SYSTEMATIC pdf23
+  PROCESSES signal
+    r4_highmet_highnj_2b            0.10
+
+SYSTEMATIC lumi
+  PROCESSES signal
+    r1_lowmet_allnb            0.046
+    r2_lowmet_lownj_1b            0.046
+    r2_lowmet_highnj_1b            0.046
+    r2_lowmet_lownj_2b            0.046
+    r2_lowmet_highnj_2b            0.046
+    r2_lowmet_lownj_3b            0.046
+    r2_lowmet_highnj_3b            0.046
+    r3_lowmet_allnb            0.046
+    r4_lowmet_lownj_1b            0.046
+    r4_lowmet_highnj_1b            0.046
+    r4_lowmet_lownj_2b            0.046
+    r4_lowmet_highnj_2b            0.046
+    r4_lowmet_lownj_3b            0.046
+    r4_lowmet_highnj_3b            0.046
+    r1_highmet_allnb            0.046
+    r2_highmet_lownj_1b            0.046
+    r2_highmet_highnj_1b            0.046
+    r2_highmet_lownj_2b            0.046
+    r2_highmet_highnj_2b            0.046
+    r3_highmet_allnb            0.046
+    r4_highmet_lownj_1b            0.046
+    r4_highmet_highnj_1b            0.046
+    r4_highmet_lownj_2b            0.046
+    r4_highmet_highnj_2b            0.046
