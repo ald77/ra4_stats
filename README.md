@@ -9,13 +9,13 @@ ra4_stats relies on having CMSSW_7_4_14 or greater installed in ~/cmssw. Only CM
     mkdir -p ~/cmssw
     cmsrel CMSSW_7_4_14
     cmsrel CMSSW_7_1_5
-    cd ~/CMSSW_7_1_5/src
+    cd ~/cmssw/CMSSW_7_1_5/src
     cmsenv
     git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
     cd HiggsAnalysis/CombinedLimit
     git checkout v5.0.1
     scram b -j 8 -k
-    cd ~/CMSSW_7_4_14/src
+    cd ~/cmssw/CMSSW_7_4_14/src
     cmsenv
     git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
     cd HiggsAnalysis/CombinedLimit
