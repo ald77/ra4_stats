@@ -7,6 +7,7 @@ Initial setup
 ra4_stats relies on having CMSSW_7_4_14 or greater installed in ~/cmssw. Only CMSSW_7_4_14 is needed to produces workspaces and compute limits and significances. If one also wishes to extract fitted values for the signal strength or other model parameters, CMSSW_7_1_5 is also needed. The instructions below will setup both.
 
     mkdir -p ~/cmssw
+    cd ~/cmssw
     cmsrel CMSSW_7_4_14
     cmsrel CMSSW_7_1_5
     cd ~/cmssw/CMSSW_7_1_5/src
