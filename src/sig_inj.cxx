@@ -278,14 +278,33 @@ double GetError(const RooAbsReal &var,
   return sqrt(sum);
 }
 
-void GetStats(vector<double> vals, double &center, double &up, double &down){
+void GetStats(const vector<double> &vals, double &center, double &up, double &down){
+  double tail = erfc(1./sqrt(2.))*0.5; //0.159 = (1-0.683)/2
+  center = GetValue(vals, 0.5);
+  double low = GetValue(vals, tail);
+  double high = GetValue(vals, 1.-tail);
+  up = high-center;
+  down = center-low;
+}
+
+double GetValue(vector<double> vals, double fraction){
+  if(vals.size() == 0) return 0.;
+  if(vals.size() == 1) return vals.front();
   sort(vals.begin(), vals.end());
-  double se = erf(1./sqrt(2.));
-  vector<double> vband = GetSmallestRange(vals, se);
-  cout << vband.size() << '/' << vals.size() << "~=" << se << endl;
-  center = GetMedian(vband);
-  up = vband.back()-center;
-  down = center-vband.front();
+  double frac_index = fraction*vals.size()-0.5;
+  long lo_index = static_cast<long>(floor(frac_index));
+  long hi_index = static_cast<long>(ceil(frac_index));
+  if(lo_index < 0){
+    lo_index = 0;
+    hi_index = 1;
+  }
+  if(static_cast<size_t>(hi_index) >= vals.size()){
+    lo_index = vals.size() - 2;
+    hi_index = vals.size() - 1;
+  }
+  double lo_value = vals.at(lo_index);
+  double hi_value = vals.at(hi_index);
+  return lo_value+(hi_value-lo_value)*(frac_index - lo_index);
 }
 
 double GetMedian(vector<double> v){
@@ -486,12 +505,55 @@ void MakePlot(const vector<double> &injections_list,
     cout << "Pulls for " << (is_nc ? "NC" : "C") << ':' << endl;
   }
   for(size_t i = 0; i < injections_list.size(); ++i){
+    Plot1D(plot_name, injections_list.at(i), yvals.at(i),
+	   centers.at(i), ups.at(i), downs.at(i));
     cout << injections_list.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
     for(const auto &y: yvals.at(i)){
       cout << y << " ";
     }
     cout << endl;
   }
+}
+
+void Plot1D(const string &base, double inj, const vector<double> &vals,
+	    double center, double up, double down){
+  if(vals.size() == 0) return;
+  ostringstream oss;
+  oss << base << "_inj_" << inj << ".pdf" << flush;
+  string name = oss.str();
+  TH1D h("", "", floor(sqrt(vals.size())),
+	 *min_element(vals.cbegin(), vals.cend())-0.001,
+	 *max_element(vals.cbegin(), vals.cend())+0.001);
+  h.SetLineWidth(5);
+  h.SetLineColor(kBlack);
+  h.Sumw2();
+  for(const auto &val: vals){
+    h.Fill(val);
+  }
+  double hmax = 0.;
+  for(int bin = 1; bin <= h.GetNbinsX(); ++bin){
+    double content = h.GetBinContent(bin)+h.GetBinError(bin);
+    if(content > hmax) hmax = content;
+  }
+  h.SetMinimum(0.);
+  h.SetMaximum(hmax);
+  TLine ldown(center-down, 0., center-down, hmax);
+  ldown.SetLineColor(kRed);
+  ldown.SetLineStyle(2);
+  ldown.SetLineWidth(4);
+  TLine lcenter(center, 0., center, hmax);
+  lcenter.SetLineColor(kRed);
+  lcenter.SetLineWidth(5);
+  TLine lup(center+up, 0., center+up, hmax);
+  lup.SetLineColor(kRed);
+  lup.SetLineStyle(2);
+  lup.SetLineWidth(4);
+  TCanvas c;
+  h.Draw("e1p");
+  ldown.Draw("same");
+  lcenter.Draw("same");
+  lup.Draw("same");
+  c.Print(name.c_str());
 }
 
 void RemoveBadResults(vector<double> &vals, vector<double> &pulls){
