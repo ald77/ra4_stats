@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string skim("skim_abcd/");
-  string foldermc(basefolder+"babies/2015_11_28/mc/merged_abcd/");
+  string foldermc(basefolder+"babies/2015_11_28/mc/"+skim); // faster with merged_abcd, but a pain to find it
   string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]){
   //// Creating workspaces for the Nominal, uncert Up, and uncert Down signal cross sections
   Cut *pbaseline(&baseline1b);
   set<Block> *pblocks(&blocks_1bk);
-  string sysfolder("/net/cms2/cms2r0/babymaker/sys/2015_11_28/scan/");
+  string sysfolder("/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/");
   if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
   string sysfile(sysfolder+"sys_SMS-T1tttt_"+glu_lsp+".txt");
   // If systematic file does not exist, use m1bk_nc for tests

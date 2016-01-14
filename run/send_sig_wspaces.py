@@ -9,7 +9,7 @@ import string
 import time
 
 # Setting folders
-infolder  = "/net/cms2/cms2r0/babymaker/babies/2015_11_28/mc/scan/skim_abcd/"
+infolder  = "/net/cms2/cms2r0/babymaker/babies/2016_01_11/mc/scan/skim_abcd/"
 outfolder = "new_wspaces/" 
 runfolder = outfolder+"run/" 
 if not os.path.exists(runfolder):
