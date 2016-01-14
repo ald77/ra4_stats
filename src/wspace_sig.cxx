@@ -29,7 +29,7 @@
 using namespace std;
 
 namespace{
-  double lumi = 2.138;
+  double lumi = 2.248;
   double sig_strength = 0.;
   BlindLevel blind_level = BlindLevel::unblinded;
   bool no_kappa = false;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string skim("skim_abcd/");
-  string foldermc(basefolder+"babies/2015_11_28/mc/"+skim); // faster with merged_abcd, but a pain to find it
+  string foldermc(basefolder+"babies/2015_11_28/mc/merged_abcd/"); // faster with merged_abcd, but a pain to find it
   string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
