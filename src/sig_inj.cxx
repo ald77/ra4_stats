@@ -12,6 +12,7 @@
 #include <utility>
 #include <mutex>
 #include <limits>
+#include <numeric>
 #include <functional>
 
 #include <stdlib.h>
@@ -40,6 +41,7 @@ namespace{
   double lumi = 2.246;
   bool do_asymmetric_error = false;
   bool do_systematics = false;
+  bool draw_only = false;
 
   mutex global_mutex;
 }
@@ -58,44 +60,49 @@ int main(int argc, char *argv[]){
     << flush;
   string id_string = oss.str();
 
-  cout << "Creating workspaces..." << endl;
-  vector<future<void> > injected(injections.size());
-  for(size_t i = 0; i < injections.size(); ++i){
-    injected.at(i) =  async(launch::async, InjectSignal, id_string, injections.at(i), i);
-  }
-  for(size_t i = 0; i < injected.size(); ++i){
-    injected.at(i).get();
+  if(!draw_only){
+    cout << "Creating workspaces..." << endl;
+    vector<future<void> > injected(injections.size());
+    for(size_t i = 0; i < injections.size(); ++i){
+      injected.at(i) =  async(launch::async, InjectSignal, id_string, injections.at(i), i);
+    }
+    for(size_t i = 0; i < injected.size(); ++i){
+      injected.at(i).get();
+    }
   }
 
-  cout << "Extracting signal strength from toys..." << endl;
-  vector<vector<future<pair<double,double> > > > toyed(ntoys);
-  for(size_t i = 0; i < toyed.size(); ++i){
-    vector<future<pair<double,double> > > (injections.size()).swap(toyed.at(i));
+  vector<vector<double> > yvals_nc(injections.size(), vector<double>(ntoys, -9876543210.));
+  vector<vector<double> > yvals_c(injections.size(), vector<double>(ntoys, -9876543210.));
+  vector<vector<double> > pulls_nc(injections.size(), vector<double>(ntoys, -9876543210.));
+  vector<vector<double> > pulls_c(injections.size(), vector<double>(ntoys, -9876543210.));
+
+  if(!draw_only){
+    cout << "Extracting signal strength from toys..." << endl;
+    vector<vector<future<pair<double,double> > > > toyed(ntoys);
+    for(size_t i = 0; i < toyed.size(); ++i){
+      vector<future<pair<double,double> > > (injections.size()).swap(toyed.at(i));
+    }
+    for(int toy = 0; toy < ntoys; ++toy){
+      //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
+      for(size_t i = 0; i < injections.size(); ++i){
+        toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, true);
+      }
+      for(size_t i = 0; i < injections.size(); ++i){
+        auto res = toyed.at(toy).at(i).get();
+        yvals_nc.at(i).at(toy) = res.first;
+        pulls_nc.at(i).at(toy) = res.second;
+      }
+      for(size_t i = 0; i < injections.size(); ++i){
+        toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, false);
+      }
+      for(size_t i = 0; i < injections.size(); ++i){
+        auto res = toyed.at(toy).at(i).get();
+        yvals_c.at(i).at(toy) = res.first;
+        pulls_c.at(i).at(toy) = res.second;
+      }
+    }
+    execute("rm -f *_sig_inj_*.root");
   }
-  vector<vector<double> > yvals_nc(injections.size(), vector<double>(ntoys));
-  vector<vector<double> > yvals_c(injections.size(), vector<double>(ntoys));
-  vector<vector<double> > pulls_nc(injections.size(), vector<double>(ntoys));
-  vector<vector<double> > pulls_c(injections.size(), vector<double>(ntoys));
-  for(int toy = 0; toy < ntoys; ++toy){
-    //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
-    for(size_t i = 0; i < injections.size(); ++i){
-      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, true);
-    }
-    for(size_t i = 0; i < injections.size(); ++i){
-      auto res = toyed.at(toy).at(i).get();
-      yvals_nc.at(i).at(toy) = res.first;
-      pulls_nc.at(i).at(toy) = res.second;
-    }
-    for(size_t i = 0; i < injections.size(); ++i){
-      toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, false);
-    }
-    for(size_t i = 0; i < injections.size(); ++i){
-      auto res = toyed.at(toy).at(i).get();
-      yvals_c.at(i).at(toy) = res.first;
-      pulls_c.at(i).at(toy) = res.second;
-    }
-  }
-  execute("rm -f *_sig_inj_*.root");
 
   cout << "Generating plots..." << endl;
   for(size_t i = 0; i < injections.size(); ++i){
@@ -287,13 +294,21 @@ double GetError(const RooAbsReal &var,
   return sqrt(sum);
 }
 
-void GetStats(const vector<double> &vals, double &center, double &up, double &down){
+void GetStats(const vector<double> &vals, double &mean, double &median,
+              double &up, double &down,
+              double &up2, double &down2){
   double tail = erfc(1./sqrt(2.))*0.5; //0.159 = (1-0.683)/2
-  center = GetValue(vals, 0.5);
+  double tail2 = erfc(sqrt(2.))*0.5; //0.023 = (1-0.954)/2
+  median = GetValue(vals, 0.5);
+  mean = vals.size() > 0 ? accumulate(vals.cbegin(), vals.cend(), 0.)/vals.size() : 0.;
   double low = GetValue(vals, tail);
   double high = GetValue(vals, 1.-tail);
-  up = high-center;
-  down = center-low;
+  double low2 = GetValue(vals, tail2);
+  double high2 = GetValue(vals, 1.-tail2);
+  up = max(high-median,0.);
+  down = max(median-low,0.);
+  up2 = max(high2-median,0.);
+  down2 = max(median-low2,0.);
 }
 
 double GetValue(vector<double> vals, double fraction){
@@ -314,20 +329,6 @@ double GetValue(vector<double> vals, double fraction){
   double lo_value = vals.at(lo_index);
   double hi_value = vals.at(hi_index);
   return lo_value+(hi_value-lo_value)*(frac_index - lo_index);
-}
-
-double GetMedian(vector<double> v){
-  if(v.size() == 0){
-    return 0.;
-  }else{
-    sort(v.begin(), v.end());
-    size_t n = floor(0.5*(v.size()-1));
-    if(v.size()%2 == 0){
-      return v.at(n)+0.5*(v.at(n+1)-v.at(n));
-    }else{
-      return v.at(n);
-    }
-  }
 }
 
 double GetMode(const vector<double> &v, double frac){
@@ -385,12 +386,13 @@ void GetOptions(int argc, char *argv[]){
       {"lumi", required_argument, 0, 'l'},
       {"asym", no_argument, 0, 'a'},
       {"syst", no_argument, 0, 's'},
+      {"draw", no_argument, 0, 'd'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "t:i:l:as", long_options, &option_index);
+    opt = getopt_long(argc, argv, "t:i:l:asd", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -410,6 +412,9 @@ void GetOptions(int argc, char *argv[]){
     case 's':
       do_systematics = true;
       break;
+    case 'd':
+      draw_only = true;
+      break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
       break;
@@ -427,71 +432,87 @@ void GetOptions(int argc, char *argv[]){
 void MakePlot(const vector<double> &injections_list,
 	      const vector<vector<double> > &yvals,
 	      bool is_nc, bool is_pull){
-  vector<double> centers(injections_list.size()), ups(injections_list.size()), downs(injections_list.size()), zeros(injections_list.size(), 0.);
-  vector<double> bots(centers.size()), tops(centers.size());
+  vector<double> zeros(injections_list.size(), 0.);
+  vector<double> means(injections_list.size()), medians(injections_list.size());
+  vector<double> ups(injections_list.size()), downs(injections_list.size());
+  vector<double> ups2(injections_list.size()), downs2(injections_list.size());
+  vector<double> tops(injections_list.size()), bots(injections_list.size());
+  vector<double> tops2(injections_list.size()), bots2(injections_list.size());
   for(size_t i = 0; i < injections_list.size(); ++i){
-    GetStats(yvals.at(i), centers.at(i), ups.at(i), downs.at(i));
-    tops.at(i) = centers.at(i) + ups.at(i);
-    bots.at(i) = centers.at(i) - downs.at(i);
+    GetStats(yvals.at(i), means.at(i), medians.at(i),
+             ups.at(i), downs.at(i),
+             ups2.at(i), downs2.at(i));
+    tops.at(i) = medians.at(i) + ups.at(i);
+    bots.at(i) = medians.at(i) - downs.at(i);
+    tops2.at(i) = medians.at(i) + ups2.at(i);
+    bots2.at(i) = medians.at(i) - downs2.at(i);
   }
 
-  TGraphAsymmErrors g(injections_list.size(), &injections_list.at(0), &centers.at(0),
+  TGraphAsymmErrors g(injections_list.size(), &injections_list.at(0), &medians.at(0),
 		      &zeros.at(0), &zeros.at(0),
 		      &downs.at(0), &ups.at(0));
+  TGraphAsymmErrors g2(injections_list.size(), &injections_list.at(0), &medians.at(0),
+                       &zeros.at(0), &zeros.at(0),
+                       &downs2.at(0), &ups2.at(0));
+  TGraph gm(injections_list.size(), &injections_list.at(0), &means.at(0));
   g.SetMarkerStyle(20);
   g.SetMarkerSize(2);
-  g.SetMarkerColor(1);
+  g.SetMarkerColor(kRed+2);
   g.SetLineStyle(1);
   g.SetLineWidth(5);
-  g.SetLineColor(1);
-  double xmin = *min_element(injections_list.cbegin(), injections_list.cend());
+  g.SetLineColor(kRed+2);
+  g2.SetMarkerStyle(0);
+  g2.SetMarkerSize(0);
+  g2.SetMarkerColor(0);
+  g2.SetLineStyle(2);
+  g2.SetLineWidth(3);
+  g2.SetLineColor(kRed+2);
+  gm.SetMarkerStyle(20);
+  gm.SetMarkerSize(2);
+  gm.SetMarkerColor(kBlue);
   double xmax = *max_element(injections_list.cbegin(), injections_list.cend());
-  double xdelta = xmax-xmin;
-  double ymin = *min_element(bots.cbegin(), bots.cend());
+  double xright = 1.0625*xmax;
   double ymax = *max_element(tops.cbegin(), tops.cend());
-  double ydelta = ymax-ymin;
-  double margin = 0.05;
-  double themin = min(xmin-margin*xdelta, ymin-margin*ydelta);
-  double themax = max(xmax+margin*xdelta, ymax+margin*ydelta);
   ostringstream oss;
-  oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << " " << (is_pull ? "Pull" : "Signal Strength") << flush;
-  TH1D h("", oss.str().c_str(), 1, is_pull ? xmin-margin*xdelta : themin, is_pull ? xmax+margin*xdelta : themax);
+  oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;";
+  if(is_pull){
+    oss << "Pull";
+  }else{
+    oss << "Extracted " << (is_nc ? "NC" : "C") << " Signal Strength";
+  }
+  oss << flush;
+  TH1D h("", oss.str().c_str(), 1, 0., xright);
   if(is_pull){
     h.SetMinimum(-3.);
     h.SetMaximum(3.);
   }else{
-    h.SetMinimum(themin);
-    h.SetMaximum(themax);
+    h.SetMinimum(0.);
+    h.SetMaximum(ymax);
   }
   h.Fill(0.5, 1.0); 
-  double xleft = xmin - margin*xdelta;
-  double xright = xmax + margin*xdelta;
-  TF1 f("", "x", themin, themax);
-  f.SetLineColor(2);
-  f.SetLineWidth(4);
-  f.SetLineStyle(2);
-  TLine center(xleft, 0., xright, 0.);
-  TLine up(xleft, 1., xright, 1.);
-  TLine down(xleft, -1., xright, -1.);
-  center.SetLineColor(2);
-  center.SetLineWidth(4);
-  center.SetLineStyle(1);
-  up.SetLineColor(2);
-  up.SetLineWidth(4);
-  up.SetLineStyle(2);
-  down.SetLineColor(2);
-  down.SetLineWidth(4);
-  down.SetLineStyle(2);
+  TF1 f("", "x", 0., xright);
+  f.SetLineColor(kBlack);
+  f.SetLineWidth(1);
+  f.SetLineStyle(3);
   TCanvas c;
   h.Draw("axis");
   if(!is_pull){
     f.Draw("same");
-  }else{
-    center.Draw("same");
-    up.Draw("same");
-    down.Draw("same");
   }
   g.Draw("p 0 same");
+  g2.Draw("p 0 same");
+  gm.Draw("p same");
+  TLine hline;
+  hline.SetLineColor(kBlack);
+  hline.SetLineWidth(1);
+  hline.SetLineStyle(3);
+  if(is_pull){
+    hline.DrawLine(0, -2., xright, -2.);
+    hline.DrawLine(0, -1., xright, -1.);
+    hline.DrawLine(0, 0., xright, 0.);
+    hline.DrawLine(0, 1., xright, 1.);
+    hline.DrawLine(0, 2., xright, 2.);
+  }
   oss.str("");
   oss
     << "siginj"
@@ -508,29 +529,44 @@ void MakePlot(const vector<double> &injections_list,
   }
   c.Print(plot_name.c_str());
 
-  if(!is_pull){
-    cout << "Extracted signal strengths for " << (is_nc ? "NC" : "C") << ':' << endl;
-  }else{
-    cout << "Pulls for " << (is_nc ? "NC" : "C") << ':' << endl;
-  }
   for(size_t i = 0; i < injections_list.size(); ++i){
-    Plot1D(plot_name, injections_list.at(i), yvals.at(i),
-	   centers.at(i), ups.at(i), downs.at(i));
-    cout << injections_list.at(i) << ": " << centers.at(i) << " + " << ups.at(i) << " - " << downs.at(i) << ": ";
-    for(const auto &y: yvals.at(i)){
-      cout << y << " ";
-    }
-    cout << endl;
+    Plot1D(injections_list.at(i), yvals.at(i),
+	   means.at(i), medians.at(i),
+           ups.at(i), downs.at(i),
+           ups2.at(i), downs2.at(i),
+           is_nc, is_pull);
   }
 }
 
-void Plot1D(const string &base, double inj, const vector<double> &vals,
-	    double center, double up, double down){
+void Plot1D(double inj, const vector<double> &vals,
+	    double mean, double median,
+            double up, double down,
+            double up2, double down2,
+            bool is_nc, bool is_pull){
   if(vals.size() == 0) return;
   ostringstream oss;
-  oss << base << "_inj_" << inj << ".pdf" << flush;
+  oss
+    << (is_pull ? "pull" : "siginj")
+    << "_" << (is_nc ? "nc" : "c")
+    << "_lumi_" << lumi
+    << "_inj_" << inj
+    << ".pdf"
+    << flush;
   string name = oss.str();
-  TH1D h("", "", floor(sqrt(vals.size())),
+  oss.str("");
+  oss << "Inj. " << (is_nc ? "NC" : "C") << " Sig.=" << inj << ", N_{toys}=" << vals.size() << ";";
+  if(is_pull){
+    oss << "Pull";
+  }else{
+    if(is_nc){
+      oss << "Extracted NC Signal Strength";
+    }else{
+      oss << "Extracted C Signal Strength";
+    }
+  }
+  oss << ";# of Toys" << flush;
+    
+  TH1D h("", oss.str().c_str(), floor(sqrt(vals.size())),
 	 *min_element(vals.cbegin(), vals.cend())-0.001,
 	 *max_element(vals.cbegin(), vals.cend())+0.001);
   h.SetLineWidth(5);
@@ -546,22 +582,36 @@ void Plot1D(const string &base, double inj, const vector<double> &vals,
   }
   h.SetMinimum(0.);
   h.SetMaximum(hmax);
-  TLine ldown(center-down, 0., center-down, hmax);
-  ldown.SetLineColor(kRed);
+  TLine ldown2(median-down2, 0., median-down2, hmax);
+  ldown2.SetLineColor(kRed+2);
+  ldown2.SetLineStyle(3);
+  ldown2.SetLineWidth(2);
+  TLine ldown(median-down, 0., median-down, hmax);
+  ldown.SetLineColor(kRed+2);
   ldown.SetLineStyle(2);
   ldown.SetLineWidth(4);
-  TLine lcenter(center, 0., center, hmax);
-  lcenter.SetLineColor(kRed);
-  lcenter.SetLineWidth(5);
-  TLine lup(center+up, 0., center+up, hmax);
-  lup.SetLineColor(kRed);
+  TLine lmedian(median, 0., median, hmax);
+  lmedian.SetLineColor(kRed+2);
+  lmedian.SetLineWidth(5);
+  TLine lmean(mean, 0., mean, hmax);
+  lmean.SetLineColor(kBlue);
+  lmean.SetLineWidth(5);
+  TLine lup(median+up, 0., median+up, hmax);
+  lup.SetLineColor(kRed+2);
   lup.SetLineStyle(2);
   lup.SetLineWidth(4);
+  TLine lup2(median+up2, 0., median+up2, hmax);
+  lup2.SetLineColor(kRed+2);
+  lup2.SetLineStyle(3);
+  lup2.SetLineWidth(2);
   TCanvas c;
   h.Draw("e1p");
+  ldown2.Draw("same");
   ldown.Draw("same");
-  lcenter.Draw("same");
+  lmedian.Draw("same");
+  lmean.Draw("same");
   lup.Draw("same");
+  lup2.Draw("same");
   c.Print(name.c_str());
 }
 
