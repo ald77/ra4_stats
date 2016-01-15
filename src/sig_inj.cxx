@@ -2,7 +2,9 @@
 
 #include <cmath>
 
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <vector>
 #include <algorithm>
@@ -35,7 +37,7 @@ using namespace std;
 namespace{
   int ntoys = 5;
   vector<double> injections;
-  double lumi = 2.1;
+  double lumi = 2.246;
   bool do_asymmetric_error = false;
   bool do_systematics = false;
 
@@ -100,10 +102,17 @@ int main(int argc, char *argv[]){
     RemoveBadResults(yvals_nc.at(i), pulls_nc.at(i));
     RemoveBadResults(yvals_c.at(i), pulls_c.at(i));
   }
-  MakePlot(injections, yvals_nc, true, false);
-  MakePlot(injections, yvals_c, false, false);
-  MakePlot(injections, pulls_nc, true, true);
-  MakePlot(injections, pulls_c, false, true);
+
+  vector<double> inj_nc = injections;
+  vector<double> inj_c = injections;
+  
+  MergeWithText(inj_nc, yvals_nc, pulls_nc, true);
+  MergeWithText(inj_c, yvals_c, pulls_c, false);
+
+  MakePlot(inj_nc, yvals_nc, true, false);
+  MakePlot(inj_c, yvals_c, false, false);
+  MakePlot(inj_nc, pulls_nc, true, true);
+  MakePlot(inj_c, pulls_c, false, true);
 }
 
 void InjectSignal(const string id_string, double inject, size_t index){
@@ -445,7 +454,7 @@ void MakePlot(const vector<double> &injections_list,
   double themin = min(xmin-margin*xdelta, ymin-margin*ydelta);
   double themax = max(xmax+margin*xdelta, ymax+margin*ydelta);
   ostringstream oss;
-  oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << "Signal Strength" << flush;
+  oss << ";Injected " << (is_nc ? "NC" : "C") << " Signal Strength;Extracted " << (is_nc ? "NC" : "C") << " " << (is_pull ? "Pull" : "Signal Strength") << flush;
   TH1D h("", oss.str().c_str(), 1, is_pull ? xmin-margin*xdelta : themin, is_pull ? xmax+margin*xdelta : themax);
   if(is_pull){
     h.SetMinimum(-3.);
@@ -570,5 +579,70 @@ void RemoveBadResults(vector<double> &vals, vector<double> &pulls){
     size_t i = bad_indices.at(ii);
     vals.erase(vals.begin()+i);
     pulls.erase(pulls.begin()+i);
+  }
+}
+
+void MergeWithText(vector<double> &injs,
+                   vector<vector<double> > &yvals,
+                   vector<vector<double> > &pulls,
+                   bool is_nc){
+  ostringstream oss;
+  oss << "txt/siginj/lumi_" << lumi << "_" << (is_nc ? "nc" : "c") << ".txt" << flush;
+  string path = oss.str();
+
+  string line;
+  ifstream infile(path);
+  while(getline(infile, line)){
+    istringstream iss(line);
+    double inj, y, pull;
+    iss >> inj >> y >> pull;
+    size_t i = GetIndex(injs, inj);
+    if(i == static_cast<size_t>(-1)){
+      injs.push_back(inj);
+      yvals.push_back(vector<double>());
+      pulls.push_back(vector<double>());
+      i = injs.size() - 1;
+    }
+    yvals.at(i).push_back(y);
+    pulls.at(i).push_back(pull);
+  }
+  SortByInjectionStrength(injs, yvals, pulls);
+
+  ofstream outfile(path);
+  outfile.precision(std::numeric_limits<double>::max_digits10);
+  for(size_t iinj = 0; iinj < injs.size(); ++iinj){
+    for(size_t itoy = 0; itoy < yvals.at(iinj).size() || itoy < pulls.at(iinj).size(); ++itoy){
+      outfile
+        << setw(32) << injs.at(iinj)
+        << ' ' << setw(32) << (itoy < yvals.at(iinj).size() ? yvals.at(iinj).at(itoy) : -9876543210.)
+        << ' ' << setw(32) << (itoy < pulls.at(iinj).size() ? pulls.at(iinj).at(itoy) : -9876543210.)
+        << endl;
+    }
+  }
+  outfile.close();
+}
+
+size_t GetIndex(const vector<double> &v, double x){
+  for(size_t i = 0; i < v.size(); ++i){
+    if(v.at(i) == x) return i;
+  }
+  return -1;
+}
+
+void SortByInjectionStrength(vector<double> &inj,
+                             vector<vector<double> > &yvals,
+                             vector<vector<double> > &pulls){
+  vector<size_t> vi(inj.size());
+  for(size_t i = 0; i < vi.size(); ++i) vi.at(i) = i;
+  sort(vi.begin(), vi.end(), [&](size_t a, size_t b){return inj.at(a)<inj.at(b);});
+  auto inj_temp = inj;
+  auto yvals_temp = yvals;
+  auto pulls_temp = pulls;
+  for(size_t i = 0; i < vi.size(); ++i){
+    inj.at(i) = inj_temp.at(vi.at(i));
+    yvals.at(i) = yvals_temp.at(vi.at(i));
+    pulls.at(i) = pulls_temp.at(vi.at(i));
+    sort(yvals.at(i).begin(), yvals.at(i).end());
+    sort(pulls.at(i).begin(), pulls.at(i).end());
   }
 }

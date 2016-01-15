@@ -23,5 +23,13 @@ void MakePlot(const std::vector<double> &injections, const std::vector<std::vect
 void Plot1D(const std::string &base, double inj, const std::vector<double> &vals,
 	    double center, double up, double down);
 void RemoveBadResults(std::vector<double> &vals, std::vector<double> &pulls);
+void MergeWithText(std::vector<double> &inj,
+                   std::vector<std::vector<double> > &yvals,
+                   std::vector<std::vector<double> > &pulls,
+                   bool is_nc);
+std::size_t GetIndex(const std::vector<double> &v, double x);
+void SortByInjectionStrength(std::vector<double> &inj,
+                             std::vector<std::vector<double> > &yvals,
+                             std::vector<std::vector<double> > &pulls);
 
 #endif
