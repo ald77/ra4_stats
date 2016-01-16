@@ -23,8 +23,9 @@
 
 using namespace std;
 
+
 namespace{
-  double lumi = 0.135;
+  double lumi = 2.246;
   double sig_strength = 0.;
   BlindLevel blind_level = BlindLevel::blinded;
   bool no_kappa = false;
@@ -54,11 +55,11 @@ int main(int argc, char *argv[]){
   string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
-  string ttjets_cuts("stitch");
+  string stitch_cuts("stitch");
   Process ttbar{"ttbar", {
       {foldermc+"/*TTJets*Lept*.root/tree"},
         {foldermc+"/*TTJets_HT*.root/tree"}
-    },ttjets_cuts};
+    },stitch_cuts};
   Process other{"other", {
       {foldermc+"/*_WJetsToLNu*.root/tree"},
         {foldermc+"/*_TTWJets*.root/tree"},
@@ -67,9 +68,11 @@ int main(int argc, char *argv[]){
               {foldermc+"/*DYJetsToLL*.root/tree"},
                 {foldermc+"/*QCD_HT*.root/tree"},
                   {foldermc+"/*_WWTo*.root/tree"},
-                    {foldermc+"/*ggZH_HToBB*.root/tree"},
-                      {foldermc+"/*ttHJetTobb*.root/tree"}
-    }};
+                    {foldermc+"/*_TTGJets*.root/tree"},
+		      {foldermc+"/*_TTTT*.root/tree"},
+			{foldermc+"/*_WZ*.root/tree"},
+			  {foldermc+"/*ttHJetTobb*.root/tree"}
+    },stitch_cuts};
   Process signal_nc{"signal", {
       {foldermc+"/*T1tttt*1500*100*.root/tree"}
     }, Cut(), false, true};
@@ -89,10 +92,10 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
-  Cut baseline1b{"mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
-  Cut baseline2l{"mj>250&&ht>500&&met>200&&met<=400"};
-  Cut baseline_135{"mj>250&&ht>450&&met>150"};
+  Cut baseline{"pass&&mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=2&&nleps==1"};
+  Cut baseline1b{"pass&&mj>250&&ht>500&&met>200&&njets>="+minjets+"&&nbm>=1&&nleps==1"};
+  Cut baseline2l{"pass&&mj>250&&ht>500&&met>200&&met<=400"};
+  Cut baseline_135{"pass&&mj>250&&ht>450&&met>150"};
 
   //Declare bins
   //Method 2, m1b, and m1bk

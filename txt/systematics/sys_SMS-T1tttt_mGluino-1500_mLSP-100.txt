@@ -1,15 +1,15 @@
 SYSTEMATIC isr_pt
  PROCESSES ttbar
-  r2_lowmet_lownj_1b    0.02
-  r2_highmet_lownj_1b   0.01
+  r2_lowmet_lownj_1b    0.01
+  r2_highmet_lownj_1b   0.03
   r2_lowmet_highnj_1b   0.01
-  r2_highmet_highnj_1b  0.01
-  r2_lowmet_lownj_2b    0.01
-  r2_lowmet_lownj_3b    0.02
+  r2_highmet_highnj_1b  0.05
+  r2_lowmet_lownj_2b    -0.01
+  r2_lowmet_lownj_3b    0.01
   r2_highmet_lownj_2b   0.01
   r2_lowmet_highnj_2b   0.01
-  r2_lowmet_highnj_3b   0.02
-  r2_highmet_highnj_2b  0.01
+  r2_lowmet_highnj_3b   0.01
+  r2_highmet_highnj_2b  0.02
 
 SYSTEMATIC jec
  PROCESSES ttbar
@@ -65,17 +65,17 @@ SYSTEMATIC non_ttbar
 
 SYSTEMATIC dilep_closure
  PROCESSES ttbar
-  r2_lowmet_lownj_1b    0.366
-  r2_lowmet_lownj_1b    0.366
-  r2_highmet_lownj_1b   0.366
-  r2_lowmet_highnj_1b   0.895
-  r2_highmet_highnj_1b  0.895
-  r2_lowmet_lownj_2b    0.366
-  r2_lowmet_lownj_3b    0.366
-  r2_highmet_lownj_2b   0.366
-  r2_lowmet_highnj_2b   0.895
-  r2_lowmet_highnj_3b   0.895
-  r2_highmet_highnj_2b  0.895
+  r2_lowmet_lownj_1b    0.37
+  r2_lowmet_lownj_1b    0.37
+  r2_highmet_lownj_1b   0.37
+  r2_lowmet_highnj_1b   0.88
+  r2_highmet_highnj_1b  0.88
+  r2_lowmet_lownj_2b    0.37
+  r2_lowmet_lownj_3b    0.37
+  r2_highmet_lownj_2b   0.37
+  r2_lowmet_highnj_2b   0.88
+  r2_lowmet_highnj_3b   0.88
+  r2_highmet_highnj_2b  0.88
 
 SYSTEMATIC lepeff
   PROCESSES signal
