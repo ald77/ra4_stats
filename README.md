@@ -4,28 +4,9 @@ Statistics tools for the RA4-MJ analysis
 
 Initial setup
 -------------
-ra4_stats relies on having CMSSW_7_4_14 or greater with the ROOT6 version of the Higgs combine tool installed in ~/cmssw. Only CMSSW_7_4_14 is needed to produce workspaces and compute limits and significances. If one also wishes to extract fitted values for the signal strength or other model parameters, CMSSW_7_1_5 with the ROOT5 version of the Higgs combine tool is also needed. The instructions below will setup both.
+ra4_stats relies on having CMSSW_7_4_14 or greater with the ROOT6 version of the Higgs combine tool installed in ~/cmssw. Only CMSSW_7_4_14 is needed to produce workspaces and compute limits and significances. If one also wishes to extract fitted values for the signal strength or other model parameters, CMSSW_7_1_5 with the ROOT5 version of the Higgs combine tool is also needed. To perform the full setup with both CMSSW versions, simply execute
 
-    mkdir -p ~/cmssw
-    cd ~/cmssw
-    cmsrel CMSSW_7_4_14
-    cmsrel CMSSW_7_1_5
-    cd ~/cmssw/CMSSW_7_1_5/src
-    cmsenv
-    git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
-    cd HiggsAnalysis/CombinedLimit
-    git checkout v5.0.1
-    scram b -j 8 -k
-    cd ~/cmssw/CMSSW_7_4_14/src
-    cmsenv
-    git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
-    cd HiggsAnalysis/CombinedLimit
-    git checkout 74x-root6
-    scram b -j 8 -k
-    cd /Directory/Where/ra4_stats/Will/Go
-    git clone git@github.com:ald77/ra4_stats
-    cd ra4_stats
-    ./compile.sh
+    ./run/initial_setup.sh
 
 # Generating workspaces
 
