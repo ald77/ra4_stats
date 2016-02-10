@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string skim("skim_1lht500met200/");
   string foldermc(basefolder+"babies/2015_11_28/mc/"+skim);
-  string folderdata(basefolder+"babies/2015_11_20/data/singlelep/combined/"+skim);
+  string folderdata(basefolder+"babies/2016_02_04/data/singlelep/combined/"+skim);
 
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch");

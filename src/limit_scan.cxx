@@ -38,24 +38,20 @@ int main(int argc, char *argv[]){
 
   ifstream infile(filename);
   string line;
-  bool start_read = false;
+
   while(getline(infile, line)){
-    if(Contains(line, "---")){
-      start_read = true;
-    }else if(start_read){
-      istringstream iss(line);
-      double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown;
-      iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown;
-      vmx.push_back(pmx);
-      vmy.push_back(pmy);
-      vxsec.push_back(pxsec);
-      vobs.push_back(pobs);
-      vobsup.push_back(pobsup);
-      vobsdown.push_back(pobsdown);
-      vexp.push_back(pexp);
-      vup.push_back(pup);
-      vdown.push_back(pdown);
-    }
+    istringstream iss(line);
+    double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown;
+    iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown;
+    vmx.push_back(pmx);
+    vmy.push_back(pmy);
+    vxsec.push_back(pxsec);
+    vobs.push_back(pobs);
+    vobsup.push_back(pobsup);
+    vobsdown.push_back(pobsdown);
+    vexp.push_back(pexp);
+    vup.push_back(pup);
+    vdown.push_back(pdown);
   }
   infile.close();
 
