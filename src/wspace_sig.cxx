@@ -157,22 +157,26 @@ int main(int argc, char *argv[]){
   int mglu, mlsp;
   parseMasses(sigfile, mglu, mlsp);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
-  double xsec, xsec_unc;
-  xsec::signalCrossSection(mglu, xsec, xsec_unc);
-  double rmax = 20.;
-  if(mglu <= 1100 && mlsp <= 450){
-    rmax = 5.;
-    if(mglu <= 725 && mlsp <= 375){
-      rmax = 1.5;
-    }
-  }
 
   //// Creating workspaces for the Nominal, uncert Up, and uncert Down signal cross sections
   Cut *pbaseline(&baseline1b);
   set<Block> *pblocks(&blocks_1bk);
+  string model = "T1tttt";
   string sysfolder("/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/");
   if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
-  string sysfile(sysfolder+"sys_SMS-T1tttt_"+glu_lsp+".txt");
+  if(Contains(sigfile, "T5tttt")) {
+    sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_02_09/T5tttt/";
+    model = "T5tttt";
+  }
+  if(Contains(sigfile, "T2tt")) {
+    sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_02_09/T2tt/";
+    model = "T2tt";
+  }
+  if(Contains(sigfile, "T6ttWW")) {
+    sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_02_09/T6ttWW/";
+    model = "T6ttWW";
+  }
+  string sysfile(sysfolder+"sys_SMS-"+model+"_"+glu_lsp+".txt");
   // If systematic file does not exist, use m1bk_nc for tests
   struct stat buffer;   
   if(stat (sysfile.c_str(), &buffer) != 0) {
@@ -181,8 +185,20 @@ int main(int argc, char *argv[]){
     cout<<sysfile<<" instead"<<endl<<endl;
   }
 
+  // Cross sections
+  float xsec, xsec_unc;
+  if(model=="T1tttt" || model=="T5tttt") xsec::signalCrossSection(mglu, xsec, xsec_unc);
+  else xsec::stopCrossSection(mglu, xsec, xsec_unc);
+  double rmax = 20.;
+  if(mglu <= 1100 && mlsp <= 450){
+    rmax = 5.;
+    if(mglu <= 725 && mlsp <= 375){
+      rmax = 1.5;
+    }
+  }
+
   gSystem->mkdir(outfolder.c_str(), kTRUE);
-  string outname(outfolder+"/wspace_"+glu_lsp+"_xsecNom.root");
+  string outname(outfolder+"/wspace_"+model+"_"+glu_lsp+"_xsecNom.root");
   if(!use_r4) ReplaceAll(outname, "wspace_","wspace_nor4_");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);

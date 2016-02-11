@@ -9,8 +9,11 @@ import string
 import time
 
 # Setting folders
-infolder  = "/net/cms2/cms2r0/babymaker/wspaces/"
-runfolder = "batch_jobs/" 
+model = "T6ttWW"
+ntu_date = "2016_02_09"
+
+infolder  = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/" 
+runfolder = "batch_"+model+"/" 
 if not os.path.exists(runfolder):
   os.system("mkdir -p "+runfolder)
 
@@ -18,7 +21,7 @@ if not os.path.exists(runfolder):
 inputfiles = [i for i in os.listdir(infolder) if "xsecNom" in i]
 
 os.system("JobSetup.csh")
-njobs = 60
+njobs = 30
 files_job = (len(inputfiles)+njobs-1)/njobs
 ifile = 0
 ijob = 0
@@ -35,7 +38,7 @@ for file in inputfiles:
     fexe.write("cd ~/cmssw/stats/CMSSW_7_4_14/src/ \n")
     fexe.write("eval `scramv1 runtime -sh` \n")
     fexe.write("cd ~/code/ra4_stats ; \n\n")
-  fexe.write("./run/scan_point.exe -f "+infolder+'/'+file+' >> limits_'+str(ijob)+'.txt\n')
+  fexe.write("./run/scan_point.exe -f "+infolder+'/'+file+' >> txt/limits_'+model+'_'+str(ijob)+'.txt\n')
   if ifile % files_job == 0 or ifile == len(inputfiles): 
     fexe.close()
     cmd = "JobSubmit.csh ./run/wrapper.sh ./"+exename

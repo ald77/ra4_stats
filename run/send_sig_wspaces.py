@@ -9,8 +9,11 @@ import string
 import time
 
 # Setting folders
-infolder  = "/net/cms2/cms2r0/babymaker/babies/2016_01_11/mc/scan/skim_abcd/"
-outfolder = "new_wspaces/" 
+model = "T6ttWW"
+ntu_date = "2016_02_09"
+
+infolder  = "/net/cms2/cms2r0/babymaker/babies/"+ntu_date+"/mc/"+model+"/skim_abcd/"
+outfolder = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/" 
 runfolder = outfolder+"run/" 
 if not os.path.exists(runfolder):
   os.system("mkdir -p "+runfolder)
@@ -19,7 +22,7 @@ if not os.path.exists(runfolder):
 inputfiles = [i for i in os.listdir(infolder) if "SMS" in i]
 
 os.system("JobSetup.csh")
-njobs = 60
+njobs = 20
 files_job = (len(inputfiles)+njobs-1)/njobs
 ifile = 0
 ijob = 0
@@ -35,7 +38,7 @@ for file in inputfiles:
   fexe.write("./run/wspace_sig.exe -f "+infolder+'/'+file+' -o '+outfolder+'\n')
   if ifile % files_job == 0 or ifile == len(inputfiles): 
     fexe.close()
-    cmd = "JobSubmit.csh ./run/wrapper.sh ./"+exename
+    cmd = "JobSubmit.csh ./run/wrapper.sh "+exename
     #print cmd
     os.system(cmd)
 

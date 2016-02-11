@@ -8,7 +8,8 @@
 namespace xsec{
 
   float crossSection(const TString &file);
-  void signalCrossSection(int glu_mass, double &xsec, double &xsec_unc);
+  void signalCrossSection(int glu_mass, float &xsec, float &xsec_unc);
+  void stopCrossSection(int stop_mass, float &xsec, float &xsec_unc);
   float fractionNegWeights(const TString &file);
 }
 

@@ -33,15 +33,21 @@ int main(int argc, char *argv[]){
   TFile file(file_name.c_str(), "read");
   if(!file.IsOpen()) throw runtime_error("Could not open "+file_name);
 
+  string model = "T1tttt";
+  if(Contains(file_name, "T5tttt")) model = "T5tttt";
+  if(Contains(file_name, "T2tt")) model = "T2tt";
+  if(Contains(file_name, "T6ttWW")) model = "T6ttWW";
+
   //// Parsing the gluino and LSP masses
   int mglu, mlsp;
   parseMasses(file_name, mglu, mlsp);
-  double xsec, xsec_unc;
-  xsec::signalCrossSection(mglu, xsec, xsec_unc);
+  float xsec, xsec_unc;
+  if(model=="T1tttt" || model=="T5tttt") xsec::signalCrossSection(mglu, xsec, xsec_unc);
+  else xsec::stopCrossSection(mglu, xsec, xsec_unc);
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
 
   //string workdir = MakeDir("scan_point_"+glu_lsp);
-  string workdir = "scan_point_"+glu_lsp+"/";
+  string workdir = "scan_point_"+model+"_"+glu_lsp+"/";
   gSystem->mkdir(workdir.c_str(), kTRUE);
  
   ostringstream command;
@@ -119,7 +125,7 @@ int main(int argc, char *argv[]){
     << ' ' << exp_down
     << endl;
 
-  string txtname(workdir+"/limits_"+glu_lsp+".txt");
+  string txtname(workdir+"/limits_"+model+"_"+glu_lsp+".txt");
   ofstream txtfile(txtname);
   txtfile
     << setprecision(numeric_limits<double>::max_digits10)
