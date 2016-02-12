@@ -369,6 +369,7 @@ void WorkspaceGenerator::ReadSystematicsFile(){
             if(bin.Name() != clean_line) continue;
             for(const auto &prc: process_list){
 	      float syst(atof(line.at(1).c_str()));
+              if(isnan(syst)) syst = 0.;
               if(syst>=0) this_systematic.Strength(bin, prc) = log(1+syst);
 	      else this_systematic.Strength(bin, prc) = -log(1+fabs(syst));
               found = true;

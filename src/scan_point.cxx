@@ -28,10 +28,10 @@ namespace{
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
-  if(file_name == "") throw runtime_error("Must supply an input file name");
+  if(file_name == "") ERROR("Must supply an input file name");
 
   TFile file(file_name.c_str(), "read");
-  if(!file.IsOpen()) throw runtime_error("Could not open "+file_name);
+  if(!file.IsOpen()) ERROR("Could not open "+file_name);
 
   string model = "T1tttt";
   if(Contains(file_name, "T5tttt")) model = "T5tttt";
@@ -69,13 +69,13 @@ int main(int argc, char *argv[]){
   
   string limits_file_name = workdir+"/higgsCombineTest.Asymptotic.mH120.root";
   TFile limits_file(limits_file_name.c_str(), "read");
-  if(!limits_file.IsOpen()) throw runtime_error("Could not open limits file "+limits_file_name);
+  if(!limits_file.IsOpen()) ERROR("Could not open limits file "+limits_file_name);
   TTree *tree = static_cast<TTree*>(limits_file.Get("limit"));
-  if(tree == nullptr) throw runtime_error("Could not get limits tree");
+  if(tree == nullptr) ERROR("Could not get limits tree");
   double limit;
   tree->SetBranchAddress("limit", &limit);
   int num_entries = tree->GetEntries();
-  if(num_entries != 6) throw runtime_error("Expected 6 tree entries. Saw "+to_string(num_entries));
+  if(num_entries != 6) ERROR("Expected 6 tree entries. Saw "+to_string(num_entries));
   tree->GetEntry(1);
   double exp_down = limit;
   tree->GetEntry(2);
@@ -88,24 +88,24 @@ int main(int argc, char *argv[]){
 
   string up_limits_file_name = workdir+"/higgsCombineUp.Asymptotic.mH120.root";
   TFile up_limits_file(up_limits_file_name.c_str(), "read");
-  if(!up_limits_file.IsOpen()) throw runtime_error("No \"up\" file "+up_limits_file_name);
+  if(!up_limits_file.IsOpen()) ERROR("No \"up\" file "+up_limits_file_name);
   tree = static_cast<TTree*>(up_limits_file.Get("limit"));
-  if(tree == nullptr) throw runtime_error("Could not get \"up\" limits tree");
+  if(tree == nullptr) ERROR("Could not get \"up\" limits tree");
   tree->SetBranchAddress("limit", &limit);
   num_entries = tree->GetEntries();
-  if(num_entries != 1) throw runtime_error("Expected 1 \"up\" tree entry. Saw "+to_string(num_entries));
+  if(num_entries != 1) ERROR("Expected 1 \"up\" tree entry. Saw "+to_string(num_entries));
   tree->GetEntry(0);
   double obs_up = limit;
   up_limits_file.Close();
 
   string down_limits_file_name = workdir+"/higgsCombineDown.Asymptotic.mH120.root";
   TFile down_limits_file(down_limits_file_name.c_str(), "read");
-  if(!down_limits_file.IsOpen()) throw runtime_error("No \"down\" file "+down_limits_file_name);
+  if(!down_limits_file.IsOpen()) ERROR("No \"down\" file "+down_limits_file_name);
   tree = static_cast<TTree*>(down_limits_file.Get("limit"));
-  if(tree == nullptr) throw runtime_error("Could not get \"down\" limits tree");
+  if(tree == nullptr) ERROR("Could not get \"down\" limits tree");
   tree->SetBranchAddress("limit", &limit);
   num_entries = tree->GetEntries();
-  if(num_entries != 1) throw runtime_error("Expected 1 \"down\" tree entry. Saw "+to_string(num_entries));
+  if(num_entries != 1) ERROR("Expected 1 \"down\" tree entry. Saw "+to_string(num_entries));
   tree->GetEntry(0);
   double obs_down = limit;
   down_limits_file.Close();
