@@ -25,12 +25,12 @@ using namespace std;
 
 namespace{
   string filename = "txt/t1tttt_limit_scan.txt";
+  string model = "T1tttt";
 }
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
-  //styles style("RA4");
-  //style.setDefaultStyle();
+  styles style("2Dscan"); style.setDefaultStyle();
   SetupColors();
   
   if(filename == "") throw runtime_error("No input file provided");
@@ -67,6 +67,7 @@ int main(int argc, char *argv[]){
   
   vector<double> vlim(vxsec.size());
   for(size_t i = 0; i < vxsec.size(); ++i){
+    //vobs.at(i) /= 5;
     vlim.at(i) = vxsec.at(i) * vobs.at(i);
   }
 
@@ -91,16 +92,23 @@ int main(int argc, char *argv[]){
 
   TH2D *hlim = glim.GetHistogram();
   if(hlim == nullptr) throw runtime_error("Could not retrieve histogram");
-  hlim->SetTitle(";m_{gluino} [GeV];m_{LSP} [GeV]");
+  TString xparticle("gluino"), yparticle("LSP");
+  if(model=="T2tt") xparticle = "stop";
+  if(model=="T6ttWW") {
+    xparticle = "sbottom";
+    yparticle = "chargino";
+  }
+  hlim->SetTitle(";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; 95% C.L. upper limit on cross section [pb]");
   
-  TCanvas c("","",800,800);
+  TCanvas c("","");
   c.SetLogz();
   hlim->SetMinimum(*min_element(vlim.cbegin(), vlim.cend()));
   hlim->SetMaximum(*max_element(vlim.cbegin(), vlim.cend()));
+  //hlim->Draw("colz");
   glim.Draw("colz");
   TLegend l(gStyle->GetPadLeftMargin(), 1.-gStyle->GetPadTopMargin(),
             1.-gStyle->GetPadRightMargin(), 1.);
-  l.SetNColumns(2);
+  l.SetNColumns(2); l.SetTextSize(0.05);
   l.SetBorderSize(0);
   TGraph cup = DrawContours(gup, 2, 2);
   TGraph cdown = DrawContours(gdown, 2, 2);
@@ -109,11 +117,17 @@ int main(int argc, char *argv[]){
   TGraph cobsdown = DrawContours(gobsdown, 1, 2);
   TGraph cobs = DrawContours(gobs, 1, 1, &l, "Observed");
   l.Draw("same");
+  dots.SetMarkerStyle(21); dots.SetMarkerColor(28);
+  dots.SetMarkerSize(0.4);
   dots.Draw("p same");
-  c.Print("limit_scan.pdf");
 
-  TFile file("limit_scan.root","recreate");
-  hlim->Write("hXsec_exp_corr");
+  TString filebase = model+"_limit_scan";
+  c.Print(filebase+".pdf");
+
+  TFile file(filebase+".root","recreate");
+
+  cout<<endl<<"Saved limit curves in "<<filebase<<".root"<<endl<<endl;
+  //hlim->Write("hXsec_exp_corr");
   cobs.Write("graph_smoothed_Obs");
   cobsup.Write("graph_smoothed_ObsP");
   cobsdown.Write("graph_smoothed_ObsM");
@@ -175,17 +189,21 @@ void SetupColors(){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
+      {"model", required_argument, 0, 'm'},
       {"file", required_argument, 0, 'f'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:m:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
+    case 'm':
+      model = optarg;
+      break;
     case 'f':
       filename = optarg;
       break;
