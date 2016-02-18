@@ -1042,12 +1042,12 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
   if(var_names.size()==0){
     w_.defineSet(set_name.c_str(), "");
   }else{
-    string cat_names = *var_names.cbegin();
-    auto name = var_names.cbegin();
-    for(++name; name != var_names.cend(); ++name){
-      cat_names += ("," + *name);
+    w_.defineSet(set_name.c_str(), var_names.cbegin()->c_str());
+    for(auto name = ++var_names.cbegin();
+	name != var_names.cend();
+	++name){
+      w_.extendSet(set_name.c_str(), name->c_str());
     }
-    w_.defineSet(set_name.c_str(), cat_names.c_str());
   }
 }
 
