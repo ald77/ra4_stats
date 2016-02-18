@@ -39,7 +39,7 @@ namespace{
 int main(int argc, char *argv[]){
   GetOptionsExtract(argc, argv);
 
-  if(file_wspace == "empty") throw runtime_error("You need to specify the file containing the workspace with option -f");
+  if(file_wspace == "empty") ERROR("You need to specify the file containing the workspace with option -f");
 
   string workdir = MakeDir("extract_yields_");
 
@@ -64,14 +64,14 @@ int main(int argc, char *argv[]){
   string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
   w_name = workdir+'/'+w_name;
   TFile w_file(w_name.c_str(),"read");
-  if(!w_file.IsOpen()) throw runtime_error("File "+w_name+" not produced");
+  if(!w_file.IsOpen()) ERROR("File "+w_name+" not produced");
   RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
-  if(w == nullptr) throw runtime_error("Workspace "+name_wspace+" not found");
+  if(w == nullptr) ERROR("Workspace "+name_wspace+" not found");
 
   string fit_name = "mlfit.root";
   string full_fit_name = workdir+'/'+fit_name;
   TFile fit_file(full_fit_name.c_str(),"read");
-  if(!fit_file.IsOpen()) throw runtime_error("Could not open "+full_fit_name);
+  if(!fit_file.IsOpen()) ERROR("Could not open "+full_fit_name);
   RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
   RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
   string toy_ext = "";
@@ -459,9 +459,9 @@ double GetObserved(const RooWorkspace &w,
   if(toy_num >= 0) oss << "_" << toy_num;
   oss << flush;
   RooAbsData *data = w.data(oss.str().c_str());
-  if(data == nullptr) throw runtime_error("Could not find dataset "+oss.str());
+  if(data == nullptr) ERROR("Could not find dataset "+oss.str());
   const RooArgSet *args = data->get();
-  if(args == nullptr) throw runtime_error("Could not extract args");
+  if(args == nullptr) ERROR("Could not extract args");
   TIter iter(args->createIterator());
   int size = args->getSize();
   RooAbsArg *arg = nullptr;

@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <stdexcept>
 #include <algorithm>
 
 #include <unistd.h>
@@ -33,7 +32,7 @@ int main(int argc, char *argv[]){
   styles style("2Dscan"); style.setDefaultStyle();
   SetupColors();
   
-  if(filename == "") throw runtime_error("No input file provided");
+  if(filename == "") ERROR("No input file provided");
   vector<double> vmx, vmy, vxsec, vobs, vobsup, vobsdown, vexp, vup, vdown;
 
   ifstream infile(filename);
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]){
   }
   infile.close();
 
-  if(vmx.size() <= 2) throw runtime_error("Need at least 3 models to draw scan");
+  if(vmx.size() <= 2) ERROR("Need at least 3 models to draw scan");
   if(vmx.size() != vmy.size()
      || vmx.size() != vxsec.size()
      || vmx.size() != vobs.size()
@@ -63,7 +62,7 @@ int main(int argc, char *argv[]){
      || vmx.size() != vobsdown.size()
      || vmx.size() != vexp.size()
      || vmx.size() != vup.size()
-     || vmx.size() != vdown.size()) throw runtime_error("Error parsing text file. Model point not fully specified");
+     || vmx.size() != vdown.size()) ERROR("Error parsing text file. Model point not fully specified");
   
   vector<double> vlim(vxsec.size());
   for(size_t i = 0; i < vxsec.size(); ++i){
@@ -91,7 +90,7 @@ int main(int argc, char *argv[]){
   glim.SetNpy(nybins);
 
   TH2D *hlim = glim.GetHistogram();
-  if(hlim == nullptr) throw runtime_error("Could not retrieve histogram");
+  if(hlim == nullptr) ERROR("Could not retrieve histogram");
   TString xparticle("gluino"), yparticle("LSP");
   if(model=="T2tt") xparticle = "stop";
   if(model=="T6ttWW") {

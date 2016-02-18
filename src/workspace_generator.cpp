@@ -7,7 +7,6 @@
 #include <array>
 #include <algorithm>
 #include <numeric>
-#include <stdexcept>
 
 #include "TDirectory.h"
 
@@ -61,12 +60,11 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
 }
 
 void WorkspaceGenerator::WriteToFile(const string &file_name){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "WriteToFile(" << file_name << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(file_name);
   if(!w_is_valid_) UpdateWorkspace();
   w_.writeToFile(file_name.c_str());
   if(print_level_ >= PrintLevel::everything){
+    DBG("");
     w_.Print();
   }
   if(print_level_ >= PrintLevel::normal){
@@ -163,13 +161,11 @@ GammaParams WorkspaceGenerator::GetYield(const Bin &bin,
 }
 
 size_t WorkspaceGenerator::AddToys(size_t num_toys){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddToys(" << num_toys << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(num_toys);
   if(!w_is_valid_) UpdateWorkspace();
   if(num_toys == 0) return num_toys_;
   const RooArgSet *obs_orig = w_.set("observables");
-  if(obs_orig == nullptr) throw runtime_error("Could not get observables list for toy generation");
+  if(obs_orig == nullptr) ERROR("Could not get observables list for toy generation");
   RooArgSet obs(*obs_orig);
   SetupToys(obs);
   for(size_t itoy = num_toys_; itoy < num_toys_+num_toys; ++itoy){
@@ -184,13 +180,11 @@ size_t WorkspaceGenerator::AddToys(size_t num_toys){
 }
 
 void WorkspaceGenerator::SetupToys(const RooArgSet &obs){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "SetupToys(const RooArgSet &)" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   obs_vals_.clear();
   obs_gens_.clear();
   TIterator *iter_ptr = obs.createIterator();
-  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  if(iter_ptr == nullptr) ERROR("Could not generator iterator to set up toys");
   for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
     RooAbsReal *arg = static_cast<RooAbsReal*>(*(*iter_ptr));
     if(arg == nullptr) continue;
@@ -204,11 +198,9 @@ void WorkspaceGenerator::SetupToys(const RooArgSet &obs){
 }
 
 void WorkspaceGenerator::GenerateToys(RooArgSet &obs){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "GenerateToys(const RooArgSet &)" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   TIterator *iter_ptr = obs.createIterator();
-  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  if(iter_ptr == nullptr) ERROR("Could not generator iterator to set up toys");
   for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
     RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
     if(arg == nullptr) continue;
@@ -220,11 +212,9 @@ void WorkspaceGenerator::GenerateToys(RooArgSet &obs){
 }
 
 void WorkspaceGenerator::ResetToys(RooArgSet &obs){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "ResetToys(const RooArgSet &)" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   TIterator *iter_ptr = obs.createIterator();
-  if(iter_ptr == nullptr) throw runtime_error("Could not generator iterator to set up toys");
+  if(iter_ptr == nullptr) ERROR("Could not generator iterator to set up toys");
   for(; iter_ptr != nullptr && *(*iter_ptr) != nullptr; iter_ptr->Next()){
     RooRealVar *arg = static_cast<RooRealVar*>(*(*iter_ptr));
     if(arg == nullptr) continue;
@@ -251,9 +241,7 @@ int WorkspaceGenerator::GetPoisson(double rate){
 }
 
 void WorkspaceGenerator::UpdateWorkspace(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "UpdateWorkspace()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   string old_name = w_.GetName();
   w_.Delete();
   gDirectory->Delete(old_name.c_str());
@@ -294,9 +282,7 @@ void WorkspaceGenerator::UpdateWorkspace(){
 }
 
 void WorkspaceGenerator::AddPOI(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddPOI()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   w_.factory(("r[1.,0.,"+to_string(rmax_)+"]").c_str());
   Append(poi_, "r");
 }
@@ -332,7 +318,7 @@ void WorkspaceGenerator::ReadSystematicsFile(){
     if(line.size() < 2){
       string out;
       for(const auto &word: line) out += word;
-      throw runtime_error("Bad systematics line: "+out);
+      ERROR("Bad systematics line: "+out);
     }
     if(line.at(0) == "SYSTEMATIC"){
       if(ready){
@@ -353,7 +339,7 @@ void WorkspaceGenerator::ReadSystematicsFile(){
             }
           }
           if(!found){
-            throw runtime_error("Systematic "+this_systematic.Name()
+            ERROR("Systematic "+this_systematic.Name()
                                 +" could not be applied to process "+line.at(iword));
           }
         }
@@ -379,7 +365,7 @@ void WorkspaceGenerator::ReadSystematicsFile(){
         }
       }
       if(!found){
-        throw runtime_error("Systematic "+this_systematic.Name()
+        ERROR("Systematic "+this_systematic.Name()
                             +" could not be applied to bin "+line.at(0));
       }
     }
@@ -405,9 +391,7 @@ void WorkspaceGenerator::CleanLine(string &line){
 }
 
 void WorkspaceGenerator::AddDileptonSystematic(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddDileptonSystematic()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
 
   set<Block> new_blocks;
   for(const auto &block: blocks_){
@@ -442,9 +426,7 @@ void WorkspaceGenerator::AddDileptonSystematic(){
 }
 
 bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
-  if(print_level_ >= PrintLevel::everything){
-    cout << "NeedsDileptonBin(" << bin << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   return Contains(static_cast<string>(bin.Cut()), "mt>")
     && (Contains(static_cast<string>(bin.Cut()), "(nels+nmus)==1")
         || Contains(static_cast<string>(bin.Cut()), "(nmus+nels)==1")
@@ -460,7 +442,7 @@ bool WorkspaceGenerator::NeedsDileptonBin(const Bin &bin) const{
 
 void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &dilep_cut) const{
   if(print_level_ >= PrintLevel::everything){
-    cout << "MakeDileptonBin(" << bin << ", " << dilep_bin << ", " << dilep_cut << ")" << endl;
+    DBG(bin << ", " << dilep_bin << ", " << dilep_cut);
   }
   dilep_bin = bin;
   dilep_bin.Name("dilep_"+dilep_bin.Name());
@@ -484,9 +466,7 @@ void WorkspaceGenerator::MakeDileptonBin(const Bin &bin, Bin &dilep_bin, Cut &di
 }
 
 void WorkspaceGenerator::AddSystematicsGenerators(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddSystematicsGenerators()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   for(const auto &block: blocks_){
     for(const auto &vbin: block.Bins()){
       for(const auto &bin: vbin){
@@ -547,9 +527,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
 }
 
 void WorkspaceGenerator::AddSystematicGenerator(const string &name){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddSystematicGenerator(" << name << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(name);
   if(systematics_.find(name) != systematics_.end()) return;
   w_.factory(("RooGaussian::constraint_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
   Append(nuisances_, name);
@@ -557,9 +535,7 @@ void WorkspaceGenerator::AddSystematicGenerator(const string &name){
 }
 
 void WorkspaceGenerator::AddData(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddData(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       GammaParams gps(0., 0.);
@@ -586,9 +562,7 @@ void WorkspaceGenerator::AddData(const Block &block){
 }
 
 void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddBackgroundFractions(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       for(const auto &bkg: backgrounds_){
@@ -604,9 +578,7 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
 }
 
 void WorkspaceGenerator::AddABCDParameters(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddABCDParameters(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   BlockYields by(block, backgrounds_, baseline_, yields_);
 
   ostringstream rxss, ryss;
@@ -656,9 +628,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
 }
 
 void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddRawBackgroundPredictions(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   BlockYields by(block, backgrounds_, baseline_, yields_);
   size_t max_row = by.MaxRow();
   size_t max_col = by.MaxCol();
@@ -707,9 +677,7 @@ void WorkspaceGenerator::AddRawBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddKappas(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddKappas(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   AddMCRowSums(block);
   AddMCColSums(block);
   AddMCTotal(block);
@@ -718,9 +686,7 @@ void WorkspaceGenerator::AddKappas(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCYields(const Block & block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCYields(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
@@ -757,9 +723,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
 }
 
 void WorkspaceGenerator::AddMCPdfs(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddKappaPdfs(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   bool first = true;
   string factory_string = "PROD::pdf_mc_"+block.Name()+"(";
   for(const auto &vbin: block.Bins()){
@@ -783,9 +747,7 @@ void WorkspaceGenerator::AddMCPdfs(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCProcessSums(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCProcessSums(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       ostringstream oss;
@@ -807,9 +769,7 @@ void WorkspaceGenerator::AddMCProcessSums(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCRowSums(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCRowSums(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(size_t irow = 0; irow < block.Bins().size(); ++irow){
     ostringstream oss;
     oss << "sum::rowmc" << (irow+1) << "_BLK_" << block.Name() << "(";
@@ -824,9 +784,7 @@ void WorkspaceGenerator::AddMCRowSums(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCColSums(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCColSums(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   if(block.Bins().size() > 0 && block.Bins().at(0).size() > 0){
     for(size_t icol = 0; icol < block.Bins().at(0).size(); ++icol){
       ostringstream oss;
@@ -845,9 +803,7 @@ void WorkspaceGenerator::AddMCColSums(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCTotal(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCTotalSums(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   ostringstream oss;
   oss << "sum::totmc_BLK_" << block.Name() << "(";
   if(block.Bins().size() > 0){
@@ -861,9 +817,7 @@ void WorkspaceGenerator::AddMCTotal(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCPrediction(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCPrediction(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(size_t irow = 0; irow < block.Bins().size(); ++irow){
     for(size_t icol = 0; icol < block.Bins().at(irow).size(); ++icol){
       const Bin &bin = block.Bins().at(irow).at(icol);
@@ -881,9 +835,7 @@ void WorkspaceGenerator::AddMCPrediction(const Block &block){
 }
 
 void WorkspaceGenerator::AddMCKappa(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddMCPrediction(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(size_t irow = 0; irow < block.Bins().size(); ++irow){
     for(size_t icol = 0; icol < block.Bins().at(irow).size(); ++icol){
       const Bin &bin = block.Bins().at(irow).at(icol);
@@ -901,9 +853,7 @@ void WorkspaceGenerator::AddMCKappa(const Block &block){
 }
 
 void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddFullBackgroundPredictions(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
@@ -932,9 +882,7 @@ void WorkspaceGenerator::AddFullBackgroundPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddSignalPredictions(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddSignalPredictions(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   for(const auto &vbin: block.Bins()){
     for(const auto &bin: vbin){
       ostringstream oss;
@@ -961,9 +909,7 @@ void WorkspaceGenerator::AddSignalPredictions(const Block &block){
 }
 
 void WorkspaceGenerator::AddPdfs(const Block &block){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddSignalPredictions(" << block << ")" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(block);
   string null_list = "", alt_list = "";
   bool is_first = true;
   for(const auto &vbin: block.Bins()){
@@ -997,9 +943,7 @@ void WorkspaceGenerator::AddDummyNuisance(){
 }
 
 void WorkspaceGenerator::AddFullPdf(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddFullPdf()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   string null_list = "pdf_dummy_nuisance";
   string alt_list = "pdf_dummy_nuisance";
   for(const auto &block: blocks_){
@@ -1021,9 +965,7 @@ void WorkspaceGenerator::AddFullPdf(){
 }
 
 void WorkspaceGenerator::AddParameterSets(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddParameterSets()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
@@ -1036,9 +978,7 @@ void WorkspaceGenerator::AddParameterSets(){
 
 void WorkspaceGenerator::DefineParameterSet(const string &set_name,
                                             const set<string> &var_names){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "DefineParameterSet(" << set_name << ",[var_names])" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG(set_name);
   if(var_names.size()==0){
     w_.defineSet(set_name.c_str(), "");
   }else{
@@ -1052,9 +992,7 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
 }
 
 void WorkspaceGenerator::AddModels(){
-  if(print_level_ >= PrintLevel::everything){
-    cout << "AddModels()" << endl;
-  }
+  if(print_level_ >= PrintLevel::everything) DBG("");
   RooStats::ModelConfig model_config("ModelConfig", &w_);
   model_config.SetPdf(*w_.pdf("model_s"));
   model_config.SetParametersOfInterest(*w_.set("POI"));
@@ -1091,8 +1029,7 @@ ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
 void WorkspaceGenerator::PrintComparison(ostream &stream, const Bin &bin,
                                          const Process &process, const Block &block) const{
   if(print_level_ >= PrintLevel::everything){
-    cout << "PrintComparison([stream], " << bin << ", " << process
-         << ", " << block << ")" << endl;
+    DBG(bin << ", " << process << ", " << block);
   }
 
   GammaParams gp(0., 0.);

@@ -616,7 +616,7 @@ void Plot1D(double inj, const vector<double> &vals,
 }
 
 void RemoveBadResults(vector<double> &vals, vector<double> &pulls){
-  if(vals.size() != pulls.size()) throw runtime_error("Vals and pull must have same length");
+  if(vals.size() != pulls.size()) ERROR("Vals and pull must have same length");
   vector<size_t> bad_indices;
   for(size_t i = 0; i < vals.size(); ++i){
     if(vals.at(i) < 0.

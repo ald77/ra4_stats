@@ -86,7 +86,7 @@ void GetCountAndUncertainty(TTree &tree,
 
 string execute(const string &cmd){
   FILE *pipe = popen(cmd.c_str(), "r");
-  if(!pipe) throw runtime_error("Could not open pipe.");
+  if(!pipe) ERROR("Could not open pipe.");
   const size_t buffer_size = 128;
   char buffer[buffer_size];
   string result = "";
@@ -126,7 +126,7 @@ string ChangeExtension(string path, const string &new_ext){
 string MakeDir(string prefix){
   prefix += "XXXXXX";
   char *dir_name = new char[prefix.size()];
-  if(dir_name == nullptr) throw runtime_error("Could not allocate directory name");
+  if(dir_name == nullptr) ERROR("Could not allocate directory name");
   strcpy(dir_name, prefix.c_str());
   mkdtemp(dir_name);
   prefix = dir_name;

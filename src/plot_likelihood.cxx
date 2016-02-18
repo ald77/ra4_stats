@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   GetOptions(argc, argv);
 
   if(file_name == ""){
-    throw runtime_error("Specify name of file containing workspace with -f.");
+    ERROR("Specify name of file containing workspace with -f.");
   }
   execute("export blah=$(pwd); cd ~/cmssw/CMSSW_7_1_5/src; eval `scramv1 runtime -sh`; cd $blah; combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w "+workspace_name+" "+file_name);
 
@@ -44,23 +44,23 @@ int main(int argc, char *argv[]){
   string fit_workspace_file_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
   TFile fit_workspace_file(fit_workspace_file_name.c_str(),"read");
   if(!fit_workspace_file.IsOpen()){
-    throw runtime_error("File "+fit_workspace_file_name+" was not produced.");
+    ERROR("File "+fit_workspace_file_name+" was not produced.");
   }
   RooWorkspace *w = static_cast<RooWorkspace*>(fit_workspace_file.Get(workspace_name.c_str()));
   if(w == nullptr) {
-    throw runtime_error("Workspace "+workspace_name+" not found in file "+fit_workspace_file_name);
+    ERROR("Workspace "+workspace_name+" not found in file "+fit_workspace_file_name);
   }
     
   string fit_file_name("mlfit.root");
   TFile fit_file(fit_file_name.c_str(), "read");
   if(!fit_file.IsOpen()){
-    throw runtime_error("File "+fit_file_name+" was not produced.");
+    ERROR("File "+fit_file_name+" was not produced.");
   }
 
   string out_file_name = ChangeExtension(file_name, "_profiles.root");
   TFile out_file(out_file_name.c_str(), "recreate");
   if(!out_file.IsOpen()){
-    throw runtime_error("Could not open output file "+out_file_name);
+    ERROR("Could not open output file "+out_file_name);
   }
   out_file.cd();
 

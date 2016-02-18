@@ -138,7 +138,7 @@ Process & Process::RemoveSystematic(const Systematic &systematic){
   try{
     systematics_.erase(find(systematics_.begin(), systematics_.end(), systematic));
   }catch(const out_of_range &e){
-    throw out_of_range(string(e.what())+": bin "+name_+" does not contain systematic "+systematic.Name()+".");
+    ERROR(string(e.what())+": bin "+name_+" does not contain systematic "+systematic.Name()+".");
   }
   return *this;
 }
@@ -160,7 +160,7 @@ Process & Process::SetSystematicStrength(const std::string &name, double strengt
     }
   }
   if(!found_it){
-    throw out_of_range("Process "+name_+" does not contain systematic "+name);
+    ERROR("Process "+name_+" does not contain systematic "+name);
   }
   return *this;
 }
