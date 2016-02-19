@@ -32,6 +32,7 @@
 
 #include "utilities.hpp"
 #include "styles.hpp"
+#include "thread_pool.hpp"
 
 using namespace std;
 
@@ -60,11 +61,12 @@ int main(int argc, char *argv[]){
     << flush;
   string id_string = oss.str();
 
+  ThreadPool thread_pool;
   if(!draw_only){
     cout << "Creating workspaces..." << endl;
     vector<future<void> > injected(injections.size());
     for(size_t i = 0; i < injections.size(); ++i){
-      injected.at(i) =  async(launch::async, InjectSignal, id_string, injections.at(i), i);
+      injected.at(i) =  thread_pool.Push(InjectSignal, id_string, injections.at(i), i);
     }
     for(size_t i = 0; i < injected.size(); ++i){
       injected.at(i).get();
@@ -78,27 +80,24 @@ int main(int argc, char *argv[]){
 
   if(!draw_only){
     cout << "Extracting signal strength from toys..." << endl;
-    vector<vector<future<pair<double,double> > > > toyed(ntoys);
-    for(size_t i = 0; i < toyed.size(); ++i){
-      vector<future<pair<double,double> > > (injections.size()).swap(toyed.at(i));
+    vector<vector<future<pair<double,double> > > > toyed_nc(ntoys);
+    vector<vector<future<pair<double,double> > > > toyed_c(ntoys);
+    for(int toy = 0; toy < ntoys; ++toy){
+      vector<future<pair<double,double> > > (injections.size()).swap(toyed_nc.at(toy));
+      vector<future<pair<double,double> > > (injections.size()).swap(toyed_c.at(toy));
+      for(size_t i = 0; i < injections.size(); ++i){
+        toyed_nc.at(toy).at(i) = thread_pool.Push(ExtractSignal, id_string, i, toy, true);
+        toyed_c.at(toy).at(i) = thread_pool.Push(ExtractSignal, id_string, i, toy, false);
+      }
     }
     for(int toy = 0; toy < ntoys; ++toy){
-      //Right now, running one job in parallel per injected signal strength. GCC seems to default to always using deferred on lxplus when launch::async is dropped. If this is ever improved, could just do all the asyncs up front and have a completely separate loop for the gets.
       for(size_t i = 0; i < injections.size(); ++i){
-        toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, true);
-      }
-      for(size_t i = 0; i < injections.size(); ++i){
-        auto res = toyed.at(toy).at(i).get();
-        yvals_nc.at(i).at(toy) = res.first;
-        pulls_nc.at(i).at(toy) = res.second;
-      }
-      for(size_t i = 0; i < injections.size(); ++i){
-        toyed.at(toy).at(i) = async(launch::async, ExtractSignal, id_string, i, toy, false);
-      }
-      for(size_t i = 0; i < injections.size(); ++i){
-        auto res = toyed.at(toy).at(i).get();
-        yvals_c.at(i).at(toy) = res.first;
-        pulls_c.at(i).at(toy) = res.second;
+        auto res_nc = toyed_nc.at(toy).at(i).get();
+        yvals_nc.at(i).at(toy) = res_nc.first;
+        pulls_nc.at(i).at(toy) = res_nc.second;
+        auto res_c = toyed_c.at(toy).at(i).get();
+        yvals_c.at(i).at(toy) = res_c.first;
+        pulls_c.at(i).at(toy) = res_c.second;
       }
     }
     execute("rm -f *_sig_inj_*.root");
