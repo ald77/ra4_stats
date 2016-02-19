@@ -355,7 +355,20 @@ void WorkspaceGenerator::ReadSystematicsFile(){
             if(bin.Name() != clean_line) continue;
             for(const auto &prc: process_list){
 	      float syst(atof(line.at(1).c_str()));
-              if(isnan(syst)) syst = 0.;
+              if(isnan(syst)){
+		DBG("Systematic " << this_systematic.Name() << " is NaN for bin "
+		    << bin.Name() << ", process " << prc.Name());
+		syst = 0.;
+	      }
+              if(isinf(syst)){
+		DBG("Systematic " << this_systematic.Name() << " is infinite for bin "
+		    << bin.Name() << ", process " << prc.Name());
+		if(syst>0.){
+		  syst = 1.;
+		}else{
+		  syst = -1.;
+		}
+	      }
               if(syst>=0) this_systematic.Strength(bin, prc) = log(1+syst);
 	      else this_systematic.Strength(bin, prc) = -log(1+fabs(syst));
               found = true;
