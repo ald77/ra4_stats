@@ -126,6 +126,7 @@ int main(int argc, char *argv[]){
   TFile file(filebase+".root","recreate");
 
   cout<<endl<<"Saved limit curves in "<<filebase<<".root"<<endl<<endl;
+  hlim->SetZTitle("");
   hlim->Write("hXsec_exp_corr");
   cobs.Write("graph_smoothed_Obs");
   cobsup.Write("graph_smoothed_ObsP");
