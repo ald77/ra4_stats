@@ -4,6 +4,7 @@
 *.o
 *.obj
 *.d
+*.pyc
 
 # Precompiled Headers
 *.gch
@@ -37,6 +38,7 @@
 *.txt
 !txt/*/*txt
 *.#*
+.nfs000000000*
 
 # LaTeX
 *.tex
