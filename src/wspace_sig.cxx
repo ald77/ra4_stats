@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
     },stitch_cuts};
   Process signal{"signal", {
       {sigfile+"/tree"}
-    }, Cut(), false, true};
+    },stitch_cuts, false, true};
 
   string data_cuts("(trig[4]||trig[8])&&pass");
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline1b{"1"};
+  Cut baseline1b{"mj>250"};
 
   //Declare bins 
   Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
