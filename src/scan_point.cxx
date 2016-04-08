@@ -52,18 +52,19 @@ int main(int argc, char *argv[]){
  
   ostringstream command;
   string done = " < /dev/null &> /dev/null; ";
+  done = "; ";
   //Need to get modify these file names
   string up_file_name = file_name;   ReplaceAll(up_file_name, "xsecNom", "xsecUp");
   string down_file_name = file_name; ReplaceAll(down_file_name, "xsecNom", "xsecDown");
   command
     << "export origdir=$(pwd); "
-    << "ln -s " << file_name << ' ' << workdir << done
-    << "ln -s " << up_file_name << ' ' << workdir << done
-    << "ln -s " << down_file_name << ' ' << workdir << done
+    << "ln -s $(readlink -f " << file_name << ") " << workdir << done
+    << "ln -s $(readlink -f " << up_file_name << ") " << workdir << done
+    << "ln -s $(readlink -f " << down_file_name << ") " << workdir << done
     << "cd " << workdir << done
-    << "combine -M Asymptotic " << file_name << done
-    << "combine -M Asymptotic --run observed --name Up " << up_file_name << done
-    << "combine -M Asymptotic --run observed --name Down " << down_file_name << done
+    << "combine -M Asymptotic " << GetBaseName(file_name) << done
+    << "combine -M Asymptotic --run observed --name Up " << GetBaseName(up_file_name) << done
+    << "combine -M Asymptotic --run observed --name Down " << GetBaseName(down_file_name) << done
     << flush;
   execute(command.str());
   
@@ -139,6 +140,15 @@ int main(int argc, char *argv[]){
     << ' ' << exp_up
     << ' ' << exp_down
     << endl;
+}
+
+string GetBaseName(const string &path){
+  auto pos = path.rfind("/");
+  if(pos == string::npos){
+    return path;
+  }else{
+    return path.substr(pos+1);
+  }
 }
 
 double ExtractNumber(const string &results, const string &key){

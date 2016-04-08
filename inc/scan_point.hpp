@@ -3,6 +3,7 @@
 
 #include <string>
 
+std::string GetBaseName(const std::string &path);
 double ExtractNumber(const std::string &results, const std::string &key);
 void GetOptions(int argc, char *argv[]);
 
