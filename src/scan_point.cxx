@@ -166,9 +166,9 @@ int main(int argc, char *argv[]){
   txtfile << endl;
 }
 
-double GetSignif(const string &file_name){
+double GetSignif(const string &filename){
   double signif = 0.;
-  ifstream file(file_name);
+  ifstream file(filename);
   string line;
   while(getline(file, line)){
     auto pos = line.find("Significance: ");
