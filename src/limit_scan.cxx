@@ -33,15 +33,15 @@ int main(int argc, char *argv[]){
   SetupColors();
   
   if(filename == "") ERROR("No input file provided");
-  vector<double> vmx, vmy, vxsec, vobs, vobsup, vobsdown, vexp, vup, vdown;
+  vector<double> vmx, vmy, vxsec, vobs, vobsup, vobsdown, vexp, vup, vdown, vsigobs, vsigexp;
 
   ifstream infile(filename);
   string line;
 
   while(getline(infile, line)){
     istringstream iss(line);
-    double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown;
-    iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown;
+    double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown, sigobs, sigexp;
+    iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown >> sigobs >> sigexp;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
     vxsec.push_back(pxsec);
@@ -51,6 +51,8 @@ int main(int argc, char *argv[]){
     vexp.push_back(pexp);
     vup.push_back(pup);
     vdown.push_back(pdown);
+    vsigobs.push_back(sigobs);
+    vsigexp.push_back(sigexp);
   }
   infile.close();
 
@@ -62,7 +64,9 @@ int main(int argc, char *argv[]){
      || vmx.size() != vobsdown.size()
      || vmx.size() != vexp.size()
      || vmx.size() != vup.size()
-     || vmx.size() != vdown.size()) ERROR("Error parsing text file. Model point not fully specified");
+     || vmx.size() != vdown.size()
+     || vmx.size() != vsigobs.size()
+     || vmx.size() != vsigexp.size()) ERROR("Error parsing text file. Model point not fully specified");
   
   vector<double> vlim(vxsec.size());
   for(size_t i = 0; i < vxsec.size(); ++i){
@@ -77,6 +81,8 @@ int main(int argc, char *argv[]){
   TGraph2D gexp("gexp", "Expected Limit", vexp.size(), &vmx.at(0), &vmy.at(0), &vexp.at(0));
   TGraph2D gup("gup", "Expected +1#sigma Limit", vup.size(), &vmx.at(0), &vmy.at(0), &vup.at(0));
   TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
+  TGraph2D gsigobs("gsigobs", "Observed Significance", vsigobs.size(), &vmx.at(0), &vmy.at(0), &vsigobs.at(0));
+  TGraph2D gsigexp("gsigexp", "Expected Significance", vsigexp.size(), &vmx.at(0), &vmy.at(0), &vsigexp.at(0));
   TGraph dots(vmx.size(), &vmx.at(0), &vmy.at(0));
 
   double xmin = *min_element(vmx.cbegin(), vmx.cend());
@@ -98,11 +104,23 @@ int main(int argc, char *argv[]){
     yparticle = "chargino";
   }
   hlim->SetTitle(";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; 95% C.L. upper limit on cross section [pb]");
+  hlim->SetMinimum(*min_element(vlim.cbegin(), vlim.cend()));
+  hlim->SetMaximum(*max_element(vlim.cbegin(), vlim.cend()));
+  
+  TH2D *hsigobs = gsigobs.GetHistogram();
+  if(hsigobs == nullptr) ERROR("Could not retrieve histogram");
+  hsigobs->SetTitle(";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; Observed Significance");
+  hsigobs->SetMinimum(0.);
+  hsigobs->SetMaximum(6.);
+  
+  TH2D *hsigexp = gsigexp.GetHistogram();
+  if(hsigexp == nullptr) ERROR("Could not retrieve histogram");
+  hsigexp->SetTitle(";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; Expected Significance");
+  hsigexp->SetMinimum(0.);
+  hsigexp->SetMaximum(6.);
   
   TCanvas c("","");
   c.SetLogz();
-  hlim->SetMinimum(*min_element(vlim.cbegin(), vlim.cend()));
-  hlim->SetMaximum(*max_element(vlim.cbegin(), vlim.cend()));
   //hlim->Draw("colz");
   glim.Draw("colz");
   TLegend l(gStyle->GetPadLeftMargin(), 1.-gStyle->GetPadTopMargin(),
@@ -123,6 +141,30 @@ int main(int argc, char *argv[]){
   TString filebase = model+"_limit_scan";
   c.Print(filebase+".pdf");
 
+  c.SetLogz(false);
+
+  gsigobs.Draw("colz");
+  cup = DrawContours(gup, 2, 2);
+  cdown = DrawContours(gdown, 2, 2);
+  cexp = DrawContours(gexp, 2, 1);
+  cobsup = DrawContours(gobsup, 1, 2);
+  cobsdown = DrawContours(gobsdown, 1, 2);
+  cobs = DrawContours(gobs, 1, 1);
+  l.Draw("same");
+  dots.Draw("p same");
+  c.Print((model+"_sigobs.pdf").c_str());
+
+  gsigexp.Draw("colz");
+  cup = DrawContours(gup, 2, 2);
+  cdown = DrawContours(gdown, 2, 2);
+  cexp = DrawContours(gexp, 2, 1);
+  cobsup = DrawContours(gobsup, 1, 2);
+  cobsdown = DrawContours(gobsdown, 1, 2);
+  cobs = DrawContours(gobs, 1, 1);
+  l.Draw("same");
+  dots.Draw("p same");
+  c.Print((model+"_sigexp.pdf").c_str());
+
   TFile file(filebase+".root","recreate");
 
   cout<<endl<<"Saved limit curves in "<<filebase<<".root"<<endl<<endl;
@@ -134,7 +176,15 @@ int main(int argc, char *argv[]){
   cexp.Write("graph_smoothed_Exp");
   cup.Write("graph_smoothed_ExpP");
   cdown.Write("graph_smoothed_ExpM");
+  hsigobs->Write("hsig_obs_corr");
+  hsigexp->Write("hsig_exp_corr");
   file.Close();
+}
+
+void Style(TGraph *g, int color, int style){
+  g->SetLineColor(color);
+  g->SetLineStyle(style);
+  g->SetLineWidth(5);
 }
 
 TGraph DrawContours(TGraph2D &g2, int color, int style,
@@ -153,9 +203,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
       out = *g;
       max_points = n_points;
     }
-    g->SetLineColor(color);
-    g->SetLineStyle(style);
-    g->SetLineWidth(5);
+    Style(g, color, style);
     g->Draw("L same");
     if(!added && leg != nullptr && name != ""){
       leg->AddEntry(g, name.c_str(), "l");

@@ -24,6 +24,7 @@ using namespace std;
 
 namespace{
   string file_name = "";
+  bool do_signif = false;
 }
 
 int main(int argc, char *argv[]){
@@ -64,8 +65,15 @@ int main(int argc, char *argv[]){
     << "cd " << workdir << done
     << "combine -M Asymptotic " << GetBaseName(file_name) << done
     << "combine -M Asymptotic --run observed --name Up " << GetBaseName(up_file_name) << done
-    << "combine -M Asymptotic --run observed --name Down " << GetBaseName(down_file_name) << done
-    << flush;
+    << "combine -M Asymptotic --run observed --name Down " << GetBaseName(down_file_name) << done;
+  if(do_signif){
+    command
+      << "combine -M ProfileLikelihood --significance --expectSignal=1 --verbose=999999 " << GetBaseName(file_name)
+      << " < /dev/null &> signif_obs.log; "
+      << "combine -M ProfileLikelihood --significance --expectSignal=1 -t -1 --verbose=999999 " << GetBaseName(file_name)
+      << " < /dev/null &> signif_exp.log; ";
+  }
+  command << flush;
   execute(command.str());
   
   string limits_file_name = workdir+"/higgsCombineTest.Asymptotic.mH120.root";
@@ -111,6 +119,12 @@ int main(int argc, char *argv[]){
   double obs_down = limit;
   down_limits_file.Close();
 
+  double sig_obs, sig_exp;
+  if(do_signif){
+    sig_obs = GetSignif(workdir+"/signif_obs.log");
+    sig_exp = GetSignif(workdir+"/signif_exp.log");
+  }
+
   //execute("rm -rf "+workdir);
 
   cout
@@ -123,8 +137,13 @@ int main(int argc, char *argv[]){
     << ' ' << obs_down
     << ' ' << exp
     << ' ' << exp_up
-    << ' ' << exp_down
-    << endl;
+    << ' ' << exp_down;
+  if(do_signif){
+    cout
+      << ' ' << sig_obs
+      << ' ' << sig_exp;
+  }
+  cout << endl;
 
   string txtname(workdir+"/limits_"+model+"_"+glu_lsp+".txt");
   ofstream txtfile(txtname);
@@ -138,8 +157,26 @@ int main(int argc, char *argv[]){
     << ' ' << obs_down
     << ' ' << exp
     << ' ' << exp_up
-    << ' ' << exp_down
-    << endl;
+    << ' ' << exp_down;
+  if(do_signif){
+    txtfile
+      << ' ' << sig_obs
+      << ' ' << sig_exp;
+  }
+  txtfile << endl;
+}
+
+double GetSignif(const string &file_name){
+  double signif = 0.;
+  ifstream file(file_name);
+  string line;
+  while(getline(file, line)){
+    auto pos = line.find("Significance: ");
+    if(pos != 0) continue;
+    string val = line.substr(14);
+    signif = stod(val);
+  }
+  return signif;
 }
 
 string GetBaseName(const string &path){
@@ -168,18 +205,22 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"filename", required_argument, 0, 'f'},
+      {"signif", required_argument, 0, 's'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:s", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
     case 'f':
       file_name = optarg;
+      break;
+    case 's':
+      do_signif = true;
       break;
     default:
       cerr << "Bad option! getopt_long returned character code " << static_cast<int>(opt) << endl;

@@ -8,6 +8,7 @@
 
 class TLegend;
 
+void Style(TGraph *c, int color, int style);
 TGraph DrawContours(TGraph2D &g2, int color, int style,
                     TLegend *l = nullptr, const std::string &name = "");
 void GetOptions(int argc, char *argv[]);
