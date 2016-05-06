@@ -36,7 +36,7 @@ namespace{
   bool do_syst = true;
   bool use_r4 = true;
   bool applyVeto = false;
-  bool altBinning = false;
+  string binning = "nominal";
   string minjets("6");
   string hijets("9");
   string himet("400");
@@ -67,19 +67,16 @@ int main(int argc, char *argv[]){
   string skim("skim_abcd/");
   string foldermc(basefolder+"babies/2015_11_28/mc/merged_abcd/"); 
   string folderdata(basefolder+"babies/2016_02_04/data/singlelep/combined/"+skim);
-
-  /*string foldermc = "/net/cms29/cms29r0/heller/hellbabies/2016_02_26/mc/skim_abcd/jetmatch/merged/";
-  string folderdata= "/net/cms29/cms29r0/heller/hellbabies/2016_02_26/data/combined/filtered/";
-  string folderother("/net/cms29/cms29r0/heller/hellbabies/2016_02_29/mc/skim_abcd/merged/");
-  */
+  foldermc="/net/cms27/cms27r0/babymaker/2016_04_29/mc/really_merged_abcd/";
+ 
 
   
-  if(altBinning) cout<<"alternative binning"<<endl;
-  else cout<<"standard binning"<<endl;
+  cout<<"binning is "<<binning<<endl;
   if(applyVeto) cout<<"apply veto"<<endl;
   else cout<<"no veto"<<endl;
 
   cout<<"lumi is "<<to_string(lumi)<<endl;
+  cout<<"outfolder is "<<outfolder<<endl;
 
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch&&pass");
@@ -106,13 +103,13 @@ int main(int argc, char *argv[]){
   Cut baseline1b{"mj>250"};
   string veto("");
   if(applyVeto){
-    veto = "&&(Sum$(abs(tks_pdg)==13&&tks_pt>10&&tks_os&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==11&&tks_pt>10&&tks_os&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==211&&tks_pt>15&&tks_os&&tks_mt2<60&&tks_miniso<0.1&&abs(tks_dz)<0.07&&tks_d0<0.05))==0";
+    veto = "&&(Sum$(abs(tks_pdg)==13&&tks_pt>10&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==11&&tks_pt>10&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==211&&tks_pt>15&&tks_mt2<60&&tks_miniso<0.1&&abs(tks_dz)<0.07&&tks_d0<0.05))==0";
   }
  
   set<Block> blocks_1bk;
 
   //Declare bins 
-  if(!altBinning){
+  if(binning=="nominal"){
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
 	blind_level>=BlindLevel::blinded};
     Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet,
@@ -179,7 +176,7 @@ int main(int argc, char *argv[]){
 
   }
 
-  else{
+  else if(binning=="alternate"){
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+medmet,
 	blind_level>=BlindLevel::blinded};
     Bin r1_medmet_allnb{"r1_medmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet,
@@ -302,7 +299,7 @@ int main(int argc, char *argv[]){
 
   string sysfolder = "/net/cms29/cms29r0/heller/binning_study/sys/";
   //Protect default
-  if(!altBinning && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
+  if(binning=="nominal" && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
   
   if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
   if(Contains(sigfile, "T5tttt")) {
@@ -320,10 +317,10 @@ int main(int argc, char *argv[]){
   cout<<"sysfolder is "<<sysfolder<<endl;
   
   string sysfile(sysfolder+"sys_SMS-"+model+"_"+glu_lsp+"_"+to_string(static_cast<int>(lumi))+"ifb");
-  if(altBinning) sysfile+="_altbins.txt";
+  if(binning=="alternate") sysfile+="_altbins.txt";
   else sysfile+="_nominal.txt";
   
-  if(!altBinning && lumi < 3) sysfile = sysfolder+"sys_SMS-"+model+"_"+glu_lsp+".txt";
+  if(binning=="nominal" && lumi < 3) sysfile = sysfolder+"sys_SMS-"+model+"_"+glu_lsp+".txt";
   cout<<"sysfile is "<<sysfile<<endl;
   // If systematic file does not exist, use m1bk_nc for tests
   struct stat buffer;   
@@ -346,7 +343,7 @@ int main(int argc, char *argv[]){
   }
 
   gSystem->mkdir(outfolder.c_str(), kTRUE);
-  string outname(outfolder+"/wspace_"+outfolder+"_"+model+"_"+glu_lsp+"_xsecNom.root");
+  string outname(outfolder+"/wspace_"+model+"_"+glu_lsp+"_xsecNom.root");
   if(!use_r4) ReplaceAll(outname, "wspace_","wspace_nor4_");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
@@ -397,8 +394,8 @@ void GetOptions(int argc, char *argv[]){
       {"mj", required_argument, 0, 's'},
       {"nokappa", no_argument, 0, 'k'},
       {"no_r4", no_argument, 0, '4'},
-      {"useVeto", no_argument, 0, 'v'},
-      {"alternate_binning", no_argument, 0, 'b'},
+      {"useVeto", required_argument, 0, 'v'},
+      {"alt_binning", required_argument, 0, 'b'},
       {"toys", required_argument, 0, 0},
       {"sig_strength", required_argument, 0, 'g'},
       {"outfolder", required_argument, 0, 'o'},
@@ -407,7 +404,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4vbg:f:o:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4b:v:g:f:o:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -451,10 +448,10 @@ void GetOptions(int argc, char *argv[]){
       use_r4 = false;
       break;
     case 'v':
-      applyVeto = true;
+      if(string(optarg) =="on")	applyVeto = true;
       break;
     case 'b':
-      altBinning = true;
+      binning = optarg;
       break;
     case 's':
       mjthresh = optarg;
