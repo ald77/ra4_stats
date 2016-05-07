@@ -18,7 +18,8 @@ outfolder = "variations/wspaces/"
 runfolder = "variations/run/"
 
 
-lumis = ["5","7","10","15","20"]
+#For all options, need to first ensure there is a systematics file that will be found by wspace_sig.exe
+lumis = ["5","7","10","15","20"] 
 binnings = ["nominal","alternate"]
 vetoes = ["on","off"]
 masspoints = ["mGluino-1600_mLSP-1000","mGluino-1400_mLSP-1000","mGluino-1800_mLSP-200"]

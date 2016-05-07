@@ -10,6 +10,8 @@ from ROOT import TMath
 from ROOT import TColor
 
 inputfile = "masteroutput5.txt"
+# First, cat all output files from send_variations into a single text file
+# each output file has from send_variations has a single line with an identifier, and a value (limit or significance)
 
 def get_results_list():
     with open(inputfile) as f:
@@ -21,35 +23,42 @@ def get_results_list():
 results = get_results_list()
 
 
+###### Setting up plot definitions:
+
 #Make a plot for each entry in Frames 
 #Each frame has a graph for each entry defined in variations
 #X axis is xvariable
 
-xvariable = "lumi"
-variations = [["binning_nominal","veto_off"],["binning_nominal","veto_on"],["binning_alternate","veto_off"],["binning_alternate","veto_on"]]
-var_names = ["RA4 2015","RA4 2015 + veto","Alternate binning","Alternate binning + veto"]
+xvariable = "lumi" # this will be the x axis
+variations = [["binning_nominal","veto_off"],["binning_nominal","veto_on"],["binning_alternate","veto_off"],["binning_alternate","veto_on"]] # Each list will define one set of limits/sigs to be plotted as one TGraph
+var_names = ["RA4 2015","RA4 2015 + veto","Alternate binning","Alternate binning + veto"] #Legend names for each TGraph
 var_colors = [30,30,46,46]
 var_linestyles = [1,7,1,7]
 var_markerstyles = [20,22,20,22]
 frames = [["mGluino-1600_mLSP-1000","sig_str0"],["mGluino-1600_mLSP-1000","sig_str1"],["mGluino-1800_mLSP-200","sig_str0"],["mGluino-1800_mLSP-200","sig_str1"],["mGluino-1400_mLSP-1000","sig_str0"],["mGluino-1400_mLSP-1000","sig_str1"]] # limit, sig plots for compressed, noncompressed 
 frame_titles = ["T1tttt(1600,1000) Limit","T1tttt(1600,1000) Significance","T1tttt(1800,200) Limit","T1tttt(1800,200) Significance","T1tttt(1400,1000) Limit","T1tttt(1400,1000) Significance"]
+
+### for Full sim points:
 #frames = [["mGluino-1200_mLSP-800","sig_str0"],["mGluino-1200_mLSP-800","sig_str1"],["mGluino-1500_mLSP-100","sig_str0"],["mGluino-1500_mLSP-100","sig_str1"]] # limit, sig plots for compressed, noncompressed 
 #frame_titles = ["T1tttt(1200,800) Limit","T1tttt(1200,800) Significance","T1tttt(1500,100) Limit","T1tttt(1500,100) Significance"]
+
+
+
+#####Cosmetics
+
 ROOT.gROOT.SetBatch(ROOT.kTRUE) #prevent th1->Draw() from trying to open X11 window
 ROOT.gStyle.SetCanvasDefW(600);
 ROOT.gStyle.SetCanvasDefH(600);
 ROOT.gStyle.SetTitleOffset(1.2,"x") 
 ROOT.gStyle.SetTitleOffset(1.7,"y")
-#ROOT.gStyle.SetTitleOffset(1.7,"z") 
-#ROOT.gStyle.SetPadRightMargin(0.19) 
 ROOT.gStyle.SetPadLeftMargin(0.14)
 ROOT.gStyle.SetPadBottomMargin(0.14)
-#ROOT.gStyle.SetPadTopMargin(0.08)
 ROOT.gStyle.SetLabelFont(42)
-#ROOT.gStyle.SetLabelSize(0.04)
 ROOT.gStyle.SetTitleFont(42)
-#ROOT.gStyle.SetTitleSize(0.05)
-#ROOT.gStyle.SetTitleOffset(1.35,'y')
+
+#######
+
+#####Reading values and plotting them
 
 xmin=4
 xmax=21
