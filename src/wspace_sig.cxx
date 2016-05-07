@@ -43,6 +43,7 @@ namespace{
   string medmet("350");
   string vhimet("500");
   string mjthresh("400");
+  string mjdef("mj");
   unsigned n_toys = 0;
   string sigfile = "";
   string outfolder = "out/";
@@ -75,8 +76,13 @@ int main(int argc, char *argv[]){
   if(applyVeto) cout<<"apply veto"<<endl;
   else cout<<"no veto"<<endl;
 
+  cout<<"mj is "<<mjdef<<endl;
   cout<<"lumi is "<<to_string(lumi)<<endl;
   cout<<"outfolder is "<<outfolder<<endl;
+<<<<<<< HEAD
+  
+=======
+>>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch&&pass");
@@ -100,7 +106,7 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline1b{"mj>250"};
+  Cut baseline1b{mjdef+">250"};
   string veto("");
   if(applyVeto){
     veto = "&&(Sum$(abs(tks_pdg)==13&&tks_pt>10&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==11&&tks_pt>10&&tks_mt2<80&&tks_miniso<0.2&&abs(tks_dz)<0.07&&tks_d0<0.05)+Sum$(abs(tks_pdg)==211&&tks_pt>15&&tks_mt2<60&&tks_miniso<0.1&&abs(tks_dz)<0.07&&tks_d0<0.05))==0";
@@ -110,58 +116,62 @@ int main(int argc, char *argv[]){
 
   //Declare bins 
   if(binning=="nominal"){
+<<<<<<< HEAD
+    Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met<="+himet,
+=======
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
+>>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 	blind_level>=BlindLevel::blinded};
-    Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+himet,
-	blind_level>=BlindLevel::blinded};
-
-    Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
+    Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+himet,
 	blind_level>=BlindLevel::blinded};
 
-    Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
+    Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+    Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
+    Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
+    Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2",
 	blind_level>=BlindLevel::blinded};
 
-    Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+himet+veto,
+    Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+himet+veto,
+    Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2",
 	blind_level>=BlindLevel::blinded};
 
-    Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"+veto,
+    Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&"+mjdef+"<="+mjthresh+"&&met<="+himet+veto,
+	blind_level>=BlindLevel::blinded};
+    Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&"+mjdef+"<="+mjthresh+"&&met>"+himet+veto,
+	blind_level>=BlindLevel::blinded};
+
+    Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"+veto,
+    Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"+veto,
+    Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"+veto,
+    Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets<="+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"+veto,
+    Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"+veto,
+    Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+himet+"&&njets>"+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
 
-    Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"+veto,
+    Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"+veto,
+    Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"+veto,
+    Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets<="+midjets+"&&nbm>=2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"+veto,
+    Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+himet+"&&njets>"+midjets+"&&nbm>=2"+veto,
 	blind_level>BlindLevel::unblinded};
 
     //// METHOD 1BK: Adding 1b, fat R1/R3 integrated over njets, nb, but not MET
@@ -177,98 +187,102 @@ int main(int argc, char *argv[]){
   }
 
   else if(binning=="alternate"){
+<<<<<<< HEAD
+    Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met<="+medmet,
+=======
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+medmet,
+>>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 	blind_level>=BlindLevel::blinded};
-    Bin r1_medmet_allnb{"r1_medmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet,
+    Bin r1_medmet_allnb{"r1_medmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet,
 	blind_level>=BlindLevel::blinded};
-    Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met>"+vhimet,
-	blind_level>=BlindLevel::blinded};
-
-    Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm>2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm>2",
+    Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+vhimet,
 	blind_level>=BlindLevel::blinded};
 
-
-    Bin r2_medmet_lownj_1b{"r2_medmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==1",
+    Bin r2_lowmet_lownj_1b{"r2_lowmet_lownj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_medmet_highnj_1b{"r2_medmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==1",
+    Bin r2_lowmet_highnj_1b{"r2_lowmet_highnj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_medmet_lownj_2b{"r2_medmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==2",
+    Bin r2_lowmet_lownj_2b{"r2_lowmet_lownj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==2",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_medmet_lownj_3b{"r2_medmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm>2",
+    Bin r2_lowmet_lownj_3b{"r2_lowmet_lownj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm>2",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_medmet_highnj_2b{"r2_medmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==2",
+    Bin r2_lowmet_highnj_2b{"r2_lowmet_highnj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==2",
 	blind_level>=BlindLevel::blinded};
-    Bin r2_medmet_highnj_3b{"r2_medmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm>2",
-	blind_level>=BlindLevel::blinded};
-
-    Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==1",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_lownj_3b{"r2_highmet_lownj_3b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm>2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==2",
-	blind_level>=BlindLevel::blinded};
-    Bin r2_highmet_highnj_3b{"r2_highmet_highnj_3b", "mt<=140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm>2",
+    Bin r2_lowmet_highnj_3b{"r2_lowmet_highnj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm>2",
 	blind_level>=BlindLevel::blinded};
 
-    Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&mj<="+mjthresh+"&&met<="+medmet+veto,
+
+    Bin r2_medmet_lownj_1b{"r2_medmet_lownj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r3_medmet_allnb{"r3_medmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet+veto,
+    Bin r2_medmet_highnj_1b{"r2_medmet_highnj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==1",
 	blind_level>=BlindLevel::blinded};
-    Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&mj<="+mjthresh+"&&met>"+vhimet+veto,
+    Bin r2_medmet_lownj_2b{"r2_medmet_lownj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_medmet_lownj_3b{"r2_medmet_lownj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm>2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_medmet_highnj_2b{"r2_medmet_highnj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_medmet_highnj_3b{"r2_medmet_highnj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm>2",
 	blind_level>=BlindLevel::blinded};
 
-    Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==1"+veto,
+    Bin r2_highmet_lownj_1b{"r2_highmet_lownj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==1",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_highnj_1b{"r2_highmet_highnj_1b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==1",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_lownj_2b{"r2_highmet_lownj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_lownj_3b{"r2_highmet_lownj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm>2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_highnj_2b{"r2_highmet_highnj_2b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==2",
+	blind_level>=BlindLevel::blinded};
+    Bin r2_highmet_highnj_3b{"r2_highmet_highnj_3b", "mt<=140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm>2",
+	blind_level>=BlindLevel::blinded};
+
+    Bin r3_lowmet_allnb{"r3_lowmet_allnb", "mt>140&&"+mjdef+"<="+mjthresh+"&&met<="+medmet+veto,
+	blind_level>=BlindLevel::blinded};
+    Bin r3_medmet_allnb{"r3_medmet_allnb", "mt>140&&"+mjdef+"<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet+veto,
+	blind_level>=BlindLevel::blinded};
+    Bin r3_highmet_allnb{"r3_highmet_allnb", "mt>140&&"+mjdef+"<="+mjthresh+"&&met>"+vhimet+veto,
+	blind_level>=BlindLevel::blinded};
+
+    Bin r4_lowmet_lownj_1b{"r4_lowmet_lownj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==1"+veto,
+    Bin r4_lowmet_highnj_1b{"r4_lowmet_highnj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==2"+veto,
+    Bin r4_lowmet_lownj_2b{"r4_lowmet_lownj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm>2"+veto,
+    Bin r4_lowmet_lownj_3b{"r4_lowmet_lownj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets<="+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==2"+veto,
+    Bin r4_lowmet_highnj_2b{"r4_lowmet_highnj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm>2"+veto,
+    Bin r4_lowmet_highnj_3b{"r4_lowmet_highnj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+medmet+"&&njets>"+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
 
 
-    Bin r4_medmet_lownj_1b{"r4_medmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==1"+veto,
+    Bin r4_medmet_lownj_1b{"r4_medmet_lownj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_medmet_highnj_1b{"r4_medmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==1"+veto,
+    Bin r4_medmet_highnj_1b{"r4_medmet_highnj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_medmet_lownj_2b{"r4_medmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==2"+veto,
+    Bin r4_medmet_lownj_2b{"r4_medmet_lownj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_medmet_lownj_3b{"r4_medmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm>2"+veto,
+    Bin r4_medmet_lownj_3b{"r4_medmet_lownj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets<="+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_medmet_highnj_2b{"r4_medmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==2"+veto,
+    Bin r4_medmet_highnj_2b{"r4_medmet_highnj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_medmet_highnj_3b{"r4_medmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm>2"+veto,
+    Bin r4_medmet_highnj_3b{"r4_medmet_highnj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met<="+vhimet+"&&met>"+medmet+"&&njets>"+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
 
-    Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==1"+veto,
+    Bin r4_highmet_lownj_1b{"r4_highmet_lownj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==1"+veto,
+    Bin r4_highmet_highnj_1b{"r4_highmet_highnj_1b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==1"+veto,
 	blind_level>BlindLevel::unblind_1b};
-    Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==2"+veto,
+    Bin r4_highmet_lownj_2b{"r4_highmet_lownj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_highmet_lownj_3b{"r4_highmet_lownj_3b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm>2"+veto,
+    Bin r4_highmet_lownj_3b{"r4_highmet_lownj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets<="+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==2"+veto,
+    Bin r4_highmet_highnj_2b{"r4_highmet_highnj_2b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm==2"+veto,
 	blind_level>BlindLevel::unblinded};
-    Bin r4_highmet_highnj_3b{"r4_highmet_highnj_3b", "mt>140&&mj>"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm>2"+veto,
+    Bin r4_highmet_highnj_3b{"r4_highmet_highnj_3b", "mt>140&&"+mjdef+">"+mjthresh+"&&met>"+vhimet+"&&njets>"+midjets+"&&nbm>2"+veto,
 	blind_level>BlindLevel::unblinded};
 
     blocks_1bk = {
@@ -392,6 +406,7 @@ void GetOptions(int argc, char *argv[]){
       {"hij", required_argument, 0, 'h'},
       {"himet", required_argument, 0, 'm'},
       {"mj", required_argument, 0, 's'},
+      {"mj_var", required_argument, 0, 'd'},
       {"nokappa", no_argument, 0, 'k'},
       {"no_r4", no_argument, 0, '4'},
       {"useVeto", required_argument, 0, 'v'},
@@ -404,7 +419,11 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
+<<<<<<< HEAD
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:d:k4b:v:g:f:o:", long_options, &option_index);
+=======
     opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4b:v:g:f:o:", long_options, &option_index);
+>>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
     if( opt == -1) break;
 
     string optname;
@@ -455,6 +474,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 's':
       mjthresh = optarg;
+      break;
+    case 'd':
+      mjdef = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;
