@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
   string skim("skim_abcd/");
   string foldermc(basefolder+"babies/2015_11_28/mc/merged_abcd/"); 
   string folderdata(basefolder+"babies/2016_02_04/data/singlelep/combined/"+skim);
-  foldermc="/net/cms27/cms27r0/babymaker/2016_04_29/mc/really_merged_abcd/";
+  foldermc="/net/cms27/cms27r0/babymaker/2016_04_29/mc/really_merged_baseline/";
  
 
   
@@ -79,10 +79,6 @@ int main(int argc, char *argv[]){
   cout<<"mj is "<<mjdef<<endl;
   cout<<"lumi is "<<to_string(lumi)<<endl;
   cout<<"outfolder is "<<outfolder<<endl;
-<<<<<<< HEAD
-  
-=======
->>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch&&pass");
@@ -116,11 +112,8 @@ int main(int argc, char *argv[]){
 
   //Declare bins 
   if(binning=="nominal"){
-<<<<<<< HEAD
+
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met<="+himet,
-=======
-    Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+himet,
->>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 	blind_level>=BlindLevel::blinded};
     Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+himet,
 	blind_level>=BlindLevel::blinded};
@@ -187,11 +180,8 @@ int main(int argc, char *argv[]){
   }
 
   else if(binning=="alternate"){
-<<<<<<< HEAD
+
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met<="+medmet,
-=======
-    Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&mj<="+mjthresh+"&&met<="+medmet,
->>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
 	blind_level>=BlindLevel::blinded};
     Bin r1_medmet_allnb{"r1_medmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+medmet+"&&met<="+vhimet,
 	blind_level>=BlindLevel::blinded};
@@ -419,11 +409,8 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-<<<<<<< HEAD
     opt = getopt_long(argc, argv, "l:u:j:h:m:s:d:k4b:v:g:f:o:", long_options, &option_index);
-=======
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:k4b:v:g:f:o:", long_options, &option_index);
->>>>>>> 8e1a3253d2500010a5fa7516f2e25740d16d5303
+
     if( opt == -1) break;
 
     string optname;

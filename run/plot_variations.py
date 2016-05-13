@@ -9,7 +9,9 @@ import ROOT
 from ROOT import TMath
 from ROOT import TColor
 
-inputfile = "masteroutput5.txt"
+inputfile = "master_redo.txt"
+
+#"masteroutput5.txt"
 # First, cat all output files from send_variations into a single text file
 # each output file has from send_variations has a single line with an identifier, and a value (limit or significance)
 
@@ -23,16 +25,30 @@ def get_results_list():
 results = get_results_list()
 
 
+
+#version = "mj_comparison"
+version = "original_comparison"
 ###### Setting up plot definitions:
 
 #Make a plot for each entry in Frames 
 #Each frame has a graph for each entry defined in variations
 #X axis is xvariable
 
+#####Warning: Variations MusT NOT BE A SUBSET OF EACH OTHER: EG MJdef_mj and MJdef_mj14 . Instead use MJdef_mj_ 
+
 xvariable = "lumi" # this will be the x axis
-variations = [["binning_nominal","veto_off"],["binning_nominal","veto_on"],["binning_alternate","veto_off"],["binning_alternate","veto_on"]] # Each list will define one set of limits/sigs to be plotted as one TGraph
-var_names = ["RA4 2015","RA4 2015 + veto","Alternate binning","Alternate binning + veto"] #Legend names for each TGraph
-var_colors = [30,30,46,46]
+if "mj_comparison" in version:
+    variations = [["MJdef_mj_","threshold_400"],["MJdef_mj_","threshold_350"],["MJdef_mj14","threshold_400"],["MJdef_mj14","threshold_350"]]
+    var_names = ["R = 1.2, threshold = 400 GeV","R = 1.2, threshold = 350 GeV","R = 1.4, threshold = 400 GeV","R = 1.4, threshold = 350 GeV"]
+    var_colors = [36,36,49,49]
+
+
+if "original_comparison" in version:   
+    variations = [["binning_nominal","veto_off"],["binning_nominal","veto_on"],["binning_alternate","veto_off"],["binning_alternate","veto_on"]] # Each list will define one set of limits/sigs to be plotted as one TGraph
+    var_names = ["RA4 2015","RA4 2015 + veto","Alternate binning","Alternate binning + veto"] #Legend names for each TGraph
+    var_colors =[30,30,46,46]
+
+    
 var_linestyles = [1,7,1,7]
 var_markerstyles = [20,22,20,22]
 frames = [["mGluino-1600_mLSP-1000","sig_str0"],["mGluino-1600_mLSP-1000","sig_str1"],["mGluino-1800_mLSP-200","sig_str0"],["mGluino-1800_mLSP-200","sig_str1"],["mGluino-1400_mLSP-1000","sig_str0"],["mGluino-1400_mLSP-1000","sig_str1"]] # limit, sig plots for compressed, noncompressed 
@@ -117,4 +133,4 @@ for ifr,frame in enumerate(frames):
         leg.AddEntry(graph,var_names[i],"lp")
         
     leg.Draw("same")
-    c.Print(frame[0]+"_"+frame[1]+".pdf")
+    c.Print(version+"_"+frame[0]+"_"+frame[1]+".pdf")
