@@ -108,6 +108,8 @@ double GetMinimum(const TH1D &h, double y = -std::numeric_limits<double>::max())
 TGraphErrors MakeErrorBand(const TH1D &h);
 TGraphErrors MakeRatio(const TH1D &num, const TH1D &den);
 
+std::string StripPath(const std::string &full_path);
+
 void MakeCorrectionPlot(RooWorkspace &w,
                         const RooFitResult &f,
                         const std::string &file_name);

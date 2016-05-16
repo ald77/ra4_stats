@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
           << "cd " << workdir << "; "
           << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
   if(toy_num >= 0) command << "_" << toy_num;
-  command << " " << file_wspace << "; "
+  command << " " << StripPath(file_wspace) << "; "
           << "cd $blah; "
           << flush;
   cout << "Executing " << command.str() << endl;
@@ -990,6 +990,15 @@ TGraphErrors MakeRatio(const TH1D &num, const TH1D &den){
     }
   }
   return g;
+}
+
+string StripPath(const string &full_path){
+  auto pos = full_path.rfind("/");
+  if(pos != string::npos){
+    return full_path.substr(pos+1);
+  }else{
+    return full_path;
+  }
 }
 
 void MakeCorrectionPlot(RooWorkspace &w,
