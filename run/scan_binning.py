@@ -18,12 +18,12 @@ for sig_pt in sig_pts:
         for njets in njets_cuts:
             for nbm in nbm_cuts:
                 call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
-                      "--out_dir", out_dir, "--lumi", str(lumi),
+#                      "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", str(met), "--met_high", str(-1.),
                       "--njets_low", str(njets), "--njets_high", str(-1.),
                       "--nbm_low", str(nbm), "--nbm_high", str(-1.),
-                      "--do_track_veto", str(0)])
+                      "--do_track_veto", "0"])
 
 met_cuts = (200., 350., 500.)
 njets_cuts = (5.5, 8.5)
@@ -48,16 +48,16 @@ for sig_pt in sig_pts:
                 if inbm+1 < len(nbm_cuts):
                     nbm_hi = str(nbm_cuts[inbm+1])
                 call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
-                      "--out_dir", out_dir, "--lumi", str(lumi),
+#                      "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", met_lo, "--met_high", met_hi,
                       "--njets_low", njets_lo, "--njets_high", njets_hi,
                       "--nbm_low", nbm_lo, "--nbm_high", nbm_hi,
-                      "--do_track_veto", str(0)])
+                      "--do_track_veto", "0"])
                 call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
-                      "--out_dir", out_dir, "--lumi", str(lumi),
+#                      "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", met_lo, "--met_high", met_hi,
                       "--njets_low", njets_lo, "--njets_high", njets_hi,
                       "--nbm_low", nbm_lo, "--nbm_high", nbm_hi,
-                      "--do_track_veto", str(1)])
+                      "--do_track_veto", "1"])
