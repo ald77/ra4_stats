@@ -13,7 +13,7 @@ base_folder_name = "variations_05_10_redo/"
 resultfolder = base_folder_name+"results/"
 model = "T1tttt"
 
-infolder  = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/T1tttt/skim_abcd/"
+infolder  = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/T1tttt/skim_baseline/"
 #fullsim: "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_abcd/" 
 outfolder = base_folder_name+"wspaces/"
 runfolder = base_folder_name+"run/"
