@@ -17,7 +17,7 @@ for sig_pt in sig_pts:
     for met in met_cuts:
         for njets in njets_cuts:
             for nbm in nbm_cuts:
-                call(["JobSubmit.csh", "./run/aggregate_bins.exe",
+                call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
                       "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", str(met), "--met_high", str(-1.),
@@ -47,14 +47,14 @@ for sig_pt in sig_pts:
                 nbm_hi = str(-1.)
                 if inbm+1 < len(nbm_cuts):
                     nbm_hi = str(nbm_cuts[inbm+1])
-                call(["JobSubmit.csh", "./run/aggregate_bins.exe",
+                call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
                       "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", met_lo, "--met_high", met_hi,
                       "--njets_low", njets_lo, "--njets_high", njets_hi,
                       "--nbm_low", nbm_lo, "--nbm_high", nbm_hi,
                       "--do_track_veto", str(0)])
-                call(["JobSubmit.csh", "./run/aggregate_bins.exe",
+                call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
                       "--out_dir", out_dir, "--lumi", str(lumi),
                       "--mglu", str(mglu), "--mlsp", str(mlsp),
                       "--met_low", met_lo, "--met_high", met_hi,
