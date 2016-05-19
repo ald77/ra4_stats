@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
       {"/net/cms27/cms27r0/babymaker/2016_04_29/mc/T1tttt/skim_baseline/*SMS-T1tttt_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"*.root/tree"}
     }, "stitch&&pass", false, true};
 
-  Cut baseline(do_track_veto ? "mj14>250." : "mj14>250.&&nveto==0");
+  Cut baseline("mj14>250.");
 
   string met = "&&met>"+to_string(met_low);
   if(met_high > met_low) met += "&&met<=" + to_string(met_high);
