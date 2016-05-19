@@ -39,7 +39,8 @@ int main(int argc, char *argv[]){
 
   string mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_baseline/";
   Process ttbar{"ttbar", {
-      {mc+"*TTJets*.root/tree"}
+      {mc+"*TTJets*Lept*.root/tree"},
+        {mc+"*TTJets*HT*.root/tree"}
     }, "stitch&&pass"};
   Process other{"other", {
       {mc+"*_WJetsToLNu*.root/tree"},
