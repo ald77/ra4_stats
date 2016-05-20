@@ -15,4 +15,4 @@ if __name__ == "__main__":
     files = [f for f in os.listdir(args.input)]
     for f in files:
         full_path = os.path.join(args.input, f)
-        subprocess.call(["JobSubmit.csh","./run/scan_aggregate.py","-f",full_path,"-o",args.output])
+        subprocess.call(["JobSubmit.csh","./run/wrapper.sh","./run/scan_aggregate.py","-f",full_path,"-o",args.output])
