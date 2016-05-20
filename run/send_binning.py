@@ -23,7 +23,7 @@ for sig_pt in sig_pts:
                       "--met_low", str(met), "--met_high", str(-1.),
                       "--njets_low", str(njets), "--njets_high", str(-1.),
                       "--nbm_low", str(nbm), "--nbm_high", str(-1.),
-                      "--do_track_veto", "0"])
+                      "--do_track_veto", "1"])
 
 met_cuts = (200., 350., 500.)
 njets_cuts = (5.5, 8.5)
