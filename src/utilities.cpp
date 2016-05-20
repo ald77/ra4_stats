@@ -130,6 +130,6 @@ string MakeDir(string prefix){
   strcpy(dir_name, prefix.c_str());
   mkdtemp(dir_name);
   prefix = dir_name;
-  delete dir_name;
+  delete[] dir_name;
   return prefix;
 }
