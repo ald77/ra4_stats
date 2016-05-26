@@ -23,6 +23,13 @@ for sig_pt in sig_pts:
                       "--met_low", str(met), "--met_high", str(-1.),
                       "--njets_low", str(njets), "--njets_high", str(-1.),
                       "--nbm_low", str(nbm), "--nbm_high", str(-1.),
+                      "--do_track_veto", "0"])
+                call(["JobSubmit.csh", "./run/wrapper.sh", "./run/aggregate_bins.exe",
+#                      "--out_dir", out_dir, "--lumi", str(lumi),
+                      "--mglu", str(mglu), "--mlsp", str(mlsp),
+                      "--met_low", str(met), "--met_high", str(-1.),
+                      "--njets_low", str(njets), "--njets_high", str(-1.),
+                      "--nbm_low", str(nbm), "--nbm_high", str(-1.),
                       "--do_track_veto", "1"])
 
 met_cuts = (200., 350., 500.)

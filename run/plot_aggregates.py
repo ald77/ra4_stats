@@ -16,7 +16,7 @@ class Result(object):
         self.met = float(parts[3])
         self.njets = int(parts[4])
         self.nbm = int(parts[5])
-        self.tkveto = bool(parts[6])
+        self.tkveto = (parts[6] == "True")
         self.limit = float(parts[7])
         self.significance = float(parts[8])
 
@@ -63,20 +63,57 @@ def GetMax(graphs):
 def GetMin(graphs):
     return min(min([g.GetY()[i] for i in xrange(0, g.GetN())]) for g in graphs)
 
-def GetTitle(ex, yaxis):
-    title =  "T1tttt("+str(ex.mglu)+","+str(ex.mlsp)+"), L="+str(ex.lumi)+" fb^{-1}, "
-    if not ex.tkveto:
+def GetMaxSignif(results):
+    best_result = None
+    for met_list in results:
+        for result in met_list:
+            if best_result == None or result.significance > best_result.significance:
+                best_result = result
+    return best_result
+
+def GetMinLimit(results):
+    best_result = None
+    for met_list in results:
+        for result in met_list:
+            if best_result == None or result.limit < best_result.limit:
+                best_result = result
+    return best_result
+
+def GetColor(index):
+    if index == 0:
+        return ROOT.kRed
+    elif index == 1:
+        return ROOT.kOrange
+    elif index == 2:
+        return ROOT.kGreen
+    elif index == 3:
+        return ROOT.kCyan
+    elif index == 4:
+        return ROOT.kBlue
+    elif index == 5:
+        return ROOT.kBlack
+
+def GetTitle(results, is_signif):
+    title =  "T1tttt("+str(results[0][0].mglu)+","+str(results[0][0].mlsp)+"), L="+str(results[0][0].lumi)+" fb^{-1}, "
+    if not results[0][0].tkveto:
         title += "No "
-    title += "Tk Veto, N_{b}#geq "+str(ex.nbm)+";E_{T}^{miss} [GeV];"+yaxis
+    title += "Tk Veto, N_{b}#geq "+str(results[0][0].nbm)+": "
+
+    if is_signif:
+        title += "[signif=%(signif)0.3f]"%{"signif": GetMaxSignif(results).significance}
+    else:
+        title += "[limit=%(limit)0.3f]"%{"limit": GetMinLimit(results).limit}
+
+    title += ";E_{T}^{miss} [GeV];"+("Significance" if is_signif else "X-Sec Limit/Nominal")
     return title
 
-def Format(graphs, ex_result, yaxis):
+def Format(graphs, results, is_signif):
     the_max = GetMax(graphs)
     the_min = GetMin(graphs)
-    title = GetTitle(ex_result, yaxis)
+    title = GetTitle(results, is_signif)
 
     for i in xrange(0, len(graphs)):
-        graphs[i].SetLineColor(i+1)
+        graphs[i].SetLineColor(GetColor(i))
         graphs[i].SetLineWidth(4)
         graphs[i].SetLineStyle(1)
         graphs[i].SetMarkerSize(0)
@@ -84,17 +121,31 @@ def Format(graphs, ex_result, yaxis):
         graphs[i].SetFillStyle(0)
         graphs[i].SetFillColor(0)
         graphs[i].SetTitle(title)
+        graphs[i].GetHistogram().SetTitleSize(0.05, "xyz")
+        graphs[i].GetHistogram().SetLabelSize(0.04, "xyz")
         graphs[i].SetMinimum(the_min)
         graphs[i].SetMaximum(the_max)
 
 def GetFileName(ex):
     name = "t1tttt_"+str(ex.mglu)+"_"+str(ex.mlsp)+"_lumi_"+str(ex.lumi)+"_tkveto_"
     if ex.tkveto:
-        name += "false"
-    else:
         name += "true"
+    else:
+        name += "false"
     name += "_nbm_"+str(ex.nbm)
     return name
+
+def GetMarker(results, is_signif):
+    best_result = GetMaxSignif(results) if is_signif else GetMinLimit(results)
+    x = best_result.met
+    y = best_result.significance if is_signif else best_result.limit
+    marker = ROOT.TMarker(x,y,20)
+    marker.SetMarkerSize(3)
+    for i in xrange(0, len(results)):
+        for j in xrange(0, len(results[i])):
+            if best_result == results[i][j]:
+                marker.SetMarkerColor(GetColor(i))
+    return marker
 
 def MakePlot(results, out_dir):
     sig_graphs = list()
@@ -107,18 +158,21 @@ def MakePlot(results, out_dir):
         sig_graphs.extend([ROOT.TGraph(len(line), met, sig)])
         lim_graphs.extend([ROOT.TGraph(len(line), met, lim)])
 
-    Format(sig_graphs, results[0][0], "Significance")
-    Format(lim_graphs, results[0][0], "X-Sec Limit/Nominal")
+    Format(sig_graphs, results, True)
+    Format(lim_graphs, results, False)
                 
-    canvas = ROOT.TCanvas("", "", 640, 400)
+    canvas = ROOT.TCanvas()
     canvas.SetFillStyle(4000)
-    canvas.SetMargin(0.1, 0.2, 0.1, 0.1)
+    canvas.SetMargin(0.10, 0.20, 0.12, 0.12)
 
-    legend = ROOT.TLegend(0.8, 0.1, 1.0, 0.9)
+    legend = ROOT.TLegend(0.80, 0.12, 1.0, 0.88)
     legend.SetFillStyle(0)
     legend.SetBorderSize(0)
     for i in xrange(0, len(sig_graphs)):
         legend.AddEntry(sig_graphs[i], "N_{jets}#geq "+str(results[i][0].njets), "l")
+
+    sig_marker = GetMarker(results, True)
+    lim_marker = GetMarker(results, False)
 
     file_base = GetFileName(results[0][0])
 
@@ -127,6 +181,7 @@ def MakePlot(results, out_dir):
         g.Draw(opt)
         opt = "l same"
     legend.Draw("same")
+    sig_marker.Draw("same")
     canvas.SetLogy(False)
     canvas.Print(os.path.join(out_dir, file_base+"_significance.pdf"))
 
@@ -135,6 +190,7 @@ def MakePlot(results, out_dir):
         g.Draw(opt)
         opt = "l same"
     legend.Draw("same")
+    lim_marker.Draw("same")
     canvas.Print(os.path.join(out_dir, file_base+"_limit_lin.pdf"))
     canvas.SetLogy(True)
     canvas.Print(os.path.join(out_dir, file_base+"_limit_log.pdf"))
