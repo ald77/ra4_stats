@@ -5,7 +5,7 @@ from subprocess import call
 out_dir = "/net/cms2/cms2r0/babymaker/wspaces/agg_bins"
 lumi = 20.
 
-sig_pts = ((1400,1000), (1600, 1000), (1800, 200), (1000, 300))
+sig_pts = ((1400,1000), (1600, 1000), (1800, 200), (1000, 300), (1025, 800))
 
 met_cuts = (200., 250., 300., 350., 400., 450., 500., 550., 600.)
 njets_cuts = (5.5, 6.5, 7.5, 8.5, 9.5, 10.5)

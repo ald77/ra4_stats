@@ -108,8 +108,6 @@ def GetTitle(results, is_signif):
     return title
 
 def Format(graphs, results, is_signif):
-    the_max = GetMax(graphs)
-    the_min = GetMin(graphs)
     title = GetTitle(results, is_signif)
 
     for i in xrange(0, len(graphs)):
@@ -123,8 +121,8 @@ def Format(graphs, results, is_signif):
         graphs[i].SetTitle(title)
         graphs[i].GetHistogram().SetTitleSize(0.05, "xyz")
         graphs[i].GetHistogram().SetLabelSize(0.04, "xyz")
-        graphs[i].SetMinimum(the_min)
-        graphs[i].SetMaximum(the_max)
+        graphs[i].SetMinimum(0.)
+        graphs[i].SetMaximum(3.)
 
 def GetFileName(ex):
     name = "t1tttt_"+str(ex.mglu)+"_"+str(ex.mlsp)+"_lumi_"+str(ex.lumi)+"_tkveto_"
@@ -164,6 +162,7 @@ def MakePlot(results, out_dir):
     canvas = ROOT.TCanvas()
     canvas.SetFillStyle(4000)
     canvas.SetMargin(0.10, 0.20, 0.12, 0.12)
+    canvas.SetGrid(0,1)
 
     legend = ROOT.TLegend(0.80, 0.12, 1.0, 0.88)
     legend.SetFillStyle(0)

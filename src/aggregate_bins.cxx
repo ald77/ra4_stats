@@ -75,10 +75,10 @@ int main(int argc, char *argv[]){
   if(nbm_high > nbm_low) njets_nbm += "&&nbm<=" + to_string(nbm_high);
   string tkveto = "&&nveto==0";
 
-  Bin r1("r1", "mt<=140.&&mj14<=350."+met, true);
-  Bin r2("r2", "mt<=140.&&mj14>350."+met+njets_nbm, true);
-  Bin r3("r3", "mt>140.&&mj14<=350."+met+tkveto, true);
-  Bin r4("r4", "mt>140.&&mj14>350."+met+njets_nbm+tkveto, true);
+  Bin r1("r1", "mt<=140.&&mj14<=400."+met, true);
+  Bin r2("r2", "mt<=140.&&mj14>400."+met+njets_nbm, true);
+  Bin r3("r3", "mt>140.&&mj14<=400."+met+tkveto, true);
+  Bin r4("r4", "mt>140.&&mj14>400."+met+njets_nbm+tkveto, true);
 
   set<Block> blocks = {{"all", {{r1, r2}, {r3, r4}}}};
 
