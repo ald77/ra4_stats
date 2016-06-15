@@ -491,8 +491,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
           w_.factory(oss.str().c_str());
           oss.str("");
           oss << "expr::" << full_name
-              << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
-              << "strength_" << full_name << "," << syst.Name() << ")" << flush;
+              << "('exp(@0*@1)',strength_" << full_name << "," << syst.Name() << ")" << flush;
           w_.factory(oss.str().c_str());
         }
       }
@@ -510,8 +509,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
       w_.factory(oss.str().c_str());
       oss.str("");
       oss << "expr::" << full_name
-          << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
-          << "strength_" << full_name << "," << syst.Name() << ")" << flush;
+          << "('exp(@0*@1)',strength_" << full_name << "," << syst.Name() << ")" << flush;
       w_.factory(oss.str().c_str());
     }
   }
@@ -529,8 +527,7 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
             w_.factory(oss.str().c_str());
             oss.str("");
             oss << "expr::" << full_name
-                << "('exp(strength_" << full_name << "*" << syst.Name() << ")',"
-                << "strength_" << full_name << "," << syst.Name() << ")" << flush;
+                << "('exp(@0*@1)',strength_" << full_name << "," << syst.Name() << ")" << flush;
             w_.factory(oss.str().c_str());
           }
         }
@@ -580,9 +577,7 @@ void WorkspaceGenerator::AddBackgroundFractions(const Block &block){
     for(const auto &bin: vbin){
       for(const auto &bkg: backgrounds_){
         string var = "expr::frac_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
-          +"('ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
-          +"/ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()
-          +"',ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
+          +"('@0/@1',ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name()
           +",ymc_BLK_"+block.Name()+"_BIN_"+bin.Name()+")";
         w_.factory(var.c_str());
       }
@@ -634,8 +629,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
   w_.factory(oss.str().c_str());
   oss.str("");
   oss << "expr::rscale_BLK_" << block.Name()
-      << "('norm_BLK_" << block.Name() << "/rnorm_BLK_" << block.Name()
-      << "',norm_BLK_" << block.Name()
+      << "('@0/@1',norm_BLK_" << block.Name()
       << ",rnorm_BLK_" << block.Name() << ")" << flush;
   w_.factory(oss.str().c_str());
 }
@@ -835,11 +829,8 @@ void WorkspaceGenerator::AddMCPrediction(const Block &block){
     for(size_t icol = 0; icol < block.Bins().at(irow).size(); ++icol){
       const Bin &bin = block.Bins().at(irow).at(icol);
       ostringstream oss;
-      oss << "expr::predmc_BLK_" << block.Name() << "_BIN_" << bin.Name() << "('"
-          << "(rowmc" << (irow+1) << "_BLK_" << block.Name()
-          << "*colmc" << (icol+1) << "_BLK_" << block.Name()
-          << ")/totmc_BLK_" << block.Name()
-          << "',rowmc" << (irow+1) << "_BLK_" << block.Name()
+      oss << "expr::predmc_BLK_" << block.Name() << "_BIN_" << bin.Name() << "("
+          << "'(@0*@1)/@2',rowmc" << (irow+1) << "_BLK_" << block.Name()
           << ",colmc" << (icol+1) << "_BLK_" << block.Name()
           << ",totmc_BLK_" << block.Name() << ")" << flush;
       w_.factory(oss.str().c_str());
@@ -854,10 +845,8 @@ void WorkspaceGenerator::AddMCKappa(const Block &block){
       const Bin &bin = block.Bins().at(irow).at(icol);
       string bb_name = "BLK_"+block.Name()+"_BIN_"+bin.Name();
       ostringstream oss;
-      oss << "expr::kappamc_" << bb_name << "('"
-          << "ymc_" << bb_name
-          << "/predmc_" << bb_name
-          << "',ymc_" << bb_name
+      oss << "expr::kappamc_" << bb_name << "("
+          << "'@0/@1',ymc_" << bb_name
           << ",predmc_" << bb_name
           << ")" << flush;
       w_.factory(oss.str().c_str());
