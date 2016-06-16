@@ -126,6 +126,10 @@ private:
   void DefineParameterSet(const std::string &cat_name,
                           const std::set<std::string> &var_names);
   void AddModels();
+  void AddPoisson(const std::string &pdf_name,
+		  const std::string &n_name,
+		  const std::string &mu_name,
+		  bool allow_approx);
   void PrintComparison(std::ostream &stream, const Bin &bin,
                        const Process &process, const Block &block) const;
 };

@@ -706,7 +706,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
         string bbp_name = bb_name + "_PRC_"+bkg.Name();
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
-        Append(observables_, oss.str());
+        //Append(observables_, oss.str());
         oss << "[" << gp.NEffective() << "]" << flush;
         w_.factory(oss.str().c_str());
         oss.str("");
@@ -739,10 +739,7 @@ void WorkspaceGenerator::AddMCPdfs(const Block &block){
       Append(all_prcs, signal_);
       for(const auto &bkg: all_prcs){
         string bbp_name = "BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name();
-        w_.factory(("RooPoisson::pdf_mc_"+bbp_name
-                    +"(nobsmc_"+bbp_name
-                    +",nmc_"+bbp_name+")").c_str());
-        (static_cast<RooPoisson*>(w_.pdf(("pdf_mc_"+bbp_name).c_str())))->setNoRounding();
+	AddPoisson("pdf_mc_"+bbp_name, "nobsmc_"+bbp_name, "nmc_"+bbp_name, true);
         if(first) first = false;
         else factory_string += ",";
         factory_string += "pdf_mc_"+bbp_name;
@@ -927,10 +924,8 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       if(use_r4_ || !Contains(bb_name, "4")){
         null_list += null_name;
         alt_list += alt_name;
-        w_.factory(("RooPoisson::pdf_null"+bb_name+"(nobs"+bb_name+",nbkg"+bb_name+")").c_str());
-        (static_cast<RooPoisson*>(w_.pdf(null_name.c_str())))->setNoRounding();
-        w_.factory(("RooPoisson::pdf_alt"+bb_name+"(nobs"+bb_name+",nexp"+bb_name+")").c_str());
-        (static_cast<RooPoisson*>(w_.pdf(alt_name.c_str())))->setNoRounding();
+	AddPoisson("pdf_null"+bb_name, "nobs"+bb_name, "nbkg"+bb_name, false);
+	AddPoisson("pdf_alt"+bb_name, "nobs"+bb_name, "nexp"+bb_name, false);
         is_first = false;
       }
     }
@@ -1011,6 +1006,24 @@ void WorkspaceGenerator::AddModels(){
 
   w_.import(model_config);
   w_.import(model_config_bonly);
+}
+
+void WorkspaceGenerator::AddPoisson(const string &pdf_name,
+				    const string &n_name,
+				    const string &mu_name,
+				    bool allow_approx){
+  RooAbsReal *v_mu = w_.var(mu_name.c_str());
+  if(!v_mu) v_mu = w_.function(mu_name.c_str());
+  if(!v_mu) v_mu = w_.var(n_name.c_str());
+  if(!v_mu) v_mu = w_.function(n_name.c_str());
+  double mu = v_mu->getVal();
+  if(mu <= 50. || !allow_approx){
+    w_.factory(("RooPoisson::"+pdf_name+"("+n_name+","+mu_name+")").c_str());
+    (static_cast<RooPoisson*>(w_.pdf(pdf_name.c_str())))->setNoRounding();
+  }else{
+    w_.factory(("expr::sqrt_"+mu_name+"('sqrt(@0)',"+mu_name+")").c_str());
+    w_.factory(("RooGaussian::"+pdf_name+"("+n_name+","+mu_name+",sqrt_"+mu_name+")").c_str());
+  }
 }
 
 ostream & operator<<(ostream& stream, const WorkspaceGenerator &wg){
