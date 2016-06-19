@@ -229,12 +229,14 @@ void PrintTable(RooWorkspace &w,
   for(const auto &bin_name: bin_names){
     if(Contains(bin_name, "r1")) {
       out << "\\hline\\hline"<<endl;
-      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 400$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>400$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 350$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "midmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$350<\\text{MET}\\leq 500$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "higmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>500$} \\\\ \\hline"<<endl;
     }
     string bin_tex(TexFriendly(bin_name));
     ReplaceAll(bin_tex, "lowmet\\_","");
-    ReplaceAll(bin_tex, "highmet\\_","");
+    ReplaceAll(bin_tex, "midmet\\_","");
+    ReplaceAll(bin_tex, "higmet\\_","");
     ReplaceAll(bin_tex, "lownj\\_","$n_j\\leq8$, ");
     ReplaceAll(bin_tex, "highnj\\_","$n_j\\geq9$, ");
     ReplaceAll(bin_tex, "allnb","all $n_j,n_b$");
