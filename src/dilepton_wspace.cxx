@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
 			  {foldermc+"/*ttHJetTobb*.root/tree"}
     },stitch_cuts};
   Process signal_nc{"signal", {
-      {foldermc+"/*T1tttt*1500*100*.root/tree"}
+      {foldermc+"/*T1tttt*1500*-100_*.root/tree"}
     }, Cut(), false, true};
   Process signal_c{"signal", {
       {foldermc+"/*T1tttt*1200*800*.root/tree"}
@@ -96,8 +96,8 @@ int main(int argc, char *argv[]){
   // Cuts regions
   string c_r1="mt<=140 && mj14>250&&mj14<=400";
   string c_r2="mt<=140 && mj14>400";
-  string c_r3="mt> 140 && mj14>250&&mj14<=400";
-  string c_r4="mt> 140 && mj14>400";
+  string c_r3="mj14>250&&mj14<=400"; // mt>140 cut only applied to nveto==1
+  string c_r4="mj14>400"; // mt>140 cut only applied to nveto==1
 
   // Cuts MET
   string c_lowmet="&&met>200&&met<=350";
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
   // Cuts leptons, veto, nbm
   string c_1l="&&nleps==1&&nveto==0&&nbm>=1";
   string c_2l="nleps==2&&nbm<=2";
-  string c_veto="nleps==1&&nveto==1&&nbm>=1&&nbm<=2";
+  string c_veto="nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140";
 
   // Cuts combination 2l + veto
   string c_2lvetoallnj="&&(("+c_2l+c_allnj2l+")||("+c_veto+c_allnj+"))";

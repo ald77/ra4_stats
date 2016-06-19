@@ -456,20 +456,11 @@ double GetTotPredErr(RooWorkspace &w,
 
 double GetObserved(const RooWorkspace &w,
                    const string &bin_name){
-  ostringstream oss;
-  oss << "data_obs";
-  if(toy_num >= 0) oss << "_" << toy_num;
-  oss << flush;
-  RooAbsData *data = w.data(oss.str().c_str());
-  if(data == nullptr) ERROR("Could not find dataset "+oss.str());
-  const RooArgSet *args = data->get();
-  if(args == nullptr) ERROR("Could not extract args");
-  TIter iter(args->createIterator());
-  int size = args->getSize();
   RooAbsArg *arg = nullptr;
-  int i = 0;
-  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
-    ++i;
+  const RooArgSet &vars = w.allVars();
+  TIterator *iter_ptr = vars.createIterator();
+  while(iter_ptr != nullptr && *(*iter_ptr) != nullptr){
+    arg = static_cast<RooAbsArg*>((*iter_ptr)());
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nobs_BLK_") continue;
@@ -477,7 +468,6 @@ double GetObserved(const RooWorkspace &w,
     if(Contains(name, "_PRC_")) continue;
     return static_cast<RooRealVar*>(arg)->getVal();
   }
-  iter.Reset();
   return -1.;
 }
 
