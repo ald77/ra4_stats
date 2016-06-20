@@ -32,7 +32,7 @@ namespace{
   bool no_kappa = false;
   bool do_syst = false;
   bool use_r4 = false;
-  string method("m2lveto");
+  TString method("m2lveto");
   string minjets("6");
   string hijets("9");
   string himet("400");
@@ -51,11 +51,17 @@ int main(int argc, char *argv[]){
   string midjets2l(""); midjets2l += to_string(atoi(midjets.c_str())-1);
 
   string hostname = execute("echo $HOSTNAME");
-  string basefolder("/net/cms2/cms2r0/babymaker/");
-  if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
-  string foldermc(basefolder+"babies/2016_06_14/mc/merged_standard/");
-  string folderdata(basefolder+"babies/2016_06_14/data/skim_standard/");
+  string bfolder("/net/cms2/cms2r0/babymaker/");
+  if(Contains(hostname, "lxplus")) bfolder = "/afs/cern.ch/user/m/manuelf/work/";
+  TString foldermc(bfolder+"babies/2016_06_14/mc/merged_standard/");
+  TString folderdata(bfolder+"babies/2016_06_14/data/skim_standard/");
+  if(method.Contains("met150")){
+    foldermc = bfolder+"babies/2016_06_14/mc/merged_1lht500met150nj5/";
+    folderdata = bfolder+"babies/2016_06_14/data/merged_1lht500met150nj5/";
+  }
 
+  cout<<"folderdata is "<<folderdata<<endl;
+  cout<<"foldermc is "<<foldermc<<endl;
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch");
   Process ttbar{"ttbar", {
@@ -73,7 +79,12 @@ int main(int argc, char *argv[]){
                     {foldermc+"/*_TTGJets*.root/tree"},
 		      {foldermc+"/*_TTTT*.root/tree"},
 			{foldermc+"/*_WZ*.root/tree"},
-			  {foldermc+"/*ttHJetTobb*.root/tree"}
+			  {foldermc+"/*_ZZ*.root/tree"},
+			   {foldermc+"/*_ZJet*.root/tree"},
+			     {foldermc+"/*_WH_HToBB*.root/tree"},
+			       {foldermc+"/*_ZH_HToBB*.root/tree"},
+			       //	 {foldermc+"/*ggZH_HToBB*.root/tree"},
+				 {foldermc+"/*ttHJetTobb*.root/tree"}
     },stitch_cuts};
   Process signal_nc{"signal", {
       {foldermc+"/*T1tttt*1500*-100_*.root/tree"}
@@ -91,7 +102,7 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline2l{"pass&&ht>500&&met>200&&met<=500"};
+  Cut baseline2l{"pass&&ht>500&&met>150&&met<=500"};
 
   // Cuts regions
   string c_r1="mt<=140 && mj14>250&&mj14<=400";
@@ -102,7 +113,10 @@ int main(int argc, char *argv[]){
   // Cuts MET
   string c_lowmet="&&met>200&&met<=350";
   string c_midmet="&&met>350&&met<=500";
-
+  if (method.Contains("met150")){
+      c_lowmet="&&met>150&&met<=200"; 
+    }
+  cout<<"c_lowmet is "<<c_lowmet<<endl;
   // Cuts njets
   string c_allnj="&&njets>="+minjets;
   string c_lownj="&&njets>="+minjets+"&&njets<="+midjets;
@@ -124,20 +138,23 @@ int main(int argc, char *argv[]){
 
   // Methods m2l, mveto, m2lveto
   string c_2ltotallnj = c_2l+c_allnj2l, c_2ltotlownj = c_2l+c_lownj2l, c_2ltothignj = c_2l+c_hignj2l;
-  if(method=="mveto") {
+  if(method.Contains("mveto")) {
     c_2ltotallnj = c_veto+c_allnj;
     c_2ltotlownj = c_veto+c_lownj;
     c_2ltothignj = c_veto+c_hignj;
   }
-  if(method=="m2lveto") {
+  if(method.Contains("m2lveto")) {
     c_2ltotallnj = c_2lvetoallnj;
     c_2ltotlownj = c_2lvetolownj;
     c_2ltothignj = c_2lvetohignj;
   }
 
-  // cout<< c_r3 + c_2ltotallnj + c_lowmet<<endl;
-  // cout<< c_r4 + c_2ltotlownj + c_lowmet<<endl;
-  // cout<< c_r4 + c_2ltothignj + c_lowmet<<endl;
+  cout<<c_r1 + c_1l + c_lowmet + c_allnj<<endl;
+  cout<<c_r2 + c_1l + c_lowmet + c_lownj<<endl;
+  cout<<c_r2 + c_1l + c_lowmet + c_hignj<<endl;
+  cout<< c_r3 + c_2ltotallnj + c_lowmet<<endl;
+  cout<< c_r4 + c_2ltotlownj + c_lowmet<<endl;
+  cout<< c_r4 + c_2ltothignj + c_lowmet<<endl;
 
 
   //////////////////////////////// Dilepton+veto blocks ////////////////////////////////
@@ -174,6 +191,13 @@ int main(int argc, char *argv[]){
     {"midmet", {{r1_midmet_allnj, r2_midmet_lownj, r2_midmet_hignj},
           {d3_midmet_allnj, d4_midmet_lownj, d4_midmet_hignj}}}
   };
+
+  if(method.Contains("met150")){
+    blocks_2l = {
+    {"lowmet", {{r1_lowmet_allnj, r2_lowmet_lownj, r2_lowmet_hignj},
+          {d3_lowmet_allnj, d4_lowmet_lownj, d4_lowmet_hignj}}}
+    };
+  }
 
   Cut *pbaseline(&baseline2l);
   set<Block> *pblocks(&blocks_2l);
