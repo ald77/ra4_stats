@@ -28,11 +28,11 @@ using namespace std;
 namespace{
   double lumi = 0.815;
   double sig_strength = 0.;
-  BlindLevel blind_level = BlindLevel::blinded;
+  BlindLevel blind_level = BlindLevel::unblinded;
   bool no_kappa = false;
-  bool do_syst = true;
+  bool do_syst = false;
   bool use_r4 = false;
-  string method("m2l");
+  string method("m2lveto");
   string minjets("6");
   string hijets("9");
   string himet("400");
@@ -125,9 +125,9 @@ int main(int argc, char *argv[]){
   // Methods m2l, mveto, m2lveto
   string c_2ltotallnj = c_2l+c_allnj2l, c_2ltotlownj = c_2l+c_lownj2l, c_2ltothignj = c_2l+c_hignj2l;
   if(method=="mveto") {
-    c_2ltotallnj = c_veto+c_allnj2l;
-    c_2ltotlownj = c_veto+c_lownj2l;
-    c_2ltothignj = c_veto+c_hignj2l;
+    c_2ltotallnj = c_veto+c_allnj;
+    c_2ltotlownj = c_veto+c_lownj;
+    c_2ltothignj = c_veto+c_hignj;
   }
   if(method=="m2lveto") {
     c_2ltotallnj = c_2lvetoallnj;
@@ -234,7 +234,7 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"lumi", required_argument, 0, 'l'},
       {"unblind", required_argument, 0, 'u'},
-      {"no_syst", no_argument, 0, 0},
+      {"do_syst", no_argument, 0, 0},
       {"lowj", required_argument, 0, 'j'},
       {"hij", required_argument, 0, 'h'},
       {"himet", required_argument, 0, 'm'},
@@ -298,8 +298,8 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(optname == "no_syst"){
-        do_syst = false;
+      if(optname == "do_syst"){
+        do_syst = true;
       }else if(optname == "toys"){
         n_toys = atoi(optarg);
       }else{
