@@ -69,16 +69,8 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     }
     ostringstream oss;
     oss << local_lumi_ << flush;
-    Cut lumi_weight;
-    
-    //WARNING: Njets reweighting applied for all BG MC if lumi is more than 3 ifb
-    
-    if(local_lumi_ > 3){ lumi_weight = process.IsData() ? Cut() : 
-	(Contains(process.Name(), "sig")?Cut(oss.str()+"*weight"):Cut(oss.str()+"*weight*((mgluino>0)+(mgluino<0)*((njets<=4)*1.0+(njets==5)*0.867+(njets==6)*0.919+(njets==7)*0.734+(njets==8)*0.648+(njets==9)*0.607+(njets>=10)*0.642))"));}
-
-    else{ lumi_weight = process.IsData() ? Cut() : 
-	(Contains(process.Name(), "sig")?Cut(oss.str()+"*weight"):Cut(oss.str()+"*weight"));}
-
+    Cut lumi_weight = process.IsData() ? Cut() : 
+      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight"):Cut(oss.str()+"*weight"));
 
     array<Cut, 5> cuts;
     cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());

@@ -9,11 +9,11 @@ import string
 import time
 
 # Setting folders
-model = "T6ttWW"
-ntu_date = "2016_02_09"
+model = "T1tttt"
+ntu_date = "2016_08_10"
 
-infolder  = "/net/cms2/cms2r0/babymaker/babies/"+ntu_date+"/mc/"+model+"/skim_abcd/"
-outfolder = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/" 
+infolder  = "/net/cms29/cms29r0/babymaker/babies/"+ntu_date+"/"+model+"/merged_mcbase_standard/"
+outfolder = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/"
 runfolder = outfolder+"run/" 
 if not os.path.exists(runfolder):
   os.system("mkdir -p "+runfolder)
@@ -22,7 +22,7 @@ if not os.path.exists(runfolder):
 inputfiles = [i for i in os.listdir(infolder) if "SMS" in i]
 
 os.system("JobSetup.csh")
-njobs = 20
+njobs = 50
 files_job = (len(inputfiles)+njobs-1)/njobs
 ifile = 0
 ijob = 0

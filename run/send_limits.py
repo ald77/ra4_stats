@@ -9,19 +9,21 @@ import string
 import time
 
 # Setting folders
-model = "T6ttWW"
-ntu_date = "2016_02_09"
+model = "T1tttt"
+ntu_date = "2016_08_10"
 
 infolder  = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/" 
 runfolder = "batch_"+model+"/" 
 if not os.path.exists(runfolder):
   os.system("mkdir -p "+runfolder)
 
+cwd = os.getcwd()
+
 #input datasets
 inputfiles = [i for i in os.listdir(infolder) if "xsecNom" in i]
 
 os.system("JobSetup.csh")
-njobs = 30
+njobs = 50
 files_job = (len(inputfiles)+njobs-1)/njobs
 ifile = 0
 ijob = 0
@@ -37,7 +39,7 @@ for file in inputfiles:
     fexe.write(". /cvmfs/cms.cern.ch/cmsset_default.sh \n")
     fexe.write("cd ~/cmssw/CMSSW_7_4_14/src/ \n")
     fexe.write("eval `scramv1 runtime -sh` \n")
-    fexe.write("cd ~/ra4_stats ; \n\n")
+    fexe.write("cd "+cwd+" ; \n\n")
   fexe.write("./run/scan_point.exe -f "+infolder+'/'+file+' >> txt/limits_'+model+'_'+str(ijob)+'.txt\n')
   if ifile % files_job == 0 or ifile == len(inputfiles): 
     fexe.close()
