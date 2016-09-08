@@ -300,7 +300,7 @@ int main(int argc, char *argv[]){
   set<Block> *pblocks(&blocks_1bk);
   string model = "T1tttt";
   
-  string sysfolder = "/net/cms2/cms2r0/jaehyeokyoo/sys/2016_08_10/T1tttt/";
+  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_08_10/T1tttt/";
   //Protect default
   if(binning=="nominal" && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
   
@@ -340,10 +340,10 @@ int main(int argc, char *argv[]){
   if(model=="T1tttt" || model=="T5tttt") xsec::signalCrossSection(mglu, xsec, xsec_unc);
   else xsec::stopCrossSection(mglu, xsec, xsec_unc);
   double rmax = 20.;
-  if(mglu <= 1100 && mlsp <= 450){
+  if(mglu <= 1100 && mlsp <= 600){
     rmax = 5.;
-    if(mglu <= 725 && mlsp <= 375){
-      rmax = 1.5;
+    if(mglu <= 1100 && mlsp <= 375){
+      rmax = 1.25;
     }
   }
   

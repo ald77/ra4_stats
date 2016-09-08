@@ -12,7 +12,7 @@ import time
 model = "T1tttt"
 ntu_date = "2016_08_10"
 
-infolder  = "/net/cms29/cms29r0/babymaker/babies/"+ntu_date+"/"+model+"/merged_mcbase_standard/"
+infolder  = "/net/cms29/cms29r0/babymaker/babies/"+ntu_date+"/"+model+"/skim_abcd/"
 outfolder = "/net/cms2/cms2r0/babymaker/wspaces/"+ntu_date+"/"+model+"/"
 runfolder = outfolder+"run/" 
 if not os.path.exists(runfolder):
