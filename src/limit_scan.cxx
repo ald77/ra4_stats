@@ -19,6 +19,7 @@
 
 #include "utilities.hpp"
 #include "styles.hpp"
+#include "cross_sections.hpp"
 
 using namespace std;
 
@@ -26,6 +27,8 @@ namespace{
   string filename = "txt/t1tttt_limit_scan.txt";
   string model = "T1tttt";
 }
+void reverseGraph(TGraph &graph);
+void fixGraph(TGraph &graph);
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
@@ -42,9 +45,16 @@ int main(int argc, char *argv[]){
     istringstream iss(line);
     double pmx, pmy, pxsec, pobs, pobsup, pobsdown, pexp, pup, pdown, sigobs, sigexp;
     iss >> pmx >> pmy >> pxsec >> pobs >> pobsup >> pobsdown >> pexp >> pup >> pdown >> sigobs >> sigexp;
+    int mglu(pmx);
+    float xsec, exsec;
+    xsec::signalCrossSection(mglu, xsec, exsec);
+    // int factor(50), mlsp(pmy);
+    // if((mglu%factor!=0 || mlsp%factor!=0) && mglu-mlsp!=225 && mlsp!=1450) continue;
+    // if(mglu-mlsp==225 && mglu%factor!=0) continue;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
-    vxsec.push_back(pxsec);
+    if(Contains(model, "T1") || Contains(model, "T5")) vxsec.push_back(xsec);
+    else vxsec.push_back(pxsec);
     vobs.push_back(pobs);
     vobsup.push_back(pobsup);
     vobsdown.push_back(pobsdown);
@@ -123,6 +133,7 @@ int main(int argc, char *argv[]){
   c.SetLogz();
   //hlim->Draw("colz");
   glim.Draw("colz");
+  //  glim.Draw("triw same");
   TLegend l(gStyle->GetPadLeftMargin(), 1.-gStyle->GetPadTopMargin(),
             1.-gStyle->GetPadRightMargin(), 1.);
   l.SetNColumns(2); l.SetTextSize(0.05);
@@ -189,10 +200,41 @@ void Style(TGraph *g, int color, int style){
 
 TGraph DrawContours(TGraph2D &g2, int color, int style,
                     TLegend *leg, const string &name){
-  TGraph out;
-  g2.GetHistogram();
-  TList *l = g2.GetContourList(1.);
-  if(l == nullptr) return out;
+  TGraph graph;
+  
+  TList *l;
+  bool do_smooth = true;
+  //// Finding the TH2D, smoothing it, and creating a TGraph2D to get a new Delauny interpolation
+  if(do_smooth){
+    g2.SetNpx(100);
+    g2.SetNpy(100);
+    TH2D *histo2d = g2.GetHistogram();
+    TH2D *hclone = static_cast<TH2D*>(histo2d->Clone("clone"));
+    histo2d->Smooth(1,"k5b");
+    histo2d->Smooth(1,"k5b");
+    histo2d->Smooth(1,"k5b");
+    histo2d->Smooth(1,"k5b");
+    vector<double> vx, vy, vz;
+    double glu_lsp = 225;
+    for(int binx=1; binx<=histo2d->GetNbinsX(); binx++){
+      for(int biny=1; biny<=histo2d->GetNbinsY(); biny++){
+	double x = histo2d->GetXaxis()->GetBinCenter(binx);
+	double y = histo2d->GetYaxis()->GetBinCenter(biny);
+	double z = histo2d->GetBinContent(histo2d->GetBin(binx,biny));
+	vx.push_back(x);
+	vy.push_back(y);
+	if(x-y>glu_lsp+60) vz.push_back(z);
+	else vz.push_back(hclone->GetBinContent(hclone->GetBin(binx,biny)));
+      }
+    }
+    TGraph2D gsmooth("glim", "Cross-Section Limit", vx.size(), &vx.at(0), &vy.at(0), &vz.at(0));
+    gsmooth.GetHistogram();
+    l = gsmooth.GetContourList(1.);
+  } else {
+    g2.GetHistogram();
+    l = g2.GetContourList(1.);
+  }
+  if(l == nullptr) return graph;
   bool added = false;
   int max_points = -1;
   for(int i = 0; i < l->GetSize(); ++i){
@@ -200,7 +242,8 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
     if(g == nullptr) continue;
     int n_points = g->GetN();
     if(n_points > max_points){
-      out = *g;
+      if(do_smooth) fixGraph(*g);
+      graph = *g;
       max_points = n_points;
     }
     Style(g, color, style);
@@ -210,9 +253,63 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
       added = true;
     }
   }
-  return out;
+
+
+  return graph;
 }
-  
+
+void fixGraph(TGraph &graph){
+  double glu_lsp = 225;
+  int np(graph.GetN());
+  double mglu, iniglu, endglu, mlsp, inilsp, endlsp;
+  //cout<<endl<<endl;
+  for(int point(0); point < np; point++){
+    graph.GetPoint(point, mglu, mlsp);
+    //cout<<mglu<<", "<<mlsp<<endl;
+  }
+  graph.GetPoint(0, iniglu, inilsp);
+  graph.GetPoint(np-1, endglu, endlsp);
+  // Reversing graph if printed towards decreasing mgluino
+  if(inilsp < endlsp) {
+    reverseGraph(graph);
+    endglu = iniglu;
+    endlsp = inilsp;
+  }
+  // Adding a point so that it goes down to mLSP = 0, but not for WZ,SOS
+  //cout<<"endlsp "<<endlsp<<", endglu "<<endglu<<endl;
+  if(endlsp<30){
+    graph.SetPoint(graph.GetN(), endglu, 0);
+    np++;
+  }
+
+  reverseGraph(graph);
+  // Adding a point at mLSP = 0, and removing points beyond the diagonal
+  for(int point(0); point < np; point++){
+    graph.GetPoint(point, mglu, mlsp);
+    if(mlsp > mglu-glu_lsp-5){
+      //cout<<"point "<<point<<", np "<<np<<endl;
+      while(point <= graph.GetN() && point!=0) {
+	graph.RemovePoint(graph.GetN()-1);
+	np--;
+      }
+      break;
+    }
+  }
+}
+void reverseGraph(TGraph &graph){
+  int np(graph.GetN());
+  double mglu, mlsp;
+  vector<double> mglus, mlsps;
+  for(int point(np-1); point >= 0; point--){
+    graph.GetPoint(point, mglu, mlsp);
+    mglus.push_back(mglu);
+    mlsps.push_back(mlsp);
+  }
+  for(int point(0); point < np; point++)
+    graph.SetPoint(point, mglus[point], mlsps[point]);
+}
+
+ 
 void SetupColors(){
   const unsigned num = 5;
   const int bands = 255;
