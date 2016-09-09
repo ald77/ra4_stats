@@ -24,6 +24,7 @@
 using namespace std;
 
 namespace{
+  int Nsmooth = 4; // Number of times to smooth TH2D
   string filename = "txt/t1tttt_limit_scan.txt";
   string model = "T1tttt";
 }
@@ -150,6 +151,7 @@ int main(int argc, char *argv[]){
   dots.Draw("p same");
 
   TString filebase = model+"_limit_scan";
+  if(Nsmooth>0) {filebase += "_smooth"; filebase += Nsmooth;}
   c.Print(filebase+".pdf");
 
   c.SetLogz(false);
@@ -203,17 +205,13 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
   TGraph graph;
   
   TList *l;
-  bool do_smooth = true;
   //// Finding the TH2D, smoothing it, and creating a TGraph2D to get a new Delauny interpolation
-  if(do_smooth){
+  if(Nsmooth>0){
     g2.SetNpx(100);
     g2.SetNpy(100);
     TH2D *histo2d = g2.GetHistogram();
     TH2D *hclone = static_cast<TH2D*>(histo2d->Clone("clone"));
-    histo2d->Smooth(1,"k5b");
-    histo2d->Smooth(1,"k5b");
-    histo2d->Smooth(1,"k5b");
-    histo2d->Smooth(1,"k5b");
+    for(int ind=0; ind<Nsmooth; ind++) histo2d->Smooth(1,"k5b");
     vector<double> vx, vy, vz;
     double glu_lsp = 225;
     for(int binx=1; binx<=histo2d->GetNbinsX(); binx++){
@@ -223,11 +221,11 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
 	double z = histo2d->GetBinContent(histo2d->GetBin(binx,biny));
 	vx.push_back(x);
 	vy.push_back(y);
-	if(x-y>glu_lsp+60) vz.push_back(z);
+	if(x-y>glu_lsp+30) vz.push_back(z);
 	else vz.push_back(hclone->GetBinContent(hclone->GetBin(binx,biny)));
       }
     }
-    TGraph2D gsmooth("glim", "Cross-Section Limit", vx.size(), &vx.at(0), &vy.at(0), &vz.at(0));
+    TGraph2D gsmooth("gsmooth", "Cross-Section Limit", vx.size(), &vx.at(0), &vy.at(0), &vz.at(0));
     gsmooth.GetHistogram();
     l = gsmooth.GetContourList(1.);
   } else {
@@ -242,7 +240,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
     if(g == nullptr) continue;
     int n_points = g->GetN();
     if(n_points > max_points){
-      if(do_smooth) fixGraph(*g);
+      if(Nsmooth>0) fixGraph(*g);
       graph = *g;
       max_points = n_points;
     }
@@ -334,6 +332,7 @@ void SetupColors(){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
+      {"Nsmooth", required_argument, 0, 's'},
       {"model", required_argument, 0, 'm'},
       {"file", required_argument, 0, 'f'},
       {0, 0, 0, 0}
@@ -341,11 +340,14 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:m:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:m:s:", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
+    case 's':
+      Nsmooth = atoi(optarg);
+      break;
     case 'm':
       model = optarg;
       break;
