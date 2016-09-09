@@ -30,6 +30,9 @@ public:
   bool operator<(const Cut &cut) const;
   bool operator==(const Cut &cut) const;
 
+  std::string GetCut();
+  void SetCut(std::string &cut);
+    
 private:
   std::string cut_;
 

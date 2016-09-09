@@ -89,6 +89,18 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
         cout << "Trying cut " << this_cut << endl;
       }
       GammaParams temp_gps = process.GetYield(this_cut);
+      //// Averaging signal yields cutting on met and met_tru, as prescripted by SUSY group
+      //// https://twiki.cern.ch/twiki/bin/viewauth/CMS/SUSRecommendationsICHEP16#Special_treatment_of_MET_uncerta
+      if(Contains(process.Name(), "sig")){
+	string mettru_s = this_cut.GetCut(); 
+	ReplaceAll(mettru_s, "met", "met_tru");
+	Cut mettru_cut(mettru_s); 
+	GammaParams mettru_gps = process.GetYield(mettru_cut);
+	if(verbose_) cout<<"Yields: met "<<temp_gps.Yield()<<", met_tru "<<mettru_gps.Yield();
+	temp_gps += mettru_gps;
+	temp_gps *= 0.5;
+	if(verbose_) cout<<", average "<<temp_gps.Yield()<<" for bin "<<bin.Name()<<endl;
+      } // If it is signal
       if(icut == 0) gps = temp_gps;
       else gps.SetNEffectiveAndWeight(0., temp_gps.Weight());
     }

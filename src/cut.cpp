@@ -19,6 +19,15 @@ Cut & Cut::Replace(const Cut &orig, const Cut &rep){
   return *this;
 }
 
+string Cut::GetCut(){
+  return cut_;
+}
+
+void Cut::SetCut(string &cut){
+  cut_ = cut;
+  Clean();
+}
+
 Cut & Cut::RmCutOn(const Cut &to_rm, const Cut &rep){
   ::RmCutOn(cut_, to_rm.cut_, rep.cut_);
   return *this;
