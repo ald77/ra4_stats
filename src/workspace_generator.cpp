@@ -1020,6 +1020,7 @@ void WorkspaceGenerator::AddPoisson(const string &pdf_name,
   if(mu <= 50. || !allow_approx){
     w_.factory(("RooPoisson::"+pdf_name+"("+n_name+","+mu_name+")").c_str());
     (static_cast<RooPoisson*>(w_.pdf(pdf_name.c_str())))->setNoRounding();
+    (static_cast<RooPoisson*>(w_.pdf(pdf_name.c_str())))->protectNegativeMean();
   }else{
     w_.factory(("expr::sqrt_"+mu_name+"('sqrt(@0)',"+mu_name+")").c_str());
     w_.factory(("RooGaussian::"+pdf_name+"("+n_name+","+mu_name+",sqrt_"+mu_name+")").c_str());
