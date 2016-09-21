@@ -17,6 +17,7 @@
 class Process{
   typedef std::set<Systematic> SystCollection;
 public:
+  Process() = default;
   Process(const std::string &name,
           const std::set<std::string> &file_names,
           const Cut &cut = ::Cut(),

@@ -35,6 +35,8 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   backgrounds_(backgrounds),
   signal_(signal),
   data_(data),
+  injection_(),
+  inject_other_signal_(false),
   blocks_(blocks),
   obs_vals_(),
   obs_gens_(),
@@ -177,6 +179,29 @@ size_t WorkspaceGenerator::AddToys(size_t num_toys){
   ResetToys(obs);
   num_toys_ += num_toys;
   return num_toys_;
+}
+
+const Process & WorkspaceGenerator::GetInjectionModel() const{
+  if(inject_other_signal_){
+    return injection_;
+  }else{
+    return signal_;
+  }
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetInjectionModel(const Process &injection){
+  inject_other_signal_ = true;
+  injection_ = injection;
+  return *this;
+}
+
+bool WorkspaceGenerator::GetDefaultInjectionModel() const{
+  return inject_other_signal_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::SetDefaultInjectionModel(){
+  inject_other_signal_ = false;
+  return *this;
 }
 
 void WorkspaceGenerator::SetupToys(const RooArgSet &obs){
@@ -554,7 +579,11 @@ void WorkspaceGenerator::AddData(const Block &block){
           gps += GetYield(bin, bkg);
         }
         // Injecting signal
-        gps += sig_strength_*GetYield(bin, signal_);
+	if(inject_other_signal_){
+	  gps += sig_strength_*GetYield(bin, injection_);
+	}else{
+	  gps += sig_strength_*GetYield(bin, signal_);
+	}
       }else{
         gps = GetYield(bin, data_);
       }

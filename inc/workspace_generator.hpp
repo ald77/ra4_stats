@@ -61,12 +61,19 @@ public:
 
   size_t AddToys(size_t num_toys = 0);
 
+  const Process & GetInjectionModel() const;
+  WorkspaceGenerator & SetInjectionModel(const Process &injection);
+  bool GetDefaultInjectionModel() const;
+  WorkspaceGenerator & SetDefaultInjectionModel();
+
   friend std::ostream & operator<<(std::ostream& stream, const WorkspaceGenerator &wg);
 
 private:
   Cut baseline_;
   std::set<Process> backgrounds_;
   Process signal_, data_;
+  Process injection_;
+  bool inject_other_signal_;
   std::set<Block> blocks_;
   std::map<std::string, double> obs_vals_;
   std::map<std::string, std::poisson_distribution<> > obs_gens_;

@@ -47,6 +47,8 @@ namespace{
   string mjthresh("400");
   unsigned n_toys = 0;
   string sigfile = "";
+  string injfile = "";
+  bool inject_other_model = false;
   bool dummy_syst = false;
   string dummy_syst_file = "";
   string outfolder = "out/";
@@ -91,6 +93,9 @@ int main(int argc, char *argv[]){
     },stitch_cuts};
   Process signal{"signal", {
       {sigfile+"/tree"}
+    },"1", false, true};
+  Process injection{"injection", {
+      {injfile+"/tree"}
     },"1", false, true};
 
   string data_cuts("trig_ra4&&pass&&json12p9");
@@ -354,30 +359,37 @@ int main(int argc, char *argv[]){
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
   wgNom.SetRMax(rmax);
   wgNom.SetKappaCorrected(!no_kappa);
-  wgNom.SetDoSystematics(do_syst);
   wgNom.SetLuminosity(lumi);
   wgNom.SetDoSystematics(do_syst);
   wgNom.AddToys(n_toys);
+  if(inject_other_model){
+    wgNom.SetInjectionModel(injection);
+  }
   wgNom.WriteToFile(outname);
+
   
   ReplaceAll(outname, "Nom", "Up");
   WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
   wgUp.SetRMax(rmax);
   wgUp.SetKappaCorrected(!no_kappa);
-  wgUp.SetDoSystematics(do_syst);
   wgUp.SetLuminosity(lumi);
   wgUp.SetDoSystematics(do_syst);
   wgUp.AddToys(n_toys);
+  if(inject_other_model){
+    wgUp.SetInjectionModel(injection);
+  }
   wgUp.WriteToFile(outname);
 
   ReplaceAll(outname, "Up", "Down");
   WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
   wgDown.SetRMax(rmax);
   wgDown.SetKappaCorrected(!no_kappa);
-  wgDown.SetDoSystematics(do_syst);
   wgDown.SetLuminosity(lumi);
   wgDown.SetDoSystematics(do_syst);
   wgDown.AddToys(n_toys);
+  if(inject_other_model){
+    wgDown.SetInjectionModel(injection);
+  }
   wgDown.WriteToFile(outname);
 
   time(&endtime); 
@@ -407,6 +419,7 @@ void GetOptions(int argc, char *argv[]){
       {"sig_strength", required_argument, 0, 'g'},
       {"dummy_syst", required_argument, 0, 0},
       {"outfolder", required_argument, 0, 'o'},
+      {"inject", required_argument, 0, 'i'},
       {0, 0, 0, 0}
     };
 
@@ -470,6 +483,10 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'd':
       mjdef = optarg;
+      break;
+    case 'i':
+      injfile = optarg;
+      inject_other_model = true;
       break;
     case 0:
       optname = long_options[option_index].name;

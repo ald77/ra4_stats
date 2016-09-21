@@ -10,7 +10,7 @@ fi
 tempfile=temp.log
 
 printf '\n'$rootfile'\n\n' 
-combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1 $rootfile > $tempfile
+combine -v 9999 -M ProfileLikelihood --significance --uncapped=1 --rMin=-10. $rootfile > $tempfile
 echo Observed `grep --color=always Significance $tempfile`
 
 combine -v 9999 -M Asymptotic $rootfile > $tempfile
@@ -22,13 +22,13 @@ echo
 
 if (( "$#" > 1 ))
 then
-	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1  --toysFreq $rootfile > $tempfile
+	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1  --toysFreq --uncapped=1 --rMin=-10. $rootfile > $tempfile
 	echo A posteriori expected `grep --color=always Significance $tempfile`
 	
-	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1 -t -1  --toysFreq $rootfile > $tempfile
+	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1 -t -1  --toysFreq --uncapped=1 --rMin=-10. $rootfile > $tempfile
 	echo "A posteriori expected (with -t -1)" `grep --color=always Significance $tempfile`
 	
-	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1 -t -1 $rootfile > $tempfile
+	combine -v 9999 -M ProfileLikelihood --significance --expectSignal=1 -t -1 --uncapped=1 --rMin=-10. $rootfile > $tempfile
 	echo A priori expected `grep --color=always Significance $tempfile`
 	
 	combine -v 9999 -M Asymptotic -t -1  $rootfile > $tempfile

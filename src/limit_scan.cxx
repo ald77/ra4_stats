@@ -121,8 +121,8 @@ int main(int argc, char *argv[]){
   TH2D *hsigobs = gsigobs.GetHistogram();
   if(hsigobs == nullptr) ERROR("Could not retrieve histogram");
   hsigobs->SetTitle(";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; Observed Significance");
-  hsigobs->SetMinimum(0.);
-  hsigobs->SetMaximum(6.);
+  //hsigobs->SetMinimum(-2.);
+  //hsigobs->SetMaximum(2.);
   
   TH2D *hsigexp = gsigexp.GetHistogram();
   if(hsigexp == nullptr) ERROR("Could not retrieve histogram");
