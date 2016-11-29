@@ -53,7 +53,7 @@ def SendSignalWorkspaces(input_dir, output_dir, num_jobs, injection_strength, in
             cmd += " --inject "+injection_model
         run_file.write(cmd+"\n")
 
-    subprocess.check_call(["echo","JobSubmit.csh","./run/wrapper.sh",run_path])
+    subprocess.check_call(["JobSubmit.csh","./run/wrapper.sh",run_path])
 
   print "\nSubmitted "+str(num_files)+" files in "+str(num_jobs)+" jobs. Output will be sent to "+output_dir+".\n"
 

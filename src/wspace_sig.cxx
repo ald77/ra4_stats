@@ -361,10 +361,10 @@ int main(int argc, char *argv[]){
   wgNom.SetKappaCorrected(!no_kappa);
   wgNom.SetLuminosity(lumi);
   wgNom.SetDoSystematics(do_syst);
-  wgNom.AddToys(n_toys);
   if(inject_other_model){
     wgNom.SetInjectionModel(injection);
   }
+  wgNom.AddToys(n_toys);
   wgNom.WriteToFile(outname);
 
   
@@ -374,10 +374,10 @@ int main(int argc, char *argv[]){
   wgUp.SetKappaCorrected(!no_kappa);
   wgUp.SetLuminosity(lumi);
   wgUp.SetDoSystematics(do_syst);
-  wgUp.AddToys(n_toys);
   if(inject_other_model){
     wgUp.SetInjectionModel(injection);
   }
+  wgUp.AddToys(n_toys);
   wgUp.WriteToFile(outname);
 
   ReplaceAll(outname, "Up", "Down");
@@ -386,10 +386,10 @@ int main(int argc, char *argv[]){
   wgDown.SetKappaCorrected(!no_kappa);
   wgDown.SetLuminosity(lumi);
   wgDown.SetDoSystematics(do_syst);
-  wgDown.AddToys(n_toys);
   if(inject_other_model){
     wgDown.SetInjectionModel(injection);
   }
+  wgDown.AddToys(n_toys);
   wgDown.WriteToFile(outname);
 
   time(&endtime); 
@@ -425,7 +425,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:i:", long_options, &option_index);
 
     if( opt == -1) break;
 
