@@ -34,6 +34,8 @@ namespace{
   string name_wspace("w");
   bool table_clean(false);
   int toy_num(-1);
+  bool r4_only(false);
+  bool show_exp_sig(false);
 }
 
 int main(int argc, char *argv[]){
@@ -292,9 +294,11 @@ double GetMCYield(const RooWorkspace &w,
     if(name.substr(0,8) != "ymc_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(!(Contains(name, "_PRC_"+prc_name))) continue;
+    DBG(name << " " << bin_name << " " << prc_name);
     return static_cast<RooRealVar*>(arg)->getVal();
   }
   iter.Reset();
+  DBG(bin_name << " " << prc_name);
   return -1.;
 }
 
@@ -551,13 +555,17 @@ void MakeYieldPlot(RooWorkspace &w,
                    const string &file_name){
   RooRealVar *r_var = SetVariables(w, f);
 
-  vector<string> bin_names = GetBinNames(w);
+  vector<string> bin_names = GetBinNames(w, r4_only);
   vector<string> prc_names = GetProcessNames(w);
 
   vector<vector<double> > component_yields = GetComponentYields(w, bin_names, prc_names);
 
   vector<TH1D> histos = MakeBackgroundHistos(component_yields, bin_names, prc_names);
   TH1D signal = MakeTotalHisto(w, f, bin_names);
+  TH1D exp_signal = MakeExpSignal(w, bin_names) + signal;
+  exp_signal.SetLineColor(kRed+1);
+  exp_signal.SetFillColor(0);
+  exp_signal.SetFillStyle(0);
   TGraphErrors band = MakeErrorBand(signal);
   TH1D obs = MakeObserved(w, bin_names);
 
@@ -587,7 +595,7 @@ void MakeYieldPlot(RooWorkspace &w,
   if(!Contains(file_wspace, "nor4")) mid_pad.SetLogy();
   signal.SetTitleSize(font_size, "Y");
   signal.SetTitleOffset(offset, "Y");
-  signal.SetFillColor(2);
+  signal.SetFillColor(kRed+1);
   signal.SetFillStyle(1001);
   signal.SetLineColor(2);
   signal.SetLineStyle(1);
@@ -602,6 +610,7 @@ void MakeYieldPlot(RooWorkspace &w,
   band.Draw("02 same");
   obs.Draw("ex0 same");
   signal.Draw("same axis");
+  exp_signal.Draw("hist same");
 
   top_pad.cd();
   TLegend l(0.1, 0., 1., 1.);
@@ -609,7 +618,11 @@ void MakeYieldPlot(RooWorkspace &w,
   l.SetFillColor(0); l.SetFillStyle(4000);
   l.SetBorderSize(0);
   l.AddEntry(&obs, "Observed", "lep");
-  l.AddEntry(&signal, "Signal", "f");
+  if(r_var->isConstant()){
+    l.AddEntry(&exp_signal, "Expected Signal", "l");
+  }else{
+    l.AddEntry(&signal, "Fitted Signal", "f");
+  }
   ostringstream oss;
   oss << setprecision(2) << fixed;
   oss << "r=";
@@ -688,7 +701,7 @@ vector<string> GetFuncNames(const RooWorkspace &w){
   return names;
 }
 
-vector<string> GetBinNames(const RooWorkspace &w){
+vector<string> GetBinNames(const RooWorkspace &w, bool r4_only){
   vector<string> names;
   TIter iter(w.allFunctions().createIterator());
   int size = w.allFunctions().getSize();
@@ -699,7 +712,8 @@ vector<string> GetBinNames(const RooWorkspace &w){
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,9) != "nexp_BLK_") continue;
-    if(!Contains(name, "4")  && Contains(file_wspace, "nor4")) continue;
+    if(Contains(name, "4")  && Contains(file_wspace, "nor4")) continue;
+    if(!Contains(name, "r4") && r4_only) continue;
     string bin_name = name.substr(5);
     Append(names, bin_name);
   }
@@ -792,8 +806,8 @@ vector<TH1D> MakeBackgroundHistos(const vector<vector<double> > &yields,
   for(size_t iprc = 0; iprc < histos.size(); ++iprc){
     TH1D &h = histos.at(iprc);
     h.SetName(prc_names.at(iprc).c_str());
-    h.SetFillColor(iprc+3);
-    h.SetLineColor(iprc+3);
+    h.SetFillColor(iprc==0 ? kGreen+1 : (iprc==1 ? kBlue+1 :iprc+3));
+    h.SetLineColor(iprc==0 ? kGreen+1 : (iprc==1 ? kBlue+1 :iprc+3));
     h.SetLineWidth(0);
     for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
       const string &name = bin_names.at(ibin);
@@ -818,12 +832,35 @@ vector<TH1D> MakeBackgroundHistos(const vector<vector<double> > &yields,
   return histos;
 }
 
+TH1D MakeExpSignal(RooWorkspace &w,
+		   const vector<string> &bin_names){
+  TH1D h("", ";;Yield ", bin_names.size(), 0.5, bin_names.size()+0.5);
+  h.SetFillColor(0);
+  h.SetFillStyle(0);
+  h.SetLineColor(kRed+1);
+  h.SetLineStyle(2);
+
+  for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
+    h.SetBinError(ibin+1, 0.);
+    string name = bin_names.at(ibin);
+    auto pos = name.find("_BIN_");
+    name = name.substr(pos+5);
+    if(pos != string::npos){
+      h.SetBinContent(ibin+1, GetMCYield(w, name, "signal"));
+    }else{
+      h.SetBinContent(ibin+1, -1.);
+    }
+  }
+
+  return h;
+}
+
 TH1D MakeTotalHisto(RooWorkspace &w,
                     const RooFitResult &f,
                     const vector<string> &bin_names){
   TH1D h("signal", ";;Yield ", bin_names.size(), 0.5, bin_names.size()+0.5);
-  h.SetFillColor(2);
-  h.SetLineColor(2);
+  h.SetFillColor(kRed+1);
+  h.SetLineColor(kRed+1);
   h.SetLineWidth(0);
 
   for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
@@ -1093,12 +1130,14 @@ void GetOptionsExtract(int argc, char *argv[]){
       {"name_wspace", required_argument, 0, 'w'},
       {"toy", required_argument, 0, 't'},
       {"table_clean", no_argument, 0, 'c'},
+      {"r4_only", no_argument, 0, '4'},
+      {"exp_sig", no_argument, 0, 's'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:w:t:c", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:w:t:c4s", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -1114,6 +1153,12 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 'c':
       table_clean = true;
+      break;
+    case '4':
+      r4_only = true;
+      break;
+    case 's':
+      show_exp_sig = true;
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);

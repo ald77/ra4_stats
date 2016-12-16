@@ -71,7 +71,7 @@ void MakeYieldPlot(RooWorkspace &w,
 
 std::vector<std::string> GetVarNames(const RooWorkspace &w);
 std::vector<std::string> GetFuncNames(const RooWorkspace &w);
-std::vector<std::string> GetBinNames(const RooWorkspace &w);
+std::vector<std::string> GetBinNames(const RooWorkspace &w, bool r4_only=false);
 std::vector<std::string> GetPlainBinNames(const RooWorkspace &w);
 std::vector<std::string> GetProcessNames(const RooWorkspace &w);
 
@@ -82,6 +82,9 @@ std::vector<std::vector<double> > GetComponentYields(const RooWorkspace &w,
 std::vector<TH1D> MakeBackgroundHistos(const std::vector<std::vector<double> > &component_yields,
                                        const std::vector<std::string> &bin_names,
                                        const std::vector<std::string> &prc_names);
+
+TH1D MakeExpSignal(RooWorkspace &w,
+		   const std::vector<std::string> &bin_names);
 
 TH1D MakeTotalHisto(RooWorkspace &w,
                     const RooFitResult &f,
