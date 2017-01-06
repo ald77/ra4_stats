@@ -70,10 +70,9 @@ int main(int argc, char *argv[]){
   string hostname = execute("echo $HOSTNAME");
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
-  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_limit/"); 
-  string folderdata(basefolder+"babies/2016_08_10/data/merged_database_stdnj5/");
- 
-  
+  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/"); 
+  string folderdata(basefolder+"babies/2016_11_08/data/merged_database_standard/");
+
   cout<<"binning is "<<binning<<endl;
   if(applyVeto) cout<<"apply veto"<<endl;
   else cout<<"no veto"<<endl;
@@ -86,19 +85,34 @@ int main(int argc, char *argv[]){
   string stitch_cuts("stitch&&pass");
 
   Process ttbar{"ttbar", {
-      {foldermc+"/*TTJets*.root/tree"}
+      {foldermc+"/*_TTJets*SingleLept*.root/tree",
+	  foldermc+"/*_TTJets*DiLept*.root/tree",
+	  foldermc+"/*_TTJets_HT*.root/tree"}
     },stitch_cuts};
   Process other{"other", {
-      {foldermc+"/*other*.root/tree"}
+      {foldermc+"/*_WJetsToLNu*.root/tree",
+	  foldermc+"/*_ST_*.root/tree",
+	  foldermc+"/*_TTW*.root/tree",
+	  foldermc+"/*_TTZ*.root/tree",
+	  foldermc+"/*DYJetsToLL*.root/tree",
+	  foldermc+"/*_ZJet*.root/tree",
+	  foldermc+"/*_ttHJetTobb*.root/tree",
+	  foldermc+"/*_TTGJets*.root/tree",
+	  foldermc+"/*_TTTT*.root/tree",
+	  foldermc+"/*_WH_HToBB*.root/tree",
+	  foldermc+"/*_ZH_HToBB*.root/tree",
+	  foldermc+"/*_WWTo*.root/tree",
+	  foldermc+"/*_WZ*.root/tree",
+	  foldermc+"/*_ZZ_*.root/tree"}
     },stitch_cuts};
   Process signal{"signal", {
       {sigfile+"/tree"}
-    },"1", false, true};
+    },"stitch", false, true};
   Process injection{"injection", {
       {injfile+"/tree"}
-    },"1", false, true};
+    },"stitch", false, true};
 
-  string data_cuts("trig_ra4&&pass&&json12p9");
+  string data_cuts("trig_ra4&&pass");
 
   Process data{"data", {
       {folderdata+"/*.root/tree"}
@@ -108,7 +122,7 @@ int main(int argc, char *argv[]){
   set<Process> backgrounds{ttbar, other};
 
   //Baseline selection applied to all bins and processes
-  Cut baseline1b{"st>500&&met>200&&nleps==1&&nbm>=1&&njets>="+minjets+"&&"+mjdef+">"+lowmjthresh};
+  Cut baseline1b{"met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&nbm>=1&&njets>="+minjets+"&&"+mjdef+">"+lowmjthresh};
   string veto("");
   if(applyVeto)
     veto = "&&nveto==0";
@@ -305,7 +319,7 @@ int main(int argc, char *argv[]){
   set<Block> *pblocks(&blocks_1bk);
   string model = "T1tttt";
   
-  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_08_10/T1tttt/";
+  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_01_04/T1tttt/";
   //Protect default
   if(binning=="nominal" && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
   

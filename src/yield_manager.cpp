@@ -70,7 +70,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     ostringstream oss;
     oss << local_lumi_ << flush;
     Cut lumi_weight = process.IsData() ? Cut() : 
-      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight"):Cut(oss.str()+"*weight"));
+      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight*eff_trig"):Cut(oss.str()+"*weight*eff_trig"));
 
     array<Cut, 5> cuts;
     cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());
@@ -93,7 +93,9 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
       //// https://twiki.cern.ch/twiki/bin/viewauth/CMS/SUSRecommendationsICHEP16#Special_treatment_of_MET_uncerta
       if(Contains(process.Name(), "sig")){
 	string mettru_s = this_cut.GetCut(); 
+	ReplaceAll(mettru_s, "met_calo", "XXXYYYZZZ_calo");
 	ReplaceAll(mettru_s, "met", "met_tru");
+	ReplaceAll(mettru_s, "XXXYYYZZZ_calo", "met_calo");
 	Cut mettru_cut(mettru_s); 
 	GammaParams mettru_gps = process.GetYield(mettru_cut);
 	if(verbose_) cout<<"Yields: met "<<temp_gps.Yield()<<", met_tru "<<mettru_gps.Yield();

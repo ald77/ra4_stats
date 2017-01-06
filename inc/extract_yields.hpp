@@ -70,6 +70,7 @@ void MakeYieldPlot(RooWorkspace &w,
                    const std::string &file_name);
 
 std::vector<std::string> GetVarNames(const RooWorkspace &w);
+void ManuallyAddBins(const RooWorkspace &w, std::vector<std::string> &names);
 std::vector<std::string> GetFuncNames(const RooWorkspace &w);
 std::vector<std::string> GetBinNames(const RooWorkspace &w, bool r4_only=false);
 std::vector<std::string> GetPlainBinNames(const RooWorkspace &w);

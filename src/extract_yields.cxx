@@ -99,8 +99,9 @@ int main(int argc, char *argv[]){
 }
 
 string GetSignalName(const RooWorkspace &w){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -283,8 +284,9 @@ void PrintTable(RooWorkspace &w,
 double GetMCYield(const RooWorkspace &w,
                   const string &bin_name,
                   const string &prc_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -294,18 +296,17 @@ double GetMCYield(const RooWorkspace &w,
     if(name.substr(0,8) != "ymc_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(!(Contains(name, "_PRC_"+prc_name))) continue;
-    DBG(name << " " << bin_name << " " << prc_name);
     return static_cast<RooRealVar*>(arg)->getVal();
   }
   iter.Reset();
-  DBG(bin_name << " " << prc_name);
   return -1.;
 }
 
 double GetMCTotal(const RooWorkspace &w,
                   const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -324,8 +325,9 @@ double GetMCTotal(const RooWorkspace &w,
 double GetMCTotalErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -343,8 +345,9 @@ double GetMCTotalErr(RooWorkspace &w,
 
 double GetBkgPred(const RooWorkspace &w,
                   const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -363,8 +366,9 @@ double GetBkgPred(const RooWorkspace &w,
 double GetBkgPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -382,8 +386,9 @@ double GetBkgPredErr(RooWorkspace &w,
 
 double GetSigPred(const RooWorkspace &w,
                   const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -402,8 +407,9 @@ double GetSigPred(const RooWorkspace &w,
 double GetSigPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -421,8 +427,9 @@ double GetSigPredErr(RooWorkspace &w,
 
 double GetTotPred(const RooWorkspace &w,
                   const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -441,8 +448,9 @@ double GetTotPred(const RooWorkspace &w,
 double GetTotPredErr(RooWorkspace &w,
                      const RooFitResult &f,
                      const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -477,8 +485,9 @@ double GetObserved(const RooWorkspace &w,
 
 double GetLambda(const RooWorkspace &w,
                  const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -497,8 +506,9 @@ double GetLambda(const RooWorkspace &w,
 double GetLambdaErr(RooWorkspace &w,
                     const RooFitResult &f,
                     const string &bin_name){
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -581,6 +591,7 @@ void MakeYieldPlot(RooWorkspace &w,
   TPad mid_pad("mid_pad", "mid_pad", 0., 0.4, 1., 0.85);
   mid_pad.SetFillColor(0); mid_pad.SetFillStyle(4000);
   mid_pad.SetMargin(0.1, 0., 0.0, 0.);
+  mid_pad.SetLogy();
   mid_pad.Draw();
   c.cd();
   TPad top_pad("top_pad", "top_pad", 0., 0.85, 1., 1.0);
@@ -592,7 +603,6 @@ void MakeYieldPlot(RooWorkspace &w,
   double offset = 0.5;
 
   mid_pad.cd();
-  if(!Contains(file_wspace, "nor4")) mid_pad.SetLogy();
   signal.SetTitleSize(font_size, "Y");
   signal.SetTitleOffset(offset, "Y");
   signal.SetFillColor(kRed+1);
@@ -600,17 +610,22 @@ void MakeYieldPlot(RooWorkspace &w,
   signal.SetLineColor(2);
   signal.SetLineStyle(1);
   signal.SetLineWidth(0);
+  signal.SetMinimum(0.03);
   signal.Draw("hist");
   for(auto h = histos.rbegin(); h!= histos.rend(); ++h){
+    h->SetMinimum(0.03);
     h->Draw("same");
   }
 
   double marker_size(1.4);
   obs.SetMarkerStyle(20); obs.SetMarkerSize(marker_size);
   band.Draw("02 same");
+  obs.SetMinimum(0.03);
   obs.Draw("ex0 same");
+  signal.SetMinimum(0.03);
   signal.Draw("same axis");
-  exp_signal.Draw("hist same");
+  exp_signal.SetMinimum(0.03);
+  if(Contains(file_name, "bkg")) exp_signal.Draw("hist same");
 
   top_pad.cd();
   TLegend l(0.1, 0., 1., 1.);
@@ -632,7 +647,6 @@ void MakeYieldPlot(RooWorkspace &w,
     oss << r_var->getVal() << " (fixed)";
   }else{
     oss << r_var->getVal() << "#pm" << GetError(*r_var, f);
-    cout<<"Signal strength: "<<r_var->getVal() << "#pm" << GetError(*r_var, f) << endl;
   }
   oss << flush;
   l.AddEntry(&obs, oss.str().c_str(), "");
@@ -658,6 +672,7 @@ void MakeYieldPlot(RooWorkspace &w,
   dumb.GetXaxis()->LabelsOption("V");
   dumb.SetTitleSize(font_size, "Y");
   dumb.SetTitleOffset(offset, "Y");
+  dumb.SetMinimum(0.03);
   dumb.Draw();
   pred_rat.SetFillColor(kGray);
   pred_rat.SetFillStyle(3001);
@@ -686,8 +701,9 @@ vector<string> GetVarNames(const RooWorkspace &w){
 
 vector<string> GetFuncNames(const RooWorkspace &w){
   vector<string> names;
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   TObject *obj = nullptr;
   int i = 0;
   while((obj = iter()) && i < size){
@@ -697,41 +713,45 @@ vector<string> GetFuncNames(const RooWorkspace &w){
     Append(names, name);
   }
   iter.Reset();
-  sort(names.begin(), names.end());
+  //sort(names.begin(), names.end());
   return names;
 }
 
+void ManuallyAddBins(const RooWorkspace &w, vector<string> &names){
+  RooArgSet funcs = w.allFunctions();
+  vector<string> blocks = {"lowmet", "medmet", "highmet"};
+  vector<string> regions = {"r1", "r2", "r3", "r4"};
+  vector<string> njets = {"", "lownj", "highnj"};
+  vector<string> nbs = {"allnb", "1b", "2b", "3b"};
+  for(const auto &block: blocks){
+    for(const auto &region: regions){
+      for(const auto &nj: njets){
+	for(const auto &nb: nbs){
+	  string name = "nexp_BLK_"+block+"_BIN_"+region+"_"+block+"_"+(nj==""?string(""):nj+"_")+nb;
+	  if(funcs.find(name.c_str())) names.push_back(name);
+	}
+      }
+    }
+  }
+}
+
 vector<string> GetBinNames(const RooWorkspace &w, bool r4_only){
+  vector<string> func_names = GetFuncNames(w);
   vector<string> names;
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
-  RooAbsArg *arg = nullptr;
-  int i = 0;
-  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
-    ++i;
-    if(arg == nullptr) continue;
-    string name = arg->GetName();
+  for(const auto &name: func_names){
     if(name.substr(0,9) != "nexp_BLK_") continue;
-    if(Contains(name, "4")  && Contains(file_wspace, "nor4")) continue;
     if(!Contains(name, "r4") && r4_only) continue;
     string bin_name = name.substr(5);
     Append(names, bin_name);
   }
-  iter.Reset();
-  reverse(names.begin(), names.end());
+  //reverse(names.begin(), names.end());
   return names;
 }
 
 vector<string> GetPlainBinNames(const RooWorkspace &w){
+  vector<string> func_names = GetFuncNames(w);
   vector<string> names;
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
-  RooAbsArg *arg = nullptr;
-  int i = 0;
-  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
-    ++i;
-    if(arg == nullptr) continue;
-    string name = arg->GetName();
+  for(const auto &name: func_names){
     if(name.substr(0,9) != "nexp_BLK_") continue;
     auto bpos = name.find("_BIN_");
     auto ppos = name.find("_PRC_");
@@ -739,15 +759,15 @@ vector<string> GetPlainBinNames(const RooWorkspace &w){
     string bin_name = name.substr(bpos+5, ppos-bpos-5);
     Append(names, bin_name);
   }
-  iter.Reset();
-  reverse(names.begin(), names.end());
+  //reverse(names.begin(), names.end());
   return names;
 }
 
 vector<string> GetProcessNames(const RooWorkspace &w){
   vector<string> names;
-  TIter iter(w.allFunctions().createIterator());
-  int size = w.allFunctions().getSize();
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
   RooAbsArg *arg = nullptr;
   int i = 0;
   while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
@@ -802,12 +822,15 @@ vector<TH1D> MakeBackgroundHistos(const vector<vector<double> > &yields,
       histos.at(iprc).SetBinContent(ibin+1, yields.at(ibin).at(iprc));
     }
   }
+  for(auto &h: histos) h.SetMinimum(0.03);
 
   for(size_t iprc = 0; iprc < histos.size(); ++iprc){
     TH1D &h = histos.at(iprc);
     h.SetName(prc_names.at(iprc).c_str());
-    h.SetFillColor(iprc==0 ? kGreen+1 : (iprc==1 ? kBlue+1 :iprc+3));
-    h.SetLineColor(iprc==0 ? kGreen+1 : (iprc==1 ? kBlue+1 :iprc+3));
+    Int_t color = iprc==0 ? TColor::GetColor(9,186,1) :
+      (iprc==1 ? TColor::GetColor(153,220,255) : static_cast<Int_t>(iprc+3));
+    h.SetFillColor(color);
+    h.SetLineColor(color);
     h.SetLineWidth(0);
     for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
       const string &name = bin_names.at(ibin);
@@ -839,12 +862,14 @@ TH1D MakeExpSignal(RooWorkspace &w,
   h.SetFillStyle(0);
   h.SetLineColor(kRed+1);
   h.SetLineStyle(2);
+  h.SetMinimum(0.03);
 
   for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
     h.SetBinError(ibin+1, 0.);
     string name = bin_names.at(ibin);
     auto pos = name.find("_BIN_");
     name = name.substr(pos+5);
+    h.GetXaxis()->SetBinLabel(ibin+1, name.c_str());
     if(pos != string::npos){
       h.SetBinContent(ibin+1, GetMCYield(w, name, "signal"));
     }else{
@@ -862,6 +887,7 @@ TH1D MakeTotalHisto(RooWorkspace &w,
   h.SetFillColor(kRed+1);
   h.SetLineColor(kRed+1);
   h.SetLineWidth(0);
+  h.SetMinimum(0.03);
 
   for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
     const string &name = bin_names.at(ibin);
@@ -884,6 +910,7 @@ TH1D MakeObserved(const RooWorkspace &w,
   h.SetLineColor(1);
   h.SetFillColor(0);
   h.SetFillStyle(4000);
+  h.SetMinimum(0.03);
 
   for(size_t ibin = 0; ibin < bin_names.size(); ++ibin){
     const string &name = bin_names.at(ibin);
