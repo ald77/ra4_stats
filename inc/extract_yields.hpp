@@ -67,7 +67,8 @@ RooRealVar * SetVariables(RooWorkspace &w,
 
 void MakeYieldPlot(RooWorkspace &w,
                    const RooFitResult &f,
-                   const std::string &file_name);
+                   const std::string &file_name,
+		   bool linear);
 
 std::vector<std::string> GetVarNames(const RooWorkspace &w);
 void ManuallyAddBins(const RooWorkspace &w, std::vector<std::string> &names);

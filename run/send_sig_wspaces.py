@@ -46,7 +46,7 @@ def SendSignalWorkspaces(input_dir, output_dir, num_jobs, injection_strength, in
       end_file = min((ijob+1)*files_per_job, num_files)
       for ifile in xrange(start_file, end_file):
         cmd = "./run/wspace_sig.exe -f "+input_files[ifile]+" -o "+output_dir
-        cmd += " --sig_strength "+str(injection_strength)
+        cmd += " --sig_strength "+str(injection_strength)+" -u all -l 36.2"
         if injection_strength >= 0.:
           cmd += " --unblind none"
           if injection_model != "":

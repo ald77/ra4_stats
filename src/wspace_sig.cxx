@@ -103,7 +103,9 @@ int main(int argc, char *argv[]){
 	  foldermc+"/*_ZH_HToBB*.root/tree",
 	  foldermc+"/*_WWTo*.root/tree",
 	  foldermc+"/*_WZ*.root/tree",
-	  foldermc+"/*_ZZ_*.root/tree"}
+	  foldermc+"/*_ZZ_*.root/tree",
+	  foldermc+"/*QCD_HT*0_Tune*.root/tree",
+	  foldermc+"/*QCD_HT*Inf_Tune*.root/tree"}
     },stitch_cuts};
   Process signal{"signal", {
       {sigfile+"/tree"}
@@ -130,8 +132,19 @@ int main(int argc, char *argv[]){
   set<Block> blocks_1bk;
 
   //Declare bins 
-  if(binning=="nominal"){
-    
+  if(binning=="debug"){
+    Bin r1{"r1", "mt<=140&&"+mjdef+"<="+mjthresh+veto+"&&met>350&&met<=500",
+	blind_level>=BlindLevel::blinded};
+    Bin r2{"r2", "mt<=140&&"+mjdef+">"+mjthresh+veto+"&&met>350&&met<=500&&nbm==2&&njets>=6&&njets<=8",
+	blind_level>=BlindLevel::blinded};
+    Bin r3{"r3", "mt>140&&"+mjdef+"<="+mjthresh+veto+"&&met>350&&met<=500",
+	blind_level>=BlindLevel::blinded};
+    Bin r4{"r4", "mt>140&&"+mjdef+">"+mjthresh+veto+"&&met>350&&met<=500&&nbm==2&&njets>=6&&njets<=8",
+	blind_level>BlindLevel::blinded};
+    blocks_1bk = {
+      {"inclusive", {{r1,r2},{r3,r4}}}
+    };
+  }else if(binning=="nominal"){
     Bin r1_lowmet_allnb{"r1_lowmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met<="+himet,
 	blind_level>=BlindLevel::blinded};
     Bin r1_highmet_allnb{"r1_highmet_allnb", "mt<=140&&"+mjdef+"<="+mjthresh+"&&met>"+himet,

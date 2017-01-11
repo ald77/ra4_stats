@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
           << "cd $blah; "
           << "cp " << file_wspace << ' ' << workdir << "; "
           << "cd " << workdir << "; "
-          << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
+          << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all --minimizerToleranceForMinos=0.000001 --minimizerStrategyForMinos=2 -w " << name_wspace << " --dataset data_obs";
   if(toy_num >= 0) command << "_" << toy_num;
   command << " " << StripPath(file_wspace) << "; "
           << "cd $blah; "
@@ -82,13 +82,15 @@ int main(int argc, char *argv[]){
   if(fit_b != nullptr){
     PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
     PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
-    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"));
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
     if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
   }
   if(fit_s != nullptr){
     PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
     PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
-    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"));
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
     if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
   }
 
@@ -208,11 +210,10 @@ void PrintTable(RooWorkspace &w,
   ofstream out(file_name);
   out << fixed << setprecision(digits);
   out << "\\documentclass{article}\n";
-  out << "\\usepackage{amsmath,graphicx,rotating}\n";
-  out << "\\usepackage[landscape]{geometry}\n";
+  out << "\\usepackage{amsmath,graphicx,rotating,longtable}\n";
   out << "\\thispagestyle{empty}\n";
   out << "\\begin{document}\n";
-  out << "\\begin{table}\n";
+  out << "\\begin{longtable}{rr}\n";
   out << "\\centering\n";
   out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}{l ";
@@ -233,20 +234,19 @@ void PrintTable(RooWorkspace &w,
     if(Contains(bin_name, "r1")) {
       out << "\\hline\\hline"<<endl;
       if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 350$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "midmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$350<\\text{MET}\\leq 500$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "higmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>500$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "medmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$350<\\text{MET}\\leq 500$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>500$} \\\\ \\hline"<<endl;
     }
     string bin_tex(TexFriendly(bin_name));
     ReplaceAll(bin_tex, "lowmet\\_","");
-    ReplaceAll(bin_tex, "midmet\\_","");
-    ReplaceAll(bin_tex, "higmet\\_","");
+    ReplaceAll(bin_tex, "medmet\\_","");
+    ReplaceAll(bin_tex, "highmet\\_","");
     ReplaceAll(bin_tex, "lownj\\_","$n_j\\leq8$, ");
     ReplaceAll(bin_tex, "highnj\\_","$n_j\\geq9$, ");
     ReplaceAll(bin_tex, "allnb","all $n_j,n_b$");
     ReplaceAll(bin_tex, "1b","$n_b=1$");
+    ReplaceAll(bin_tex, "2b","$n_b=2$");
     ReplaceAll(bin_tex, "3b","$n_b\\geq3$");
-    if(Contains(bin_name, "lowmet")) ReplaceAll(bin_tex, "2b","$n_b=2$");
-    else ReplaceAll(bin_tex, "2b","$n_b\\geq2$");
     for(int ind(1); ind<=4; ind++){
       ReplaceAll(bin_tex, "r"+to_string(ind)+"\\_","R"+to_string(ind)+": ");
       ReplaceAll(bin_tex, "r"+to_string(ind)+"c\\_","R"+to_string(ind)+": ");
@@ -274,7 +274,7 @@ void PrintTable(RooWorkspace &w,
   out << "\\hline\\hline\n";
   out << "\\end{tabular}\n";
   out << "}\n";
-  out << "\\end{table}\n";
+  out << "\\end{longtable}\n";
   out << "\\end{document}\n";
   out << endl;
   out.close();
@@ -562,7 +562,8 @@ RooRealVar * SetVariables(RooWorkspace &w,
 
 void MakeYieldPlot(RooWorkspace &w,
                    const RooFitResult &f,
-                   const string &file_name){
+                   const string &file_name,
+		   bool linear){
   RooRealVar *r_var = SetVariables(w, f);
 
   vector<string> bin_names = GetBinNames(w, r4_only);
@@ -591,7 +592,7 @@ void MakeYieldPlot(RooWorkspace &w,
   TPad mid_pad("mid_pad", "mid_pad", 0., 0.4, 1., 0.85);
   mid_pad.SetFillColor(0); mid_pad.SetFillStyle(4000);
   mid_pad.SetMargin(0.1, 0., 0.0, 0.);
-  mid_pad.SetLogy();
+  if(!linear) mid_pad.SetLogy();
   mid_pad.Draw();
   c.cd();
   TPad top_pad("top_pad", "top_pad", 0., 0.85, 1., 1.0);
@@ -610,21 +611,26 @@ void MakeYieldPlot(RooWorkspace &w,
   signal.SetLineColor(2);
   signal.SetLineStyle(1);
   signal.SetLineWidth(0);
-  signal.SetMinimum(0.03);
+  if(linear) signal.SetMinimum(0.);
+  else signal.SetMinimum(0.03);
   signal.Draw("hist");
   for(auto h = histos.rbegin(); h!= histos.rend(); ++h){
-    h->SetMinimum(0.03);
+    if(linear) h->SetMinimum(0.);
+    else h->SetMinimum(0.03);
     h->Draw("same");
   }
 
   double marker_size(1.4);
   obs.SetMarkerStyle(20); obs.SetMarkerSize(marker_size);
   band.Draw("02 same");
-  obs.SetMinimum(0.03);
-  obs.Draw("ex0 same");
-  signal.SetMinimum(0.03);
+  if(linear) obs.SetMinimum(0.);
+  else obs.SetMinimum(0.03);
+  obs.Draw("e0 x0 p0 same");
+  if(linear) signal.SetMinimum(0.);
+  else signal.SetMinimum(0.03);
   signal.Draw("same axis");
-  exp_signal.SetMinimum(0.03);
+  if(linear) exp_signal.SetMinimum(0.);
+  else exp_signal.SetMinimum(0.03);
   if(Contains(file_name, "bkg")) exp_signal.Draw("hist same");
 
   top_pad.cd();
@@ -672,7 +678,6 @@ void MakeYieldPlot(RooWorkspace &w,
   dumb.GetXaxis()->LabelsOption("V");
   dumb.SetTitleSize(font_size, "Y");
   dumb.SetTitleOffset(offset, "Y");
-  dumb.SetMinimum(0.03);
   dumb.Draw();
   pred_rat.SetFillColor(kGray);
   pred_rat.SetFillStyle(3001);
@@ -907,6 +912,7 @@ TH1D MakeTotalHisto(RooWorkspace &w,
 TH1D MakeObserved(const RooWorkspace &w,
                   const vector<string> &bin_names){
   TH1D h("observed", ";;Yield ", bin_names.size(), 0.5, bin_names.size()+0.5);
+  h.SetBinErrorOption(TH1::kPoisson);
   h.SetLineColor(1);
   h.SetFillColor(0);
   h.SetFillStyle(4000);
