@@ -38,36 +38,51 @@ namespace{
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
 
-  string mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/";
+  string hostname = execute("echo $HOSTNAME");
+  string basefolder("/net/cms2/cms2r0/babymaker/");
+  if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
+  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_abcd/"); 
+  string foldersig(basefolder+"babies/2016_08_10/T1tttt/skim_abcd/"); 
+  string folderdata(basefolder+"babies/2016_11_08/data/merged_database_abcd/");
+
+  //Define processes. Try to minimize splitting
+  string stitch_cuts("stitch&&pass");
+
   Process ttbar{"ttbar", {
-      {mc+"*TTJets*Lept*.root/tree"},
-        {mc+"*TTJets*HT*.root/tree"}
-    }, "stitch&&pass"};
+      {foldermc+"/*_TTJets*SingleLept*.root/tree",
+	  foldermc+"/*_TTJets*DiLept*.root/tree",
+	  foldermc+"/*_TTJets_HT*.root/tree"}
+    },stitch_cuts};
   Process other{"other", {
-      {mc+"*_WJetsToLNu*.root/tree"},
-        {mc+"*_ST_*.root/tree"},
-          {mc+"*_TTWJets*.root/tree"},
-            {mc+"*_TTZTo*.root/tree"},
-              {mc+"*DYJetsToLL*.root/tree"},
-                {mc+"*_QCD_HT*.root/tree"},
-                  {mc+"*_ZJET*.root/tree"},
-                    {mc+"*_WWTo*.root/tree"},
-                      {mc+"*ggH_HToBB*.root/tree"},
-                        {mc+"*ttHJetTobb*.root/tree"},
-                          {mc+"*_TTGJets*.root/tree"},
-                            {mc+"*_TTTT_*.root/tree"},
-                              {mc+"*_WH_HToBB*.root/tree"},
-                                {mc+"*_WZTo*.root/tree"},
-                                  {mc+"*_ZH_HToBB*.root/tree"},
-                                    {mc+"*_ZZ_*.root/tree"},
-    }, "stitch&&pass"};
-  Process data{"data", {{"/net/cms2/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/*.root/tree"}}, "trig_ra4&&pass&&json12p9", true};
+      {foldermc+"/*_WJetsToLNu*.root/tree",
+	  foldermc+"/*_ST_*.root/tree",
+	  foldermc+"/*_TTW*.root/tree",
+	  foldermc+"/*_TTZ*.root/tree",
+	  foldermc+"/*DYJetsToLL*.root/tree",
+	  foldermc+"/*_ZJet*.root/tree",
+	  foldermc+"/*_ttHJetTobb*.root/tree",
+	  foldermc+"/*_TTGJets*.root/tree",
+	  foldermc+"/*_TTTT*.root/tree",
+	  foldermc+"/*_WH_HToBB*.root/tree",
+	  foldermc+"/*_ZH_HToBB*.root/tree",
+	  foldermc+"/*_WWTo*.root/tree",
+	  foldermc+"/*_WZ*.root/tree",
+	  foldermc+"/*_ZZ_*.root/tree",
+	  foldermc+"/*QCD_HT*0_Tune*.root/tree",
+	  foldermc+"/*QCD_HT*Inf_Tune*.root/tree"}
+    },stitch_cuts};
+
+  string data_cuts("trig_ra4&&pass");
+
+  Process data{"data", {
+      {folderdata+"/*.root/tree"}
+    }, data_cuts, true};
   
   Process signal{"signal", {
-      {"/net/cms2/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"_*.root/tree"}
+      {foldersig+"/*SMS-T1tttt_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"_*.root/tree"}
     }, "stitch", false, true};
 
-  Cut baseline("nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1&&mj14>250.");
+  Cut baseline("met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&nbm>=1&&njets>=6&&mj14>250.");
 
   string met = "&&met>"+to_string(met_low);
   if(met_high > met_low) met += "&&met<=" + to_string(met_high);

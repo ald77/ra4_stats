@@ -52,6 +52,7 @@ namespace{
   bool dummy_syst = false;
   string dummy_syst_file = "";
   string outfolder = "out/";
+  bool nom_only = false;
 }
 
 int main(int argc, char *argv[]){
@@ -70,8 +71,8 @@ int main(int argc, char *argv[]){
   string hostname = execute("echo $HOSTNAME");
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
-  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/"); 
-  string folderdata(basefolder+"babies/2016_11_08/data/merged_database_standard/");
+  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_abcd/"); 
+  string folderdata(basefolder+"babies/2016_11_08/data/merged_database_abcd/");
 
   cout<<"binning is "<<binning<<endl;
   if(applyVeto) cout<<"apply veto"<<endl;
@@ -382,6 +383,8 @@ int main(int argc, char *argv[]){
   gSystem->mkdir(outfolder.c_str(), kTRUE);
   string outname(outfolder+"/wspace_"+model+"_"+glu_lsp+"_xsecNom.root");
   if(!use_r4) ReplaceAll(outname, "wspace_","wspace_nor4_");
+  if(no_kappa) ReplaceAll(outname, "wspace_","wspace_nokappa_");
+  if(!do_syst) ReplaceAll(outname, "wspace_","wspace_nosyst_");
   
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
   wgNom.SetRMax(rmax);
@@ -394,30 +397,31 @@ int main(int argc, char *argv[]){
   wgNom.AddToys(n_toys);
   wgNom.WriteToFile(outname);
 
-  
-  ReplaceAll(outname, "Nom", "Up");
-  WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
-  wgUp.SetRMax(rmax);
-  wgUp.SetKappaCorrected(!no_kappa);
-  wgUp.SetLuminosity(lumi);
-  wgUp.SetDoSystematics(do_syst);
-  if(inject_other_model){
-    wgUp.SetInjectionModel(injection);
-  }
-  wgUp.AddToys(n_toys);
-  wgUp.WriteToFile(outname);
+  if(!nom_only){
+    ReplaceAll(outname, "Nom", "Up");
+    WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
+    wgUp.SetRMax(rmax);
+    wgUp.SetKappaCorrected(!no_kappa);
+    wgUp.SetLuminosity(lumi);
+    wgUp.SetDoSystematics(do_syst);
+    if(inject_other_model){
+      wgUp.SetInjectionModel(injection);
+    }
+    wgUp.AddToys(n_toys);
+    wgUp.WriteToFile(outname);
 
-  ReplaceAll(outname, "Up", "Down");
-  WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
-  wgDown.SetRMax(rmax);
-  wgDown.SetKappaCorrected(!no_kappa);
-  wgDown.SetLuminosity(lumi);
-  wgDown.SetDoSystematics(do_syst);
-  if(inject_other_model){
-    wgDown.SetInjectionModel(injection);
+    ReplaceAll(outname, "Up", "Down");
+    WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
+    wgDown.SetRMax(rmax);
+    wgDown.SetKappaCorrected(!no_kappa);
+    wgDown.SetLuminosity(lumi);
+    wgDown.SetDoSystematics(do_syst);
+    if(inject_other_model){
+      wgDown.SetInjectionModel(injection);
+    }
+    wgDown.AddToys(n_toys);
+    wgDown.WriteToFile(outname);
   }
-  wgDown.AddToys(n_toys);
-  wgDown.WriteToFile(outname);
 
   time(&endtime); 
   cout<<"Finding workspaces took "<<fixed<<setprecision(0)<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
@@ -447,12 +451,13 @@ void GetOptions(int argc, char *argv[]){
       {"dummy_syst", required_argument, 0, 0},
       {"outfolder", required_argument, 0, 'o'},
       {"inject", required_argument, 0, 'i'},
+      {"nominal", no_argument, 0, 'n'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:i:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:i:n", long_options, &option_index);
 
     if( opt == -1) break;
 
@@ -514,6 +519,9 @@ void GetOptions(int argc, char *argv[]){
     case 'i':
       injfile = optarg;
       inject_other_model = true;
+      break;
+    case 'n':
+      nom_only = true;
       break;
     case 0:
       optname = long_options[option_index].name;
