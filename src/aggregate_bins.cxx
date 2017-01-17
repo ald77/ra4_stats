@@ -33,6 +33,7 @@ namespace{
   double nbm_high = -1.;
   int mglu = 1700.;
   int mlsp = 100.;
+  bool use_r4 = true;
 }
 
 int main(int argc, char *argv[]){
@@ -99,7 +100,7 @@ int main(int argc, char *argv[]){
   set<Block> blocks = {{"all", {{r1, r2}, {r3, r4}}}};
 
   WorkspaceGenerator wg(baseline, blocks, {ttbar, other}, signal, data,
-                        syst_file, true, 0., 1.);
+                        syst_file, use_r4, 0., 1.);
   wg.SetRMax(10.);
   wg.SetKappaCorrected(true);
   wg.SetDoSystematics(true);
@@ -119,7 +120,9 @@ int main(int argc, char *argv[]){
   else oss << "inf";
   oss << "_tkveto_" << (do_track_veto ? "true" : "false")
       << ".root" << flush;
-  wg.WriteToFile(oss.str());
+  string outname = oss.str();
+  if(!use_r4) ReplaceAll(outname, "wspace_aggbin_", "wspace_aggbin_nor4_");
+  wg.WriteToFile(outname);
 }
 
 void GetOptions(int argc, char *argv[]){
@@ -137,6 +140,7 @@ void GetOptions(int argc, char *argv[]){
       {"njets_high", required_argument, 0, 0},
       {"nbm_low", required_argument, 0, 0},
       {"nbm_high", required_argument, 0, 0},
+      {"no_r4", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -173,6 +177,8 @@ void GetOptions(int argc, char *argv[]){
         mglu = atoi(optarg);
       }else if(optname == "mlsp"){
         mlsp = atoi(optarg);
+      }else if(optname == "no_r4"){
+	use_r4 = false;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
