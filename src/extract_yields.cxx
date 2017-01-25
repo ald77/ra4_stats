@@ -225,7 +225,7 @@ void PrintTable(RooWorkspace &w,
     out << prc_name << " & ";
   }
   out << "MC Bkg. "<<(dosig?"& Bkgnd. Pred. ":"")<<"& Signal "<<(dosig?"& Sig. Pred. ":"")
-      <<"& Tot. Pred. & Obs.";
+      <<"& Pred. & Obs.";
   if(!table_clean) out << " & $\\lambda$";
   out<<"\\\\\n";
 
@@ -233,20 +233,20 @@ void PrintTable(RooWorkspace &w,
   for(const auto &bin_name: bin_names){
     if(Contains(bin_name, "r1")) {
       out << "\\hline\\hline"<<endl;
-      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<\\text{MET}\\leq 350$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "medmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$350<\\text{MET}\\leq 500$} \\\\ \\hline"<<endl;
-      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$\\text{MET}>500$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "lowmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$200<E_{T}^{miss}\\leq 350$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "medmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$350<E_{T}^{miss}\\leq 500$} \\\\ \\hline"<<endl;
+      if(Contains(bin_name, "highmet")) out<<"\\multicolumn{"<<ncols<<"}{c}{$E_{T}^{miss}>500$} \\\\ \\hline"<<endl;
     }
     string bin_tex(TexFriendly(bin_name));
     ReplaceAll(bin_tex, "lowmet\\_","");
     ReplaceAll(bin_tex, "medmet\\_","");
     ReplaceAll(bin_tex, "highmet\\_","");
-    ReplaceAll(bin_tex, "lownj\\_","$n_j\\leq8$, ");
-    ReplaceAll(bin_tex, "highnj\\_","$n_j\\geq9$, ");
-    ReplaceAll(bin_tex, "allnb","all $n_j,n_b$");
-    ReplaceAll(bin_tex, "1b","$n_b=1$");
-    ReplaceAll(bin_tex, "2b","$n_b=2$");
-    ReplaceAll(bin_tex, "3b","$n_b\\geq3$");
+    ReplaceAll(bin_tex, "lownj\\_","$6 \\leq N_{jets}\\leq8$, ");
+    ReplaceAll(bin_tex, "highnj\\_","$N_{jets}\\geq9$, ");
+    ReplaceAll(bin_tex, "allnb","all $N_{jets}, N_b$");
+    ReplaceAll(bin_tex, "1b","$N_b=1$");
+    ReplaceAll(bin_tex, "2b","$N_b=2$");
+    ReplaceAll(bin_tex, "3b","$N_b\\geq3$");
     for(int ind(1); ind<=4; ind++){
       ReplaceAll(bin_tex, "r"+to_string(ind)+"\\_","R"+to_string(ind)+": ");
       ReplaceAll(bin_tex, "r"+to_string(ind)+"c\\_","R"+to_string(ind)+": ");
@@ -263,7 +263,8 @@ void PrintTable(RooWorkspace &w,
     if(dosig) out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
     out << GetMCYield(w, bin_name, sig_name) << " & ";
     if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
-    out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
+    if(Contains(bin_name,"r4")) out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
+    else out << " & ";
     if(Contains(bin_name,"4") && (blind_all || (!Contains(bin_name,"1b") && blind_2b))) out << "-- & ";
     else out << setprecision(0) << GetObserved(w, bin_name);
     out << setprecision(digits);
