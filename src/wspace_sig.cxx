@@ -54,6 +54,7 @@ namespace{
   string outfolder = "out/";
   bool nom_only = false;
   string CSVM = "0.800";
+  bool use_pois = false;
 }
 //nbm = Sum$(jets_csv>CSVM&&jets_pt>30&&!jets_islep)
 int main(int argc, char *argv[]){
@@ -390,6 +391,7 @@ int main(int argc, char *argv[]){
   ReplaceAll(outname,"wspace_","wspace_"+CSVM+"_");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
+  wgNom.UseGausApprox(!use_pois);
   wgNom.SetRMax(rmax);
   wgNom.SetKappaCorrected(!no_kappa);
   wgNom.SetLuminosity(lumi);
@@ -403,6 +405,7 @@ int main(int argc, char *argv[]){
   if(!nom_only){
     ReplaceAll(outname, "Nom", "Up");
     WorkspaceGenerator wgUp(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1+xsec_unc);
+    wgUp.UseGausApprox(!use_pois);
     wgUp.SetRMax(rmax);
     wgUp.SetKappaCorrected(!no_kappa);
     wgUp.SetLuminosity(lumi);
@@ -415,6 +418,7 @@ int main(int argc, char *argv[]){
 
     ReplaceAll(outname, "Up", "Down");
     WorkspaceGenerator wgDown(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1-xsec_unc);
+    wgDown.UseGausApprox(!use_pois);
     wgDown.SetRMax(rmax);
     wgDown.SetKappaCorrected(!no_kappa);
     wgDown.SetLuminosity(lumi);
@@ -456,12 +460,13 @@ void GetOptions(int argc, char *argv[]){
       {"inject", required_argument, 0, 'i'},
       {"nominal", no_argument, 0, 'n'},
       {"csvthres", required_argument, 0, 'c'},
+      {"poisson", no_argument, 0, 'p'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:i:n:c", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:u:j:h:m:s:a:d:k4b:v:g:f:o:i:nc:p", long_options, &option_index);
 
     if( opt == -1) break;
 
@@ -530,7 +535,9 @@ void GetOptions(int argc, char *argv[]){
     case 'c':
       CSVM = optarg;
       break;
-
+    case 'p':
+      use_pois = true;
+      break;
     case 0:
       optname = long_options[option_index].name;
       if(optname == "no_syst"){

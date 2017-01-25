@@ -57,6 +57,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   do_dilepton_(false),
   do_mc_kappa_correction_(true),
   num_toys_(0),
+  gaus_approx_(true),
   w_is_valid_(false){
   w_.cd();
 }
@@ -146,6 +147,15 @@ WorkspaceGenerator & WorkspaceGenerator::SetRMax(double rmax){
   return *this;
 }
 
+bool WorkspaceGenerator::UseGausApprox() const{
+  return gaus_approx_;
+}
+
+WorkspaceGenerator & WorkspaceGenerator::UseGausApprox(bool use_gaus_approx){
+  gaus_approx_ = use_gaus_approx;
+  return *this;
+}
+
 GammaParams WorkspaceGenerator::GetYield(const YieldKey &key) const{
   yields_.Luminosity() = luminosity_;
   return yields_.GetYield(key);
@@ -180,6 +190,8 @@ size_t WorkspaceGenerator::AddToys(size_t num_toys){
   num_toys_ += num_toys;
   return num_toys_;
 }
+
+
 
 const Process & WorkspaceGenerator::GetInjectionModel() const{
   if(inject_other_signal_){
@@ -735,7 +747,7 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
         string bbp_name = bb_name + "_PRC_"+bkg.Name();
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
-        //Append(observables_, oss.str());
+        if(!gaus_approx_) Append(observables_, oss.str());
         oss << "[" << gp.NEffective() << "]" << flush;
         w_.factory(oss.str().c_str());
         oss.str("");
@@ -768,7 +780,7 @@ void WorkspaceGenerator::AddMCPdfs(const Block &block){
       Append(all_prcs, signal_);
       for(const auto &bkg: all_prcs){
         string bbp_name = "BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name();
-	AddPoisson("pdf_mc_"+bbp_name, "nobsmc_"+bbp_name, "nmc_"+bbp_name, true);
+	AddPoisson("pdf_mc_"+bbp_name, "nobsmc_"+bbp_name, "nmc_"+bbp_name, gaus_approx_);
         if(first) first = false;
         else factory_string += ",";
         factory_string += "pdf_mc_"+bbp_name;

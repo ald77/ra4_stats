@@ -52,6 +52,9 @@ public:
   double GetRMax() const;
   WorkspaceGenerator & SetRMax(double rmax);
 
+  bool UseGausApprox() const;
+  WorkspaceGenerator & UseGausApprox(bool use_gaus_approx);
+
   GammaParams GetYield(const YieldKey &key) const;
   GammaParams GetYield(const Bin &bin,
                        const Process &process,
@@ -90,6 +93,7 @@ private:
   bool do_dilepton_;
   bool do_mc_kappa_correction_;
   size_t num_toys_;
+  bool gaus_approx_;
   mutable bool w_is_valid_;
 
   static YieldManager yields_;

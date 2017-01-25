@@ -47,12 +47,12 @@ int main(int argc, char *argv[]){
 
   ostringstream command;
   command << "export blah=$(pwd); "
-          << "cd ~/cmssw/CMSSW_7_1_5/src; "
+          << "cd ~/cmssw/CMSSW_7_4_14/src; "
           << "eval `scramv1 runtime -sh`; "
           << "cd $blah; "
           << "cp " << file_wspace << ' ' << workdir << "; "
           << "cd " << workdir << "; "
-          << "combine -M MaxLikelihoodFit --saveWorkspace --saveWithUncertainties --minos=all --minimizerToleranceForMinos=0.000001 --minimizerStrategyForMinos=2 -w " << name_wspace << " --dataset data_obs";
+          << "combine -M MaxLikelihoodFit -v 999999 --forceRecreateNLL --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
   if(toy_num >= 0) command << "_" << toy_num;
   command << " " << StripPath(file_wspace) << "; "
           << "cd $blah; "
@@ -161,7 +161,7 @@ void PrintDebug(RooWorkspace &w,
   out << "\\hline\\hline\n";
   out << "Variable & Fit Value\\\\\n";
   out << "\\hline\n";
-  out << fixed << setprecision(2);
+  out << fixed << setprecision(6);
   for(const auto &var: var_names){
     RooRealVar *varo = w.var(var.c_str());
     if(varo == nullptr) continue;
@@ -646,7 +646,7 @@ void MakeYieldPlot(RooWorkspace &w,
     l.AddEntry(&signal, "Fitted Signal", "f");
   }
   ostringstream oss;
-  oss << setprecision(2) << fixed;
+  oss << setprecision(6) << fixed;
   oss << "r=";
   if(r_var == nullptr){
     oss << "???";
