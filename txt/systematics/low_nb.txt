@@ -1,0 +1,11 @@
+SYSTEMATIC dilep
+ PROCESSES ttbar,other
+  r2 0.15
+
+SYSTEMATIC lowjet
+ PROCESSES ttbar,other
+  r2 0.37
+
+SYSTEMATIC signal
+ PROCESSES signal
+  r2 0.20

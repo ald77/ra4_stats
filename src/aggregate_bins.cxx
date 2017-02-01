@@ -23,7 +23,7 @@ using namespace std;
 namespace{
   string out_dir = "/net/top/homes/ald77/ra4_stats/wspaces";
   string syst_file = "txt/systematics/simple.txt";
-  double lumi = 36.2;
+  double lumi = 36.8;
   bool do_track_veto = true;
   double met_low = 200.;
   double met_high = -1.;
@@ -31,7 +31,7 @@ namespace{
   double njets_high = -1.;
   double nbm_low = 0.5;
   double nbm_high = -1.;
-  int mglu = 1700.;
+  int mglu = 1800.;
   int mlsp = 100.;
   bool use_r4 = true;
 }
@@ -83,13 +83,13 @@ int main(int argc, char *argv[]){
       {foldersig+"/*SMS-T1tttt_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"_*.root/tree"}
     }, "stitch", false, true};
 
-  Cut baseline("met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&nbm>=1&&njets>=6&&mj14>250.");
+  Cut baseline("met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)>=1&&njets>=6&&mj14>250.");
 
   string met = "&&met>"+to_string(met_low);
   if(met_high > met_low) met += "&&met<=" + to_string(met_high);
-  string njets_nbm = "&&njets>"+to_string(njets_low)+"&&nbm>"+to_string(nbm_low);
+  string njets_nbm = "&&njets>"+to_string(njets_low)+"&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)>"+to_string(nbm_low);
   if(njets_high > njets_low) njets_nbm += "&&njets<=" + to_string(njets_high);
-  if(nbm_high > nbm_low) njets_nbm += "&&nbm<=" + to_string(nbm_high);
+  if(nbm_high > nbm_low) njets_nbm += "&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)<=" + to_string(nbm_high);
   string tkveto = "&&nveto==0";
 
   Bin r1("r1", "mt<=140.&&mj14<=400."+met+tkveto, false);
@@ -101,6 +101,7 @@ int main(int argc, char *argv[]){
 
   WorkspaceGenerator wg(baseline, blocks, {ttbar, other}, signal, data,
                         syst_file, use_r4, 0., 1.);
+  wg.UseGausApprox(false);
   wg.SetRMax(10.);
   wg.SetKappaCorrected(true);
   wg.SetDoSystematics(true);

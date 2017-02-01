@@ -29,7 +29,7 @@
 using namespace std;
 
 namespace{
-  double lumi = 36.2;//12.9;
+  double lumi = 36.8;//12.9;
   double sig_strength = 0.;
   BlindLevel blind_level = BlindLevel::unblinded;
   bool no_kappa = false;
@@ -53,7 +53,7 @@ namespace{
   string dummy_syst_file = "";
   string outfolder = "out/";
   bool nom_only = false;
-  string CSVM = "0.800";
+  string CSVM = "0.8484";
   bool use_pois = false;
 }
 //nbm = Sum$(jets_csv>CSVM&&jets_pt>30&&!jets_islep)
@@ -375,10 +375,13 @@ int main(int argc, char *argv[]){
   if(model=="T1tttt" || model=="T5tttt") xsec::signalCrossSection(mglu, xsec, xsec_unc);
   else xsec::stopCrossSection(mglu, xsec, xsec_unc);
   double rmax = 20.;
-  if(mglu <= 1100 && mlsp <= 600){
+  if(mglu <= 1500 && mlsp <= 800){
     rmax = 5.;
-    if(mglu <= 1100 && mlsp <= 375){
+    if(mglu <= 1200 && mlsp <= 550){
       rmax = 1.25;
+      if(mglu <= 900 && mlsp <= 350){
+	rmax = 0.5;
+      }
     }
   }
   
