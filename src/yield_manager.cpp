@@ -99,8 +99,8 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
 	Cut mettru_cut(mettru_s); 
 	GammaParams mettru_gps = process.GetYield(mettru_cut);
 	if(verbose_) cout<<"Yields: met "<<temp_gps.Yield()<<", met_tru "<<mettru_gps.Yield();
-	temp_gps += mettru_gps;
-	temp_gps *= 0.5;
+	temp_gps.SetYieldAndUncertainty(0.5*(temp_gps.Yield()+mettru_gps.Yield()),
+					max(temp_gps.Uncertainty(), mettru_gps.Uncertainty()));
 	if(verbose_) cout<<", average "<<temp_gps.Yield()<<" for bin "<<bin.Name()<<endl;
       } // If it is signal
       if(icut == 0) gps = temp_gps;
