@@ -335,7 +335,7 @@ int main(int argc, char *argv[]){
   set<Block> *pblocks(&blocks_1bk);
   string model = "T1tttt";
   
-  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_01_04/T1tttt/";
+  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_02_01/T1tttt/";
   //Protect default
   if(binning=="nominal" && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
   

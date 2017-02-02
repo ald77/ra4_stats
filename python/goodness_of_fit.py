@@ -41,7 +41,7 @@ class ROOTFile(object):
     def __exit__(self, type, value, traceback):
         self.file.Close()
 
-def GoodnessOfFit(file_path, workspace_name):
+def GoodnessOfFit(file_path, workspace_name, ndof):
     file_path = fullPath(file_path)
     with ROOTFile(file_path, "read") as root_file:
         workspace = root_file.Get(workspace_name)
@@ -49,7 +49,6 @@ def GoodnessOfFit(file_path, workspace_name):
         model_b = workspace.pdf("model_b")
 
         nll = ROOT.RooNLLVar("nll", "nll", model_b, data_obs)
-        nll.Print()
         minuit = ROOT.RooMinuit(nll)
 
         minuit.setPrintLevel(-999999)
@@ -77,7 +76,6 @@ def GoodnessOfFit(file_path, workspace_name):
             variable = iterator.Next()
 
         chi_sq = 2.*(fit_nll-sat_nll)
-        ndof = 18
         print("")
         print("ABCD NLL = {}".format(fit_nll))
         print("Saturated NLL = {}".format(sat_nll))
@@ -90,6 +88,7 @@ if __name__ == "__main__":
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("input_file", help="Path to file containing RooWorkspace")
     parser.add_argument("workspace_name", default="w", nargs="?", help="Name of RooWorkspace")
+    parser.add_argument("--ndof", type=int, default=18, help="Number of degrees of freedom for chi^2 to p-value calculation")
     args = parser.parse_args()
 
-    GoodnessOfFit(args.input_file, args.workspace_name)
+    GoodnessOfFit(args.input_file, args.workspace_name, args.ndof)
