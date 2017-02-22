@@ -36,6 +36,7 @@ namespace{
   int toy_num(-1);
   bool r4_only(false);
   bool show_exp_sig(false);
+  bool do_global = false;
 }
 
 int main(int argc, char *argv[]){
@@ -200,8 +201,8 @@ void PrintTable(RooWorkspace &w,
 
   bool dosig(Contains(file_name, "sig_table")), blind_all(Contains(file_name, "r4blinded"));
   bool blind_2b(Contains(file_name, "1bunblinded"));
-  size_t digits(2), ncols(10);
-  if(!dosig) ncols = 8;
+  size_t digits(2), ncols(11);
+  if(!dosig) ncols = 9;
   if(table_clean) {
     ncols--;
     digits = 1;
@@ -225,7 +226,7 @@ void PrintTable(RooWorkspace &w,
     out << prc_name << " & ";
   }
   out << "MC Bkg. "<<(dosig?"& Bkgnd. Pred. ":"")<<"& Signal "<<(dosig?"& Sig. Pred. ":"")
-      <<"& Pred. & Obs.";
+      <<"& $\\kappa$ & Pred. & Obs.";
   if(!table_clean) out << " & $\\lambda$";
   out<<"\\\\\n";
 
@@ -263,8 +264,16 @@ void PrintTable(RooWorkspace &w,
     if(dosig) out << "$" << GetBkgPred(w, bin_name) << "\\pm" << GetBkgPredErr(w, f, bin_name) <<  "$ & ";
     out << GetMCYield(w, bin_name, sig_name) << " & ";
     if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
-    if(Contains(bin_name,"r4")) out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
-    else out << " & ";
+    if(Contains(bin_name,"r4")){
+      out << "$" << GetKappa(w, bin_name) << "\\pm" << GetKappaErr(w, f, bin_name) <<  "$ & ";
+    }else{
+      out << " & ";
+    }
+    if(Contains(bin_name,"r4") || do_global){
+      out << "$" << GetTotPred(w, bin_name) << "\\pm" << GetTotPredErr(w, f, bin_name) <<  "$ & ";
+    }else{
+      out << " & ";
+    }
     if(Contains(bin_name,"4") && (blind_all || (!Contains(bin_name,"1b") && blind_2b))) out << "-- & ";
     else out << setprecision(0) << GetObserved(w, bin_name);
     out << setprecision(digits);
@@ -481,6 +490,47 @@ double GetObserved(const RooWorkspace &w,
     if(Contains(name, "_PRC_")) continue;
     return static_cast<RooRealVar*>(arg)->getVal();
   }
+  return -1.;
+}
+
+double GetKappa(const RooWorkspace &w,
+		const string &bin_name){
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
+  RooAbsArg *arg = nullptr;
+  int i = 0;
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
+    ++i;
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,15) != "nosyskappa_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetKappaErr(RooWorkspace &w,
+		   const RooFitResult &f,
+		   const string &bin_name){
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
+  RooAbsArg *arg = nullptr;
+  int i = 0;
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
+    ++i;
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,15) != "nosyskappa_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
+  }
+  iter.Reset();
   return -1.;
 }
 
@@ -741,12 +791,12 @@ void ManuallyAddBins(const RooWorkspace &w, vector<string> &names){
   }
 }
 
-vector<string> GetBinNames(const RooWorkspace &w, bool r4_only){
+vector<string> GetBinNames(const RooWorkspace &w, bool r4_only_local){
   vector<string> func_names = GetFuncNames(w);
   vector<string> names;
   for(const auto &name: func_names){
     if(name.substr(0,9) != "nexp_BLK_") continue;
-    if(!Contains(name, "r4") && r4_only) continue;
+    if(!Contains(name, "r4") && r4_only_local) continue;
     string bin_name = name.substr(5);
     Append(names, bin_name);
   }
@@ -1166,12 +1216,13 @@ void GetOptionsExtract(int argc, char *argv[]){
       {"table_clean", no_argument, 0, 'c'},
       {"r4_only", no_argument, 0, '4'},
       {"exp_sig", no_argument, 0, 's'},
+      {"global", no_argument, 0, 'g'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:w:t:c4s", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:w:t:c4sg", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
@@ -1193,6 +1244,9 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 's':
       show_exp_sig = true;
+      break;
+    case 'g':
+      do_global = true;
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);

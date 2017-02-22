@@ -56,6 +56,12 @@ double GetTotPredErr(RooWorkspace &w,
 double GetObserved(const RooWorkspace &w,
                    const std::string &bin_name);
 
+double GetKappa(const RooWorkspace &w,
+		const std::string &bin_name);
+double GetKappaErr(RooWorkspace &w,
+		   const RooFitResult &f,
+		   const std::string &bin_name);
+
 double GetLambda(const RooWorkspace &w,
                  const std::string &bin_name);
 double GetLambdaErr(RooWorkspace &w,
