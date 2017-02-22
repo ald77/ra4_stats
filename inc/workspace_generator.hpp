@@ -131,6 +131,7 @@ private:
   void AddFullBackgroundPredictions(const Block &block);
   void AddSignalPredictions(const Block &block);
   void AddPdfs(const Block &block);
+  void AddDebug(const Block &block);
   void AddDummyNuisance();
   void AddFullPdf();
   void AddParameterSets();

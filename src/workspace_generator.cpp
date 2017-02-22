@@ -308,6 +308,7 @@ void WorkspaceGenerator::UpdateWorkspace(){
     AddFullBackgroundPredictions(block);
     AddSignalPredictions(block);
     AddPdfs(block);
+    AddDebug(block);
   }
 
   AddDummyNuisance();
@@ -973,6 +974,21 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
   }
   w_.factory(("PROD:pdf_null_BLK_"+block.Name()+"("+null_list+")").c_str());
   w_.factory(("PROD:pdf_alt_BLK_"+block.Name()+"("+alt_list+")").c_str());
+}
+
+void WorkspaceGenerator::AddDebug(const Block &block){
+  if(print_level_ >= PrintLevel::everything) DBG(block);
+  const auto &bins = block.Bins();
+  for(size_t iy = 1; iy < bins.size(); ++iy){
+    for(size_t ix = 1; ix < bins.at(iy).size(); ++ix){
+      const auto &r1 = "BLK_"+block.Name()+"_BIN_"+bins.at(0).at(0).Name();
+      const auto &r2 = "BLK_"+block.Name()+"_BIN_"+bins.at(0).at(ix).Name();
+      const auto &r3 = "BLK_"+block.Name()+"_BIN_"+bins.at(iy).at(0).Name();
+      const auto &r4 = "BLK_"+block.Name()+"_BIN_"+bins.at(iy).at(ix).Name();
+      w_.factory(("expr::syskappa_"+r4+"('(@0*@1)/(@2*@3)',nexp_"+r4+",nexp_"+r1+",nexp_"+r2+",nexp_"+r3+")").c_str());
+      w_.factory(("expr::nosyskappa_"+r4+"('(@0*@1)/(@2*@3)',ymc_"+r4+",ymc_"+r1+",ymc_"+r2+",ymc_"+r3+")").c_str());
+    }
+  }
 }
 
 void WorkspaceGenerator::AddDummyNuisance(){

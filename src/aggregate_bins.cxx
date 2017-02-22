@@ -23,7 +23,7 @@ using namespace std;
 namespace{
   string out_dir = "/net/top/homes/ald77/ra4_stats/wspaces";
   string syst_file = "txt/systematics/simple.txt";
-  double lumi = 36.8;
+  double lumi = 35.9;
   bool do_track_veto = true;
   double met_low = 200.;
   double met_high = -1.;
@@ -42,15 +42,16 @@ int main(int argc, char *argv[]){
   string hostname = execute("echo $HOSTNAME");
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
-  string foldermc(basefolder+"babies/2016_08_10/mc/merged_mcbase_abcd/"); 
-  string foldersig(basefolder+"babies/2016_08_10/T1tttt/skim_abcd/"); 
-  string folderdata(basefolder+"babies/2016_11_08/data/merged_database_abcd/");
+  string foldermc(basefolder+"babies/2017_01_27/mc/merged_mcbase_abcd/"); 
+  string foldersig(basefolder+"babies/2017_02_14/T1tttt/merged_mcbase_abcd/"); 
+  string folderdata(basefolder+"babies/2017_02_14/data/merged_database_abcd/");
 
   //Define processes. Try to minimize splitting
   string stitch_cuts("stitch&&pass");
 
   Process ttbar{"ttbar", {
-      {foldermc+"/*_TTJets*SingleLept*.root/tree",
+      {foldermc+"/*_TTJets*SingleLeptFromT_Tune*.root/tree",
+	  foldermc+"/*_TTJets*SingleLeptFromTbar_Tune*.root/tree",
 	  foldermc+"/*_TTJets*DiLept*.root/tree",
 	  foldermc+"/*_TTJets_HT*.root/tree"}
     },stitch_cuts};
@@ -83,13 +84,13 @@ int main(int argc, char *argv[]){
       {foldersig+"/*SMS-T1tttt_mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp)+"_*.root/tree"}
     }, "stitch", false, true};
 
-  Cut baseline("met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)>=1&&njets>=6&&mj14>250.");
+  Cut baseline("met/met_calo<5.&&pass_ra2_badmu&&st>500&&met>200&&nleps==1&&nbm>=1&&njets>=6&&mj14>250.");
 
   string met = "&&met>"+to_string(met_low);
   if(met_high > met_low) met += "&&met<=" + to_string(met_high);
-  string njets_nbm = "&&njets>"+to_string(njets_low)+"&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)>"+to_string(nbm_low);
+  string njets_nbm = "&&njets>"+to_string(njets_low)+"&&nbm>"+to_string(nbm_low);
   if(njets_high > njets_low) njets_nbm += "&&njets<=" + to_string(njets_high);
-  if(nbm_high > nbm_low) njets_nbm += "&&Sum$(jets_csv>0.8484&&jets_pt>30&&!jets_islep)<=" + to_string(nbm_high);
+  if(nbm_high > nbm_low) njets_nbm += "&&nbm<=" + to_string(nbm_high);
   string tkveto = "&&nveto==0";
 
   Bin r1("r1", "mt<=140.&&mj14<=400."+met+tkveto, false);
