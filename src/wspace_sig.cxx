@@ -53,7 +53,6 @@ namespace{
   string dummy_syst_file = "";
   string outfolder = "out/";
   bool nom_only = false;
-  string CSVM = "0.8484";
   bool use_pois = false;
 }
 //nbm = Sum$(jets_csv>CSVM&&jets_pt>30&&!jets_islep)
@@ -390,8 +389,6 @@ int main(int argc, char *argv[]){
   if(!use_r4) ReplaceAll(outname, "wspace_","wspace_nor4_");
   if(no_kappa) ReplaceAll(outname, "wspace_","wspace_nokappa_");
   if(!do_syst) ReplaceAll(outname, "wspace_","wspace_nosyst_");
-  ReplaceAll(CSVM,"0.","");
-  ReplaceAll(outname,"wspace_","wspace_"+CSVM+"_");
 
   WorkspaceGenerator wgNom(*pbaseline, *pblocks, backgrounds, signal, data, sysfile, use_r4, sig_strength, 1.);
   wgNom.UseGausApprox(!use_pois);
@@ -462,7 +459,6 @@ void GetOptions(int argc, char *argv[]){
       {"outfolder", required_argument, 0, 'o'},
       {"inject", required_argument, 0, 'i'},
       {"nominal", no_argument, 0, 'n'},
-      {"csvthres", required_argument, 0, 'c'},
       {"poisson", no_argument, 0, 'p'},
       {0, 0, 0, 0}
     };
@@ -534,9 +530,6 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'n':
       nom_only = true;
-      break;
-    case 'c':
-      CSVM = optarg;
       break;
     case 'p':
       use_pois = true;

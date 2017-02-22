@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 import os
 import errno
 import glob
-import math
+import numpy
 import subprocess
 
 def ensureDir(path):
@@ -26,36 +28,48 @@ def SendSignalWorkspaces(input_dir, output_dir, num_jobs, injection_strength, in
   run_dir = os.path.join(output_dir, "run")
   ensureDir(run_dir)
 
+  cmssw_dir = os.path.join(os.environ["CMSSW_BASE"],"src")
+
+  if num_jobs < 1:
+    num_jobs = 1
+
   input_files = [ fullPath(f) for f in glob.glob(os.path.join(input_dir, "*SMS*")) ]
   num_files = len(input_files)
+  input_files = numpy.array_split(numpy.array(input_files), num_jobs)
 
-  if num_jobs > num_files:
-    num_jobs = num_files
+  num_submitted = 0
 
-  files_per_job = int(math.ceil( float(num_files)/num_jobs ))
-
-  subprocess.check_call(["JobSetup.csh"])
-
-  for ijob in xrange(0,num_jobs):
-    run_path = os.path.join(run_dir,"wspace_sig_"+str(ijob)+".sh")
+  for sublist in input_files:
+    if len(sublist) == 0:
+      continue
+    job_files = sublist.tolist()
+    run_path = os.path.join(run_dir,"wspace_sig_{}.sh".format(num_submitted))
     with open(run_path, "w") as run_file:
       os.fchmod(run_file.fileno(), 0755)
       run_file.write("#! /bin/bash\n\n")
 
-      start_file = ijob*files_per_job
-      end_file = min((ijob+1)*files_per_job, num_files)
-      for ifile in xrange(start_file, end_file):
-        cmd = "./run/wspace_sig.exe -f "+input_files[ifile]+" -o "+output_dir
-        cmd += " --sig_strength "+str(injection_strength)+" -u all -l 36.8 -c 0.8484"
+      run_file.write("DIRECTORY=`pwd`\n")
+      run_file.write("cd {}\n".format(cmssw_dir))
+      run_file.write(". /net/cms2/cms2r0/babymaker/cmsset_default.sh\n")
+      run_file.write("eval `scramv1 runtime -sh`\n")
+      run_file.write("cd $DIRECTORY\n\n")
+
+      for ifile in range(len(job_files)):
+        f = job_files[ifile]
+        cmd = "./run/wspace_sig.exe -f {} -o {} --sig_strength {} -u all -l 35.9".format(
+          f, output_dir, (injection_strength if injection_strength >= 0. else 0.))
         if injection_strength >= 0.:
           cmd += " --unblind none"
           if injection_model != "":
             cmd += " --inject "+injection_model
-        run_file.write(cmd+"\n")
+        run_file.write("echo Starting to process file {} of {}\n".format(ifile+1, len(job_files)))
+        run_file.write(cmd+"\n\n")
 
-    subprocess.check_call(["JobSubmit.csh","./run/wrapper.sh",run_path])
+    subprocess.check_call(["JobSubmit.csh",run_path])
+    num_submitted += 1
 
-  print "\nSubmitted "+str(num_files)+" files in "+str(num_jobs)+" jobs. Output will be sent to "+output_dir+".\n"
+  print("\nSubmitted {} files in {} jobs. Output will be sent to {}.\n".format(
+      num_files, num_submitted, output_dir))
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description = "Submits batch jobs to produce workspaces for each signal mass point",
