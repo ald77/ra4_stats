@@ -5,7 +5,7 @@ import os
 import glob
 import subprocess
 import errno
-import math
+import numpy
 
 def ensureDir(path):
   try:
@@ -26,37 +26,44 @@ def SendLimits(input_dir, output_dir, num_jobs):
   run_dir = os.path.join(output_dir, "run")
   ensureDir(run_dir)
 
+  cmssw_dir = os.path.join(os.environ["CMSSW_BASE"],"src")
+
+  if num_jobs < 1:
+    num_jobs = 1
+
   input_files = [ fullPath(f) for f in glob.glob(os.path.join(input_dir, "*_xsecNom.root")) ]
   num_files = len(input_files)
+  input_files = numpy.array_split(numpy.array(input_files), num_jobs)
 
-  if num_jobs > num_files:
-    num_jobs = num_files
+  num_submitted = 0
 
-  files_per_job = int(math.ceil( float(num_files)/num_jobs ))
-
-  subprocess.check_call(["JobSetup.csh"])
-  cwd = os.getcwd()
-
-  for ijob in xrange(0,num_jobs):
-    run_path = os.path.join(run_dir,"find_limit_sig_"+str(ijob)+".sh")
+  for sublist in input_files:
+    if len(sublist) == 0.:
+      continue
+    job_files = sublist.tolist()
+    run_path = os.path.join(run_dir,"scan_point_{}.sh".format(num_submitted))
     with open(run_path, "w") as run_file:
       os.fchmod(run_file.fileno(), 0755)
       run_file.write("#! /bin/bash\n\n")
-      run_file.write(". /cvmfs/cms.cern.ch/cmsset_default.sh\n")
-      run_file.write("cd ~/cmssw/CMSSW_7_4_14/src\n")
+
+      run_file.write("DIRECTORY=`pwd`\n")
+      run_file.write("cd {}\n".format(cmssw_dir))
+      run_file.write(". /net/cms2/cms2r0/babymaker/cmsset_default.sh\n")
       run_file.write("eval `scramv1 runtime -sh`\n")
-      run_file.write("cd "+cwd+"\n\n")
-      start_file = ijob*files_per_job
-      end_file = min((ijob+1)*files_per_job, num_files)
-      for ifile in xrange(start_file, end_file):
-        out_file = os.path.join(output_dir, "limits_and_significances_"+str(ifile)+".txt")
-        cmd = "./run/scan_point.exe -s -f "+input_files[ifile]+" >> "+out_file
-        run_file.write(cmd+"\n")
+      run_file.write("cd $DIRECTORY\n\n")
 
-    subprocess.check_call(["JobSubmit.csh","./run/wrapper.sh",run_path])
+      for ifile in range(len(job_files)):
+        f = job_files[ifile]
+        out_file = os.path.join(output_dir, "limits_and_significances_{}_{}.txt".format(num_submitted, ifile))
+        cmd = "./run/scan_point.exe -s -f {} >> {}\n\n".format(f, out_file)
+        run_file.write("echo Starting to process file {} of {}\n".format(ifile+1, len(job_files)))
+        run_file.write(cmd)
 
-  print "\nSubmitted "+str(num_files)+" files in "+str(num_jobs)+" jobs. Output will be sent to "+output_dir+".\n"
+    subprocess.check_call(["JobSubmit.csh",run_path])
+    num_submitted += 1
 
+  print("\nSubmitted {} files in {} jobs. Output will be sent to {}.\n".format(
+      num_files, num_submitted, output_dir))
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Submits batch jobs to compute limits and significances from existing workspaces",

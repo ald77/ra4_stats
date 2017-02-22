@@ -59,6 +59,9 @@ int main(int argc, char *argv[]){
   string down_file_name = file_name; ReplaceAll(down_file_name, "xsecNom", "xsecDown");
   command
     << "export origdir=$(pwd); "
+    << "cd ~/cmssw/CMSSW_7_4_14/src; "
+    << "eval `scramv1 runtime -sh`; "
+    << "cd $origdir; "
     << "ln -s $(readlink -f " << file_name << ") " << workdir << done
     << "ln -s $(readlink -f " << up_file_name << ") " << workdir << done
     << "ln -s $(readlink -f " << down_file_name << ") " << workdir << done
