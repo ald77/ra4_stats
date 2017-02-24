@@ -84,13 +84,10 @@ int main(int argc, char *argv[]){
   cout<<"outfolder is "<<outfolder<<endl;
 
   //Define processes. Try to minimize splitting
-  string stitch_cuts("stitch&&pass");
+  string stitch_cuts("stitch_met&&pass");
 
-  Process ttbar{"ttbar", {
-      {foldermc+"/*_TTJets*SingleLeptFromT_Tune*.root/tree",
-	  foldermc+"/*_TTJets*SingleLeptFromTbar_Tune*.root/tree",
-	  foldermc+"/*_TTJets*DiLept_Tune*.root/tree",
-	  foldermc+"/*_TTJets_HT*.root/tree"}
+  Process ttbar{"ttbar", set<string>{
+      foldermc+"/*_TTJets*Lept*.root/tree",
     },stitch_cuts};
   Process other{"other", {
       {foldermc+"/*_WJetsToLNu*.root/tree",
@@ -335,13 +332,13 @@ int main(int argc, char *argv[]){
   set<Block> *pblocks(&blocks_1bk);
   string model = "T1tttt";
   
-  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_02_21/T1tttt_fakePU/";
+  string sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_02_22/T1tttt_fakePU/";
   //Protect default
   if(binning=="nominal" && lumi < 3) sysfolder = "/net/cms2/cms2r0/babymaker/sys/2016_01_11/scan/";
   
   if(Contains(hostname, "lxplus")) sysfolder = "txt/systematics/";
   if(Contains(sigfile, "T5tttt")) {
-    sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_02_21/T5tttt_fakePU/";
+    sysfolder = "/net/cms2/cms2r0/babymaker/sys/2017_02_22/T5tttt_fakePU/";
     model = "T5tttt";
   }
   if(Contains(sigfile, "T2tt")) {

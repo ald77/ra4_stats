@@ -10,8 +10,11 @@
 
 #include "RooWorkspace.h"
 #include "RooFitResult.h"
+#include "RooMinuit.h"
 
 void GetOptionsExtract(int argc, char *argv[]);
+
+RooFitResult* DoMinuit(RooMinuit &minuit);
 
 std::string GetSignalName(const RooWorkspace &w);
 
@@ -56,11 +59,17 @@ double GetTotPredErr(RooWorkspace &w,
 double GetObserved(const RooWorkspace &w,
                    const std::string &bin_name);
 
-double GetKappa(const RooWorkspace &w,
-		const std::string &bin_name);
-double GetKappaErr(RooWorkspace &w,
+double GetKappaNoSys(const RooWorkspace &w,
+		     const std::string &bin_name);
+double GetKappaNoSysErr(RooWorkspace &w,
 		   const RooFitResult &f,
 		   const std::string &bin_name);
+
+double GetKappaSys(const RooWorkspace &w,
+		   const std::string &bin_name);
+double GetKappaSysErr(RooWorkspace &w,
+		      const RooFitResult &f,
+		      const std::string &bin_name);
 
 double GetLambda(const RooWorkspace &w,
                  const std::string &bin_name);

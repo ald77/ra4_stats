@@ -70,7 +70,7 @@ void YieldManager::ComputeYield(const YieldKey &key) const{
     ostringstream oss;
     oss << local_lumi_ << flush;
     Cut lumi_weight = process.IsData() ? Cut() : 
-      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight*eff_trig/w_btag"):Cut(oss.str()+"*weight*eff_trig/w_btag"));
+      (Contains(process.Name(), "sig")?Cut(oss.str()+"*weight*eff_trig"):Cut(oss.str()+"*weight*eff_trig"));
 
     array<Cut, 5> cuts;
     cuts.at(0) = lumi_weight*(cut && bin.Cut() && process.Cut());

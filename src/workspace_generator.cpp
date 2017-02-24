@@ -985,7 +985,7 @@ void WorkspaceGenerator::AddDebug(const Block &block){
       const auto &r2 = "BLK_"+block.Name()+"_BIN_"+bins.at(0).at(ix).Name();
       const auto &r3 = "BLK_"+block.Name()+"_BIN_"+bins.at(iy).at(0).Name();
       const auto &r4 = "BLK_"+block.Name()+"_BIN_"+bins.at(iy).at(ix).Name();
-      w_.factory(("expr::syskappa_"+r4+"('(@0*@1)/(@2*@3)',nexp_"+r4+",nexp_"+r1+",nexp_"+r2+",nexp_"+r3+")").c_str());
+      w_.factory(("expr::syskappa_"+r4+"('(@0*@1)/(@2*@3)',nbkg_"+r4+",nbkg_"+r1+",nbkg_"+r2+",nbkg_"+r3+")").c_str());
       w_.factory(("expr::nosyskappa_"+r4+"('(@0*@1)/(@2*@3)',ymc_"+r4+",ymc_"+r1+",ymc_"+r2+",ymc_"+r3+")").c_str());
     }
   }

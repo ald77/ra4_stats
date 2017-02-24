@@ -47,13 +47,10 @@ int main(int argc, char *argv[]){
   string folderdata(basefolder+"babies/2017_02_14/data/merged_database_abcd/");
 
   //Define processes. Try to minimize splitting
-  string stitch_cuts("stitch&&pass");
+  string stitch_cuts("stitch_met&&pass");
 
-  Process ttbar{"ttbar", {
-      {foldermc+"/*_TTJets*SingleLeptFromT_Tune*.root/tree",
-	  foldermc+"/*_TTJets*SingleLeptFromTbar_Tune*.root/tree",
-	  foldermc+"/*_TTJets*DiLept*.root/tree",
-	  foldermc+"/*_TTJets_HT*.root/tree"}
+  Process ttbar{"ttbar", set<string>{
+      foldermc+"/*_TTJets*Lept*.root/tree"
     },stitch_cuts};
   Process other{"other", {
       {foldermc+"/*_WJetsToLNu*.root/tree",

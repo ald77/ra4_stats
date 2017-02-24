@@ -23,6 +23,10 @@
 #include "RooArgSet.h"
 #include "RooRealVar.h"
 #include "RooAbsData.h"
+#include "RooDataSet.h"
+#include "RooProdPdf.h"
+#include "RooNLLVar.h"
+#include "RooMinuit.h"
 
 #include "utilities.hpp"
 #include "styles.hpp"
@@ -30,75 +34,125 @@
 using namespace std;
 
 namespace{
-  string file_wspace("empty");
+  string file_wspace("");
   string name_wspace("w");
   bool table_clean(false);
   int toy_num(-1);
   bool r4_only(false);
   bool show_exp_sig(false);
   bool do_global = false;
+  bool use_combine = false;
 }
 
 int main(int argc, char *argv[]){
   GetOptionsExtract(argc, argv);
 
-  if(file_wspace == "empty") ERROR("You need to specify the file containing the workspace with option -f");
-
-  string workdir = MakeDir("extract_yields_");
-
-  ostringstream command;
-  command << "export blah=$(pwd); "
-          << "cd ~/cmssw/CMSSW_7_4_14/src; "
-          << "eval `scramv1 runtime -sh`; "
-          << "cd $blah; "
-          << "cp " << file_wspace << ' ' << workdir << "; "
-          << "cd " << workdir << "; "
-          << "combine -M MaxLikelihoodFit -v 999999 --forceRecreateNLL --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
-  if(toy_num >= 0) command << "_" << toy_num;
-  command << " " << StripPath(file_wspace) << "; "
-          << "cd $blah; "
-          << flush;
-  cout << "Executing " << command.str() << endl;
-  execute(command.str());
+  if(file_wspace == "") ERROR("You need to specify the file containing the workspace with option -f");
 
   styles style("RA4");
   style.setDefaultStyle();
 
-  string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
-  w_name = workdir+'/'+w_name;
-  TFile w_file(w_name.c_str(),"read");
-  if(!w_file.IsOpen()) ERROR("File "+w_name+" not produced");
-  RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
-  if(w == nullptr) ERROR("Workspace "+name_wspace+" not found");
+  if(use_combine){
+    string workdir = MakeDir("extract_yields_");
 
-  string fit_name = "mlfit.root";
-  string full_fit_name = workdir+'/'+fit_name;
-  TFile fit_file(full_fit_name.c_str(),"read");
-  if(!fit_file.IsOpen()) ERROR("Could not open "+full_fit_name);
-  RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
-  RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-  string toy_ext = "";
-  if(toy_num >= 0) toy_ext = "_toy_" + to_string(toy_num);
-  file_wspace = ChangeExtension(file_wspace, toy_ext+"_"+name_wspace+".root");
-  if(fit_b != nullptr){
-    PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
-    PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
-    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
-    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
-    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+    ostringstream command;
+    command << "export blah=$(pwd); "
+	    << "cd ~/cmssw/CMSSW_7_4_14/src; "
+	    << "eval `scramv1 runtime -sh`; "
+	    << "cd $blah; "
+	    << "cp " << file_wspace << ' ' << workdir << "; "
+	    << "cd " << workdir << "; "
+	    << "combine -M MaxLikelihoodFit -v 999999 --forceRecreateNLL --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
+    if(toy_num >= 0) command << "_" << toy_num;
+    command << " " << StripPath(file_wspace) << "; "
+	    << "cd $blah; "
+	    << flush;
+    cout << "Executing " << command.str() << endl;
+    execute(command.str());
+
+
+    string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
+    w_name = workdir+'/'+w_name;
+    TFile w_file(w_name.c_str(),"read");
+    if(!w_file.IsOpen()) ERROR("File "+w_name+" not produced");
+    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
+    if(w == nullptr) ERROR("Workspace "+name_wspace+" not found");
+
+    string fit_name = "mlfit.root";
+    string full_fit_name = workdir+'/'+fit_name;
+    TFile fit_file(full_fit_name.c_str(),"read");
+    if(!fit_file.IsOpen()) ERROR("Could not open "+full_fit_name);
+    RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
+    RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
+    string toy_ext = "";
+    if(toy_num >= 0) toy_ext = "_toy_" + to_string(toy_num);
+    file_wspace = ChangeExtension(file_wspace, toy_ext+"_"+name_wspace+".root");
+    if(fit_b != nullptr){
+      PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
+      PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
+      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
+      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
+      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+    }
+    if(fit_s != nullptr){
+      PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
+      PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
+      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
+    }
+    
+    w_file.Close();
+    fit_file.Close();
+    
+    execute("rm -rf "+workdir);
+  }else{
+    TFile in_file(file_wspace.c_str(), "read");
+    RooWorkspace *w = static_cast<RooWorkspace*>(in_file.Get(name_wspace.c_str()));
+    string data_name = "data_obs";
+    if(toy_num >= 0) data_name += "_"+to_string(toy_num);
+    RooDataSet *data_obs = static_cast<RooDataSet*>(w->data(data_name.c_str()));
+
+    RooProdPdf *model_b = static_cast<RooProdPdf*>(w->pdf("model_b"));
+    RooProdPdf *model_s = static_cast<RooProdPdf*>(w->pdf("model_s"));
+
+    RooNLLVar nll_b("nll_b","nll_b", *model_b, *data_obs);
+    RooNLLVar nll_s("nll_s","nll_s", *model_s, *data_obs);
+
+    RooMinuit minuit_b(nll_b);
+    RooMinuit minuit_s(nll_s);
+
+    RooFitResult *fit_b = DoMinuit(minuit_b);
+    RooFitResult *fit_s = DoMinuit(minuit_s);
+
+    if(fit_b != nullptr){
+      PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
+      PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
+      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
+      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
+      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+    }
+    if(fit_s != nullptr){
+      PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
+      PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
+      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
+      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
+    }
   }
-  if(fit_s != nullptr){
-    PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
-    PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
-    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
-    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
-    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
-  }
+}
 
-  w_file.Close();
-  fit_file.Close();
-
-  execute("rm -rf "+workdir);
+RooFitResult* DoMinuit(RooMinuit &minuit){
+  minuit.setPrintLevel(-99999);
+  minuit.setVerbose(false);
+  minuit.setStrategy(2);
+  minuit.optimizeConst(false);
+  minuit.hesse();
+  minuit.migrad();
+  minuit.hesse();
+  minuit.migrad();
+  minuit.hesse();
+  return minuit.save();
 }
 
 string GetSignalName(const RooWorkspace &w){
@@ -204,7 +258,7 @@ void PrintTable(RooWorkspace &w,
   size_t digits(2), ncols(11);
   if(!dosig) ncols = 9;
   if(table_clean) {
-    ncols--;
+    --ncols;
     digits = 1;
   }
 
@@ -265,7 +319,17 @@ void PrintTable(RooWorkspace &w,
     out << GetMCYield(w, bin_name, sig_name) << " & ";
     if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
     if(Contains(bin_name,"r4")){
-      out << "$" << GetKappa(w, bin_name) << "\\pm" << GetKappaErr(w, f, bin_name) <<  "$ & ";
+      double kappa = GetKappaSys(w, bin_name);
+      double stat_err = GetKappaNoSysErr(w, f, bin_name);
+      double full_err = GetKappaSysErr(w, f, bin_name);
+      double sys_err = 0.;
+      if(full_err >= stat_err){
+	double ratio = stat_err/full_err;
+	sys_err = full_err*sqrt(1.-ratio*ratio);
+      }else{
+	DBG("(systematic error)^2<0 for " << bin_name);
+      }
+      out << "$" << kappa << "\\pm" << stat_err << "\\pm" << sys_err << "$ & ";
     }else{
       out << " & ";
     }
@@ -493,8 +557,8 @@ double GetObserved(const RooWorkspace &w,
   return -1.;
 }
 
-double GetKappa(const RooWorkspace &w,
-		const string &bin_name){
+double GetKappaNoSys(const RooWorkspace &w,
+		     const string &bin_name){
   RooArgSet funcs = w.allFunctions();
   TIter iter(funcs.createIterator());
   int size = funcs.getSize();
@@ -513,9 +577,9 @@ double GetKappa(const RooWorkspace &w,
   return -1.;
 }
 
-double GetKappaErr(RooWorkspace &w,
-		   const RooFitResult &f,
-		   const string &bin_name){
+double GetKappaNoSysErr(RooWorkspace &w,
+			const RooFitResult &f,
+			const string &bin_name){
   RooArgSet funcs = w.allFunctions();
   TIter iter(funcs.createIterator());
   int size = funcs.getSize();
@@ -526,6 +590,47 @@ double GetKappaErr(RooWorkspace &w,
     if(arg == nullptr) continue;
     string name = arg->GetName();
     if(name.substr(0,15) != "nosyskappa_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return GetError(*static_cast<RooAbsReal*>(arg), f);
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetKappaSys(const RooWorkspace &w,
+		   const string &bin_name){
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
+  RooAbsArg *arg = nullptr;
+  int i = 0;
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
+    ++i;
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,13) != "syskappa_BLK_") continue;
+    if(!(Contains(name, "_BIN_"+bin_name))) continue;
+    if(Contains(name, "_PRC_")) continue;
+    return static_cast<RooRealVar*>(arg)->getVal();
+  }
+  iter.Reset();
+  return -1.;
+}
+
+double GetKappaSysErr(RooWorkspace &w,
+		      const RooFitResult &f,
+		      const string &bin_name){
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
+  RooAbsArg *arg = nullptr;
+  int i = 0;
+  while((arg = static_cast<RooAbsArg*>(iter())) && i < size){
+    ++i;
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,13) != "syskappa_BLK_") continue;
     if(!(Contains(name, "_BIN_"+bin_name))) continue;
     if(Contains(name, "_PRC_")) continue;
     return GetError(*static_cast<RooAbsReal*>(arg), f);
@@ -1217,6 +1322,7 @@ void GetOptionsExtract(int argc, char *argv[]){
       {"r4_only", no_argument, 0, '4'},
       {"exp_sig", no_argument, 0, 's'},
       {"global", no_argument, 0, 'g'},
+      {"use_combine", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -1247,6 +1353,14 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 'g':
       do_global = true;
+      break;
+    case 0:
+      optname = long_options[option_index].name;
+      if(optname == "use_combine"){
+	use_combine = true;
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+      }
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
