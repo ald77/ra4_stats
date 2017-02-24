@@ -637,7 +637,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
   ostringstream oss;
   oss << "norm_BLK_" << block.Name() << flush;
   Append(nuisances_, oss.str());
-  oss << "[" << max(1., by.Total().Yield()) << ",0.,"
+  oss << "[" << max(1., 0.8*by.Total().Yield()) << ",0.,"
       << max(5.*by.Total().Yield(), 20.) << "]" << flush;
   w_.factory(oss.str().c_str());
   for(size_t irow = 0; irow < by.RowSums().size(); ++irow){
