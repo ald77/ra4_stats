@@ -235,7 +235,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
 	double z = histo2d->GetBinContent(histo2d->GetBin(binx,biny));
 	vx.push_back(x);
 	vy.push_back(y);
-	if(x-y>glu_lsp+30) vz.push_back(z);
+	if(x-y>glu_lsp+85) vz.push_back(z);
 	else vz.push_back(hclone->GetBinContent(hclone->GetBin(binx,biny)));
       }
     }
@@ -272,6 +272,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style,
 
 void fixGraph(TGraph &graph){
   double glu_lsp = 225;
+  if(model=="T5tttt") glu_lsp = 265.;
   int np(graph.GetN());
   double mglu, iniglu, endglu, mlsp, inilsp, endlsp;
   //cout<<endl<<endl;
