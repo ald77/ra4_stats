@@ -94,7 +94,18 @@ int main(int argc, char *argv[]){
   TGraph2D gdown("gdown", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
   TGraph2D gsigobs("gsigobs", "Observed Significance", vsigobs.size(), &vmx.at(0), &vmy.at(0), &vsigobs.at(0));
   TGraph2D gsigexp("gsigexp", "Expected Significance", vsigexp.size(), &vmx.at(0), &vmy.at(0), &vsigexp.at(0));
-  TGraph dots(vmx.size(), &vmx.at(0), &vmy.at(0));
+  vector<double> vmx_excl, vmy_excl, vmx_incl, vmy_incl;
+  for(size_t i = 0; i < vobs.size(); ++i){
+    if(vobs.at(i) < 1.){
+      vmx_excl.push_back(vmx.at(i));
+      vmy_excl.push_back(vmy.at(i));
+    }else{
+      vmx_incl.push_back(vmx.at(i));
+      vmy_incl.push_back(vmy.at(i));
+    }
+  }
+  TGraph dots_excl(vmx_excl.size(), &vmx_excl.at(0), &vmy_excl.at(0));
+  TGraph dots_incl(vmx_incl.size(), &vmx_incl.at(0), &vmy_incl.at(0));
 
   double xmin = *min_element(vmx.cbegin(), vmx.cend());
   double xmax = *max_element(vmx.cbegin(), vmx.cend());
@@ -146,9 +157,10 @@ int main(int argc, char *argv[]){
   TGraph cobsdown = DrawContours(gobsdown, 1, 2);
   TGraph cobs = DrawContours(gobs, 1, 1, &l, "Observed");
   l.Draw("same");
-  dots.SetMarkerStyle(21); dots.SetMarkerColor(28);
-  dots.SetMarkerSize(0.4);
-  dots.Draw("p same");
+  dots_excl.SetMarkerStyle(23); dots_excl.SetMarkerColor(28); dots_excl.SetMarkerSize(0.6);
+  dots_incl.SetMarkerStyle(22); dots_incl.SetMarkerColor(28); dots_incl.SetMarkerSize(0.6);
+  dots_excl.Draw("p same");
+  dots_incl.Draw("p same");
 
   TString filebase = model+"_limit_scan";
   if(Nsmooth>0) {filebase += "_smooth"; filebase += Nsmooth;}
@@ -164,7 +176,8 @@ int main(int argc, char *argv[]){
   cobsdown = DrawContours(gobsdown, 1, 2);
   cobs = DrawContours(gobs, 1, 1);
   l.Draw("same");
-  dots.Draw("p same");
+  dots_excl.Draw("p same");
+  dots_incl.Draw("p same");
   c.Print((model+"_sigobs.pdf").c_str());
 
   gsigexp.Draw("colz");
@@ -175,7 +188,8 @@ int main(int argc, char *argv[]){
   cobsdown = DrawContours(gobsdown, 1, 2);
   cobs = DrawContours(gobs, 1, 1);
   l.Draw("same");
-  dots.Draw("p same");
+  dots_excl.Draw("p same");
+  dots_incl.Draw("p same");
   c.Print((model+"_sigexp.pdf").c_str());
 
   TFile file(filebase+".root","recreate");
