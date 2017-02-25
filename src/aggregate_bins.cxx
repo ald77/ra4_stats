@@ -43,7 +43,7 @@ int main(int argc, char *argv[]){
   string basefolder("/net/cms2/cms2r0/babymaker/");
   if(Contains(hostname, "lxplus")) basefolder = "/afs/cern.ch/user/m/manuelf/work/";
   string foldermc(basefolder+"babies/2017_01_27/mc/merged_mcbase_abcd/"); 
-  string foldersig(basefolder+"babies/2017_02_14/T1tttt/merged_mcbase_abcd/"); 
+  string foldersig(basefolder+"babies/2017_02_22_grooming/T1tttt/merged_mcbase_abcd/"); 
   string folderdata(basefolder+"babies/2017_02_14/data/merged_database_abcd/");
 
   //Define processes. Try to minimize splitting
