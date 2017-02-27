@@ -1293,7 +1293,7 @@ double GetError(const RooAbsReal &var,
     static_cast<RooRealVar*>(paramList.at(ivar))->setVal(downVal);
     double down = cloneFunc->getVal(nset);
 
-    errors.at(ivar) = (up-down);
+    errors.at(ivar) = 0.5*(up-down);
 
     static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal);
   }
