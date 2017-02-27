@@ -1269,14 +1269,28 @@ double GetError(const RooAbsReal &var,
     RooRealVar& rrv = static_cast<RooRealVar&>(fpf[fpf_idx[ivar]]);
 
     double cenVal = rrv.getVal();
-    double errVal = rrv.getError();
+    double minVal = rrv.getMin();
+    double maxVal = rrv.getMax();
+    double downVal = cenVal-fabs(rrv.getErrorLo());
+    double upVal = cenVal+fabs(rrv.getErrorHi());
+    if(upVal-downVal >= maxVal-minVal){
+      //Error bars bigger than variable range
+      downVal = minVal;
+      upVal = maxVal;
+    }else if(downVal < minVal){
+      upVal += minVal - downVal;
+      downVal = minVal;
+    }else if(upVal > maxVal){
+      downVal -= upVal - maxVal;
+      upVal = maxVal;
+    }
 
     // Make Plus variation
-    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal+0.5*errVal);
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(upVal);
     double up = cloneFunc->getVal(nset);
 
     // Make Minus variation
-    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(cenVal-0.5*errVal);
+    static_cast<RooRealVar*>(paramList.at(ivar))->setVal(downVal);
     double down = cloneFunc->getVal(nset);
 
     errors.at(ivar) = (up-down);
