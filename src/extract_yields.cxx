@@ -1256,22 +1256,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
 			  const RooFitResult &f,
 			  string covar_file_name){
   SetVariables(w, f);
-  RooAbsReal *model = w.pdf("model_b");
-  RooAbsReal *cloneFunc = static_cast<RooAbsReal*>(model->cloneTree());
-  //cloneFunc->Print();
-  RooArgSet *errorParams = cloneFunc->getObservables(f.floatParsFinal());
-  RooArgSet *allComps = cloneFunc->getComponents();
-
-  RooArgList paramList;
   const RooArgList &fpf = f.floatParsFinal();
-  vector<int> fpf_idx;
-  for(int i = 0; i < fpf.getSize(); ++i){
-    RooAbsArg *par = errorParams->find(fpf[i].GetName());
-    if(par){
-      paramList.add(*par);
-      fpf_idx.push_back(i);
-    }
-  }
 
   vector<RooAbsReal*> yields;
   RooArgSet funcs = w.allFunctions();
@@ -1287,12 +1272,12 @@ void MakeCovarianceMatrix(RooWorkspace &w,
     if(!Contains(name, "_BIN_")) continue;
     if(Contains(name, "_PRC_")) continue;
     if(r4_only && !Contains(name, "r4_")) continue;
-    yields.push_back(static_cast<RooAbsReal*>(&((*allComps)[name.c_str()])));
+    yields.push_back(arg);
   }
 
-  vector<vector<double> > errors(paramList.getSize(), vector<double>(yields.size(), 0.));
-  for(Int_t iparam = 0; iparam<paramList.getSize(); ++iparam){
-    RooRealVar &rrv = static_cast<RooRealVar&>(fpf[fpf_idx[iparam]]);
+  vector<vector<double> > errors(fpf.getSize(), vector<double>(yields.size(), 0.));
+  for(Int_t iparam = 0; iparam<fpf.getSize(); ++iparam){
+    RooRealVar &rrv = static_cast<RooRealVar&>(*w.var(fpf.at(iparam)->GetName()));
 
     double cenVal = rrv.getVal();
     double minVal = rrv.getMin();
@@ -1311,23 +1296,23 @@ void MakeCovarianceMatrix(RooWorkspace &w,
       upVal = maxVal;
     }
 
-    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(upVal);
+    rrv.setVal(upVal);
     for(size_t iyield = 0; iyield<yields.size(); ++iyield){
       errors.at(iparam).at(iyield) = 0.5*yields.at(iyield)->getVal();
     }
-    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(downVal);
+    rrv.setVal(downVal);
     for(size_t iyield = 0; iyield<yields.size(); ++iyield){
       errors.at(iparam).at(iyield) -= 0.5*yields.at(iyield)->getVal();
     }
-    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(cenVal);
+    rrv.setVal(cenVal);
   }
 
-  vector<vector<double> > right(paramList.getSize(), vector<double>(yields.size(), 0.));
-  for(Int_t iparam = 0; iparam<paramList.getSize(); ++iparam){
+  vector<vector<double> > right(fpf.getSize(), vector<double>(yields.size(), 0.));
+  for(Int_t iparam = 0; iparam<fpf.getSize(); ++iparam){
     for(size_t iyield = 0; iyield<yields.size(); ++iyield){
       right.at(iparam).at(iyield) = 0.;
-      for(Int_t entry = 0; entry<paramList.getSize(); ++entry){
-	right.at(iparam).at(iyield) += f.correlation(paramList.at(iparam)->GetName(),paramList.at(entry)->GetName())
+      for(Int_t entry = 0; entry<fpf.getSize(); ++entry){
+	right.at(iparam).at(iyield) += f.correlation(fpf.at(iparam)->GetName(),fpf.at(entry)->GetName())
 	  * errors.at(entry).at(iyield);
       }
     }
@@ -1337,7 +1322,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   for(size_t irow = 0; irow < yields.size(); ++irow){
     for(size_t icol = 0.; icol < yields.size(); ++icol){
       covar.at(irow).at(icol) = 0.;
-      for(Int_t ientry = 0.; ientry < paramList.getSize(); ++ientry){
+      for(Int_t ientry = 0.; ientry < fpf.getSize(); ++ientry){
 	covar.at(irow).at(icol) += errors.at(ientry).at(irow) * right.at(ientry).at(icol);
       }
     }
@@ -1401,23 +1386,6 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   h_corr.Draw("text same");
   ReplaceAll(covar_file_name, "_covar.pdf", "_corr.pdf");
   c.Print(covar_file_name.c_str());
-
-  if(cloneFunc != nullptr){
-    delete cloneFunc;
-    cloneFunc = nullptr;
-  }
-  if(errorParams != nullptr){
-    delete errorParams;
-    errorParams = nullptr;
-  }
-  /*if(nset != nullptr){
-    delete nset;
-    nset = nullptr;
-    }*/
-  if(allComps != nullptr){
-    delete allComps;
-    allComps = nullptr;
-  }
 }
 
 double GetError(const RooAbsReal &var,
