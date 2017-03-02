@@ -18,6 +18,8 @@
 #include "TPad.h"
 #include "TLegend.h"
 #include "TColor.h"
+#include "TH2D.h"
+#include "TStyle.h"
 
 #include "RooArgList.h"
 #include "RooArgSet.h"
@@ -70,7 +72,6 @@ int main(int argc, char *argv[]){
     cout << "Executing " << command.str() << endl;
     execute(command.str());
 
-
     string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
     w_name = workdir+'/'+w_name;
     TFile w_file(w_name.c_str(),"read");
@@ -93,6 +94,7 @@ int main(int argc, char *argv[]){
       MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
       MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
       if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_covar.pdf"));
     }
     if(fit_s != nullptr){
       PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
@@ -100,6 +102,7 @@ int main(int argc, char *argv[]){
       MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
       MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
       if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
+      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_sig_covar.pdf"));
     }
     
     w_file.Close();
@@ -116,8 +119,8 @@ int main(int argc, char *argv[]){
     RooProdPdf *model_b = static_cast<RooProdPdf*>(w->pdf("model_b"));
     RooProdPdf *model_s = static_cast<RooProdPdf*>(w->pdf("model_s"));
 
-    RooNLLVar nll_b("nll_b","nll_b", *model_b, *data_obs);
-    RooNLLVar nll_s("nll_s","nll_s", *model_s, *data_obs);
+    RooNLLVar nll_b("nll_b","nll_b", *model_b, *data_obs, RooFit::Extended(model_b->canBeExtended()), RooFit::Offset(true));
+    RooNLLVar nll_s("nll_s","nll_s", *model_s, *data_obs, RooFit::Extended(model_s->canBeExtended()), RooFit::Offset(true));
 
     RooMinuit minuit_b(nll_b);
     RooMinuit minuit_s(nll_s);
@@ -131,6 +134,7 @@ int main(int argc, char *argv[]){
       MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
       MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
       if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_covar.pdf"));
     }
     if(fit_s != nullptr){
       PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
@@ -138,6 +142,7 @@ int main(int argc, char *argv[]){
       MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
       MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
       if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
+      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_sig_covar.pdf"));
     }
   }
 }
@@ -145,8 +150,9 @@ int main(int argc, char *argv[]){
 RooFitResult* DoMinuit(RooMinuit &minuit){
   minuit.setPrintLevel(-99999);
   minuit.setVerbose(false);
-  minuit.setStrategy(2);
-  minuit.optimizeConst(false);
+  minuit.setStrategy(1);
+  minuit.optimizeConst(true);
+  minuit.migrad();
   minuit.hesse();
   minuit.migrad();
   minuit.hesse();
@@ -320,7 +326,8 @@ void PrintTable(RooWorkspace &w,
     if(dosig) out << "$" << GetSigPred(w, bin_name) << "\\pm" << GetSigPredErr(w, f, bin_name) <<  "$ & ";
     if(Contains(bin_name,"r4")){
       double kappa = GetKappaSys(w, bin_name);
-      double stat_err = GetKappaNoSysErr(w, f, bin_name);
+      double kappa_nosys = GetKappaNoSys(w, bin_name);
+      double stat_err = GetKappaNoSysErr(w, f, bin_name)*kappa/kappa_nosys;
       double full_err = GetKappaSysErr(w, f, bin_name);
       double sys_err = 0.;
       if(full_err >= stat_err){
@@ -1245,6 +1252,174 @@ void MakeCorrectionPlot(RooWorkspace &w,
   c.Print(file_name.c_str());
 }
 
+void MakeCovarianceMatrix(RooWorkspace &w,
+			  const RooFitResult &f,
+			  string covar_file_name){
+  SetVariables(w, f);
+  RooAbsReal *model = w.pdf("model_b");
+  RooAbsReal *cloneFunc = static_cast<RooAbsReal*>(model->cloneTree());
+  //cloneFunc->Print();
+  RooArgSet *errorParams = cloneFunc->getObservables(f.floatParsFinal());
+  RooArgSet *allComps = cloneFunc->getComponents();
+
+  RooArgList paramList;
+  const RooArgList &fpf = f.floatParsFinal();
+  vector<int> fpf_idx;
+  for(int i = 0; i < fpf.getSize(); ++i){
+    RooAbsArg *par = errorParams->find(fpf[i].GetName());
+    if(par){
+      paramList.add(*par);
+      fpf_idx.push_back(i);
+    }
+  }
+
+  vector<RooAbsReal*> yields;
+  RooArgSet funcs = w.allFunctions();
+  TIter iter(funcs.createIterator());
+  int size = funcs.getSize();
+  RooAbsReal *arg = nullptr;
+  int i = 0;
+  while((arg = static_cast<RooAbsReal*>(iter())) && i < size){
+    ++i;
+    if(arg == nullptr) continue;
+    string name = arg->GetName();
+    if(name.substr(0,9) != "nbkg_BLK_") continue;
+    if(!Contains(name, "_BIN_")) continue;
+    if(Contains(name, "_PRC_")) continue;
+    if(r4_only && !Contains(name, "r4_")) continue;
+    yields.push_back(static_cast<RooAbsReal*>(&((*allComps)[name.c_str()])));
+  }
+
+  vector<vector<double> > errors(paramList.getSize(), vector<double>(yields.size(), 0.));
+  for(Int_t iparam = 0; iparam<paramList.getSize(); ++iparam){
+    RooRealVar &rrv = static_cast<RooRealVar&>(fpf[fpf_idx[iparam]]);
+
+    double cenVal = rrv.getVal();
+    double minVal = rrv.getMin();
+    double maxVal = rrv.getMax();
+    double downVal = cenVal-fabs(rrv.getErrorLo());
+    double upVal = cenVal+fabs(rrv.getErrorHi());
+    if(upVal-downVal >= maxVal-minVal){
+      //Error bars bigger than variable range
+      downVal = minVal;
+      upVal = maxVal;
+    }else if(downVal < minVal){
+      upVal += minVal - downVal;
+      downVal = minVal;
+    }else if(upVal > maxVal){
+      downVal -= upVal - maxVal;
+      upVal = maxVal;
+    }
+
+    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(upVal);
+    for(size_t iyield = 0; iyield<yields.size(); ++iyield){
+      errors.at(iparam).at(iyield) = 0.5*yields.at(iyield)->getVal();
+    }
+    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(downVal);
+    for(size_t iyield = 0; iyield<yields.size(); ++iyield){
+      errors.at(iparam).at(iyield) -= 0.5*yields.at(iyield)->getVal();
+    }
+    static_cast<RooRealVar*>(paramList.at(iparam))->setVal(cenVal);
+  }
+
+  vector<vector<double> > right(paramList.getSize(), vector<double>(yields.size(), 0.));
+  for(Int_t iparam = 0; iparam<paramList.getSize(); ++iparam){
+    for(size_t iyield = 0; iyield<yields.size(); ++iyield){
+      right.at(iparam).at(iyield) = 0.;
+      for(Int_t entry = 0; entry<paramList.getSize(); ++entry){
+	right.at(iparam).at(iyield) += f.correlation(paramList.at(iparam)->GetName(),paramList.at(entry)->GetName())
+	  * errors.at(entry).at(iyield);
+      }
+    }
+  }
+
+  vector<vector<double> > covar(yields.size(), vector<double>(yields.size(), 0.));
+  for(size_t irow = 0; irow < yields.size(); ++irow){
+    for(size_t icol = 0.; icol < yields.size(); ++icol){
+      covar.at(irow).at(icol) = 0.;
+      for(Int_t ientry = 0.; ientry < paramList.getSize(); ++ientry){
+	covar.at(irow).at(icol) += errors.at(ientry).at(irow) * right.at(ientry).at(icol);
+      }
+    }
+  }
+
+  TH2D h_covar("", "Covariance Matrix",
+	       covar.size(), -0.5, covar.size()-0.5,
+	       covar.size(), -0.5, covar.size()-0.5);
+  TH2D h_corr("", "Correlation Matrix",
+	      covar.size(), -0.5, covar.size()-0.5,
+	      covar.size(), -0.5, covar.size()-0.5);
+  h_covar.SetLabelSize(0.015, "xy");
+  h_covar.SetMarkerSize(0.3);
+  h_covar.SetTickLength(0., "xy");
+  h_corr.SetLabelSize(0.015, "xy");
+  h_corr.SetMarkerSize(0.3);
+  h_corr.SetTickLength(0., "xy");
+  for(size_t x = 0; x < yields.size(); ++x){
+    string name = yields.at(x)->GetName();
+    auto pos = name.find("_BIN_");
+    name = name.substr(pos+5);
+    name = PrettyBinName(name);
+    h_covar.GetXaxis()->SetBinLabel(x+1, name.c_str());
+    h_covar.GetYaxis()->SetBinLabel(x+1, name.c_str());
+    h_corr.GetXaxis()->SetBinLabel(x+1, name.c_str());
+    h_corr.GetYaxis()->SetBinLabel(x+1, name.c_str());
+    for(size_t y = 0; y < yields.size(); ++y){
+      h_covar.SetBinContent(x+1,y+1,covar.at(x).at(y));
+      h_corr.SetBinContent(x+1,y+1,covar.at(x).at(y)/sqrt(covar.at(x).at(x)*covar.at(y).at(y)));
+    }
+  }
+  h_covar.LabelsOption("vd","X");
+  h_corr.LabelsOption("vd","X");
+  h_corr.SetMinimum(-1.);
+  h_corr.SetMaximum(1.);
+
+  const unsigned num = 3;
+  const int bands = 255;
+  int colors[bands];
+  double stops[num] = {0., 0.5, 1.};
+  double red[num] = {1., 1., 0.};
+  double green[num] = {0., 1., 1.};
+  double blue[num] = {0., 1., 0.};
+  int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
+  for(int ib = 0; ib < bands; ++ib){
+    colors[ib] = fi+ib;
+  }
+  gStyle->SetNumberContours(bands);
+  gStyle->SetPalette(bands, colors);
+
+  TCanvas c("", "", 1024, 1024);
+  c.SetMargin(0.2, 0.05, 0.2, 0.05);
+  gStyle->SetPaintTextFormat("6.1f");
+  h_covar.Draw("axis");
+  h_corr.Draw("col same");
+  h_covar.Draw("text same");
+  c.Print(covar_file_name.c_str());
+  gStyle->SetPaintTextFormat("6.2f");
+  c.SetLogz(false);
+  h_corr.Draw("col");
+  h_corr.Draw("text same");
+  ReplaceAll(covar_file_name, "_covar.pdf", "_corr.pdf");
+  c.Print(covar_file_name.c_str());
+
+  if(cloneFunc != nullptr){
+    delete cloneFunc;
+    cloneFunc = nullptr;
+  }
+  if(errorParams != nullptr){
+    delete errorParams;
+    errorParams = nullptr;
+  }
+  /*if(nset != nullptr){
+    delete nset;
+    nset = nullptr;
+    }*/
+  if(allComps != nullptr){
+    delete allComps;
+    allComps = nullptr;
+  }
+}
+
 double GetError(const RooAbsReal &var,
                 const RooFitResult &f){
   // Clone self for internal use
@@ -1324,6 +1499,23 @@ double GetError(const RooAbsReal &var,
   }
 
   return sqrt(sum);
+}
+
+string PrettyBinName(string name){
+  ReplaceAll(name, "r1_", "R1: ");
+  ReplaceAll(name, "r2_", "R2: ");
+  ReplaceAll(name, "r3_", "R3: ");
+  ReplaceAll(name, "r4_", "R4: ");
+  ReplaceAll(name, "lowmet_", "200<p_{T}^{miss}#leq 350, ");
+  ReplaceAll(name, "medmet_", "350<p_{T}^{miss}#leq 500, ");
+  ReplaceAll(name, "highmet_", "p_{T}^{miss}>550, ");
+  ReplaceAll(name, "lownj_", "6#leq N_{jets}#leq 8");
+  ReplaceAll(name, "highnj_", "N_{jets}#geq 9");
+  ReplaceAll(name, "1b", ", N_{b}=1");
+  ReplaceAll(name, "2b", ", N_{b}=2");
+  ReplaceAll(name, "3b", ", N_{b}#geq 3");
+  ReplaceAll(name, "allnb", "");
+  return name;
 }
 
 void GetOptionsExtract(int argc, char *argv[]){
