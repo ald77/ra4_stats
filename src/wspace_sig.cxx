@@ -306,18 +306,18 @@ int main(int argc, char *argv[]){
 	blind_level>BlindLevel::unblinded};
     
     blocks_1bk = {
-      {"lowmet", {{r1_lowmet_allnb, r2_lowmet_lownj_1b, r2_lowmet_highnj_1b, r2_lowmet_lownj_2b, r2_lowmet_highnj_2b,
-		   r2_lowmet_lownj_3b, r2_lowmet_highnj_3b},
-		  {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_highnj_1b, r4_lowmet_lownj_2b, r4_lowmet_highnj_2b,
-		   r4_lowmet_lownj_3b, r4_lowmet_highnj_3b}}},
-      {"medmet", {{r1_medmet_allnb, r2_medmet_lownj_1b, r2_medmet_highnj_1b, r2_medmet_lownj_2b, r2_medmet_highnj_2b,
-		   r2_medmet_lownj_3b, r2_medmet_highnj_3b},
-		  {r3_medmet_allnb, r4_medmet_lownj_1b, r4_medmet_highnj_1b, r4_medmet_lownj_2b, r4_medmet_highnj_2b,
-		   r4_medmet_lownj_3b, r4_medmet_highnj_3b}}},
-      {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_highnj_1b, r2_highmet_lownj_2b, r2_highmet_highnj_2b,
-		    r2_highmet_lownj_3b, r2_highmet_highnj_3b},
-		   {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_highnj_1b, r4_highmet_lownj_2b, r4_highmet_highnj_2b,
-		    r4_highmet_lownj_3b, r4_highmet_highnj_3b}}}
+      {"lowmet", {{r1_lowmet_allnb, r2_lowmet_lownj_1b, r2_lowmet_lownj_2b, r2_lowmet_lownj_3b, r2_lowmet_highnj_1b,
+		   r2_lowmet_highnj_2b, r2_lowmet_highnj_3b},
+		  {r3_lowmet_allnb, r4_lowmet_lownj_1b, r4_lowmet_lownj_2b, r4_lowmet_lownj_3b, r4_lowmet_highnj_1b,
+		   r4_lowmet_highnj_2b, r4_lowmet_highnj_3b}}},
+      {"medmet", {{r1_medmet_allnb, r2_medmet_lownj_1b, r2_medmet_lownj_2b, r2_medmet_lownj_3b, r2_medmet_highnj_1b,
+		   r2_medmet_highnj_2b, r2_medmet_highnj_3b},
+		  {r3_medmet_allnb, r4_medmet_lownj_1b, r4_medmet_lownj_2b, r4_medmet_lownj_3b, r4_medmet_highnj_1b,
+		   r4_medmet_highnj_2b, r4_medmet_highnj_3b}}},
+      {"highmet", {{r1_highmet_allnb, r2_highmet_lownj_1b, r2_highmet_lownj_2b, r2_highmet_lownj_3b, r2_highmet_highnj_1b,
+		   r2_highmet_highnj_2b, r2_highmet_highnj_3b},
+		  {r3_highmet_allnb, r4_highmet_lownj_1b, r4_highmet_lownj_2b, r4_highmet_lownj_3b, r4_highmet_highnj_1b,
+		   r4_highmet_highnj_2b, r4_highmet_highnj_3b}}}
     };
   }
 
