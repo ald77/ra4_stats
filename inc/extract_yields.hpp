@@ -14,7 +14,7 @@
 
 void GetOptionsExtract(int argc, char *argv[]);
 
-RooFitResult* DoMinuit(RooMinuit &minuit);
+void RunFit(const std::string &path);
 
 std::string GetSignalName(const RooWorkspace &w);
 

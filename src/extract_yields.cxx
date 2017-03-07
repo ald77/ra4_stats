@@ -37,13 +37,10 @@ using namespace std;
 
 namespace{
   string file_wspace("");
-  string name_wspace("w");
   bool table_clean(false);
-  int toy_num(-1);
   bool r4_only(false);
   bool show_exp_sig(false);
   bool do_global = false;
-  bool use_combine = false;
 }
 
 int main(int argc, char *argv[]){
@@ -54,111 +51,38 @@ int main(int argc, char *argv[]){
   styles style("RA4");
   style.setDefaultStyle();
 
-  if(use_combine){
-    string workdir = MakeDir("extract_yields_");
+  RunFit(file_wspace);
 
-    ostringstream command;
-    command << "export blah=$(pwd); "
-	    << "cd ~/cmssw/CMSSW_7_4_14/src; "
-	    << "eval `scramv1 runtime -sh`; "
-	    << "cd $blah; "
-	    << "cp " << file_wspace << ' ' << workdir << "; "
-	    << "cd " << workdir << "; "
-	    << "combine -M MaxLikelihoodFit -v 999999 --forceRecreateNLL --saveWorkspace --saveWithUncertainties --minos=all -w " << name_wspace << " --dataset data_obs";
-    if(toy_num >= 0) command << "_" << toy_num;
-    command << " " << StripPath(file_wspace) << "; "
-	    << "cd $blah; "
-	    << flush;
-    cout << "Executing " << command.str() << endl;
-    execute(command.str());
+  TFile in_file(file_wspace.c_str(), "read");
+  RooWorkspace *w = static_cast<RooWorkspace*>(in_file.Get("w"));
+  RooFitResult *fit_b = static_cast<RooFitResult*>(in_file.Get("fit_b"));
+  RooFitResult *fit_s = static_cast<RooFitResult*>(in_file.Get("fit_s"));
 
-    string w_name("higgsCombineTest.MaxLikelihoodFit.mH120.root");
-    w_name = workdir+'/'+w_name;
-    TFile w_file(w_name.c_str(),"read");
-    if(!w_file.IsOpen()) ERROR("File "+w_name+" not produced");
-    RooWorkspace *w = static_cast<RooWorkspace*>(w_file.Get(name_wspace.c_str()));
-    if(w == nullptr) ERROR("Workspace "+name_wspace+" not found");
-
-    string fit_name = "mlfit.root";
-    string full_fit_name = workdir+'/'+fit_name;
-    TFile fit_file(full_fit_name.c_str(),"read");
-    if(!fit_file.IsOpen()) ERROR("Could not open "+full_fit_name);
-    RooFitResult *fit_b = static_cast<RooFitResult*>(fit_file.Get("fit_b"));
-    RooFitResult *fit_s = static_cast<RooFitResult*>(fit_file.Get("fit_s"));
-    string toy_ext = "";
-    if(toy_num >= 0) toy_ext = "_toy_" + to_string(toy_num);
-    file_wspace = ChangeExtension(file_wspace, toy_ext+"_"+name_wspace+".root");
-    if(fit_b != nullptr){
-      PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
-      PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
-      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
-      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
-      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
-      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_covar.pdf"));
-    }
-    if(fit_s != nullptr){
-      PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
-      PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
-      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
-      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_sig_covar.pdf"));
-    }
-    
-    w_file.Close();
-    fit_file.Close();
-    
-    execute("rm -rf "+workdir);
-  }else{
-    TFile in_file(file_wspace.c_str(), "read");
-    RooWorkspace *w = static_cast<RooWorkspace*>(in_file.Get(name_wspace.c_str()));
-    string data_name = "data_obs";
-    if(toy_num >= 0) data_name += "_"+to_string(toy_num);
-    RooDataSet *data_obs = static_cast<RooDataSet*>(w->data(data_name.c_str()));
-
-    RooProdPdf *model_b = static_cast<RooProdPdf*>(w->pdf("model_b"));
-    RooProdPdf *model_s = static_cast<RooProdPdf*>(w->pdf("model_s"));
-
-    RooNLLVar nll_b("nll_b","nll_b", *model_b, *data_obs, RooFit::Extended(model_b->canBeExtended()), RooFit::Offset(true));
-    RooNLLVar nll_s("nll_s","nll_s", *model_s, *data_obs, RooFit::Extended(model_s->canBeExtended()), RooFit::Offset(true));
-
-    RooMinuit minuit_b(nll_b);
-    RooMinuit minuit_s(nll_s);
-
-    RooFitResult *fit_b = DoMinuit(minuit_b);
-    RooFitResult *fit_s = DoMinuit(minuit_s);
-
-    if(fit_b != nullptr){
-      PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
-      PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
-      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
-      MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
-      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
-      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_covar.pdf"));
-    }
-    if(fit_s != nullptr){
-      PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
-      PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
-      MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
-      if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
-      MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_sig_covar.pdf"));
-    }
+  if(fit_b != nullptr){
+    PrintDebug(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_debug.tex"));
+    PrintTable(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_table.tex"));
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot.pdf"), false);
+    MakeYieldPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_plot_linear.pdf"), true);
+    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_correction.pdf"));
+    MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_bkg_covar.pdf"));
+  }
+  if(fit_s != nullptr){
+    PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
+    PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"), false);
+    MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot_linear.pdf"), true);
+    if(!Contains(file_wspace, "nokappa")) MakeCorrectionPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_correction.pdf"));
+    MakeCovarianceMatrix(*w, *fit_b, ChangeExtension(file_wspace, "_sig_covar.pdf"));
   }
 }
 
-RooFitResult* DoMinuit(RooMinuit &minuit){
-  minuit.setPrintLevel(-99999);
-  minuit.setVerbose(false);
-  minuit.setStrategy(1);
-  minuit.optimizeConst(true);
-  minuit.migrad();
-  minuit.hesse();
-  minuit.migrad();
-  minuit.hesse();
-  minuit.migrad();
-  minuit.hesse();
-  return minuit.save();
+void RunFit(const string &path){
+  TFile in_file(path.c_str(), "read");
+  RooFitResult *fit_b = static_cast<RooFitResult*>(in_file.Get("fit_b"));
+  RooFitResult *fit_s = static_cast<RooFitResult*>(in_file.Get("fit_s"));
+  if(fit_b == nullptr || fit_s == nullptr){
+    execute("python/run_combine.py --full_fit --overwrite "+path);
+  }
 }
 
 string GetSignalName(const RooWorkspace &w){
@@ -1490,31 +1414,22 @@ void GetOptionsExtract(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"file_wspace", required_argument, 0, 'f'},
-      {"name_wspace", required_argument, 0, 'w'},
-      {"toy", required_argument, 0, 't'},
       {"table_clean", no_argument, 0, 'c'},
       {"r4_only", no_argument, 0, '4'},
       {"exp_sig", no_argument, 0, 's'},
       {"global", no_argument, 0, 'g'},
-      {"use_combine", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "f:w:t:c4sg", long_options, &option_index);
+    opt = getopt_long(argc, argv, "f:c4sg", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;
     switch(opt){
-    case 'w':
-      name_wspace = optarg;
-      break;
     case 'f':
       file_wspace = optarg;
-      break;
-    case 't':
-      toy_num = atoi(optarg);
       break;
     case 'c':
       table_clean = true;
@@ -1530,8 +1445,7 @@ void GetOptionsExtract(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(optname == "use_combine"){
-	use_combine = true;
+      if(false){
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

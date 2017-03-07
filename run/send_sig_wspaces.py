@@ -56,7 +56,7 @@ def SendSignalWorkspaces(input_dir, output_dir, num_jobs, injection_strength, in
 
       for ifile in range(len(job_files)):
         f = job_files[ifile]
-        cmd = "./run/wspace_sig.exe -f {} -o {} --sig_strength {} -u all -l 35.9".format(
+        cmd = "./run/wspace_sig.exe -f {} -o {} --sig_strength {} -u all -l 35.9 -p".format(
           f, output_dir, (injection_strength if injection_strength >= 0. else 0.))
         if injection_strength >= 0.:
           cmd += " --unblind none"
