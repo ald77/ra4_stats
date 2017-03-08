@@ -146,14 +146,20 @@ def style(h, width, style, color):
     h.SetLineStyle(style)
     h.SetLineColor(color)
     
-def make_plot(out_dir, input_name, bins, ndof, bkg_idx, sig_idx):
+def make_plot(out_dir, input_name, bins, ndof, r_sign, bkg_idx, sig_idx):
     if sig_idx == 2:
         ndof = 1
+    elif sig_idx == 3:
+        r_sign = 0
 
     chisq = 0.
     for i in range(len(bins)):
         chisq += 2.*(bins[i][bkg_idx]-bins[i][sig_idx])
     p = scipy.stats.chi2.sf(chisq,ndof)
+    if r_sign < 0:
+        p = 1.-0.5*p
+    elif r_sign > 0:
+        p = 0.5*p
     z = scipy.stats.norm.isf(p)
     
     out_name = "{}_chisq_{}_model.pdf".format(input_name,
@@ -200,6 +206,12 @@ def bin_significance(out_dir, input_path, ndof):
         bins = [ [b, 0., 0., 0.] for b in get_bin_names(w) ]
         procs = get_process_names(w)
         constraints = get_constraint_names(w)
+        r_sign = 0
+        r = fit_s.floatParsFinal().find("r")
+        if r.getVal() < 0.:
+            r_sign = -1
+        elif r.getVal() > 0.:
+            r_sign = 1
 
         find_sat_nlls(bins, procs, w)
         find_bkg_nlls(bins, procs, constraints, w, fit_b)
@@ -209,8 +221,8 @@ def bin_significance(out_dir, input_path, ndof):
         for b in bins:
             print("{:>48s}: {:>12.3f} {:>12.3f} {:>12.3f}".format(b[0],b[1],b[2],b[3]))
 
-        make_plot(out_dir, input_name, bins, ndof, 1, 2)
-        make_plot(out_dir, input_name, bins, ndof, 1, 3)
+        make_plot(out_dir, input_name, bins, ndof, r_sign, 1, 2)
+        make_plot(out_dir, input_name, bins, ndof, 0,      1, 3)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Finds approximate significance contribution from each bin",
