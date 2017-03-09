@@ -20,6 +20,7 @@
 #include "TColor.h"
 #include "TH2D.h"
 #include "TStyle.h"
+#include "TLatex.h"
 
 #include "RooArgList.h"
 #include "RooArgSet.h"
@@ -1252,10 +1253,10 @@ void MakeCovarianceMatrix(RooWorkspace &w,
     }
   }
 
-  TH2D h_covar("", "Covariance Matrix",
+  TH2D h_covar("", "",
 	       covar.size(), -0.5, covar.size()-0.5,
 	       covar.size(), -0.5, covar.size()-0.5);
-  TH2D h_corr("", "Correlation Matrix",
+  TH2D h_corr("", "",
 	      covar.size(), -0.5, covar.size()-0.5,
 	      covar.size(), -0.5, covar.size()-0.5);
   h_covar.SetLabelSize(0.015, "xy");
@@ -1284,10 +1285,10 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   const unsigned num = 3;
   const int bands = 255;
   int colors[bands];
-  double stops[num] = {0., 0.5, 1.};
-  double red[num] = {1., 1., 0.};
-  double green[num] = {0., 1., 0.};
-  double blue[num] = {0., 1., 1.};
+  double stops[num] = {0.0, 0.5, 1.0};
+  double red[num]   = {1.0, 1.0, 0.5};
+  double green[num] = {0.0, 1.0, 0.5};
+  double blue[num]  = {0.0, 1.0, 1.0};
   int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
   for(int ib = 0; ib < bands; ++ib){
     colors[ib] = fi+ib;
@@ -1303,12 +1304,27 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   h_covar.Draw("axis");
   h_corr.Draw("col same");
   h_covar.Draw("text same");
+
+  
+  TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
+	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}");
+  TLatex rtitle(1.-c.GetRightMargin(), 1.-0.5*c.GetTopMargin(),
+	       "#scale[0.8]{35.9 fb^{-1} (13 TeV)}");
+  ltitle.SetNDC();
+  rtitle.SetNDC();
+  ltitle.SetTextAlign(12);
+  rtitle.SetTextAlign(32);
+
+  ltitle.Draw("same");
+  rtitle.Draw("same");
   c.Print(covar_file_name.c_str());
   gStyle->SetPaintTextFormat("6.2f");
   c.SetLogz(false);
   h_corr.Draw("col");
   h_corr.Draw("text same");
   ReplaceAll(covar_file_name, "_covar.pdf", "_corr.pdf");
+  ltitle.Draw("same");
+  rtitle.Draw("same");
   c.Print(covar_file_name.c_str());
 }
 
@@ -1398,15 +1414,15 @@ string PrettyBinName(string name){
   ReplaceAll(name, "r2_", "R2: ");
   ReplaceAll(name, "r3_", "R3: ");
   ReplaceAll(name, "r4_", "R4: ");
-  ReplaceAll(name, "lowmet_", "200<p_{T}^{miss}#leq 350, ");
-  ReplaceAll(name, "medmet_", "350<p_{T}^{miss}#leq 500, ");
-  ReplaceAll(name, "highmet_", "p_{T}^{miss}>550, ");
-  ReplaceAll(name, "lownj_", "6#leq N_{jets}#leq 8");
-  ReplaceAll(name, "highnj_", "N_{jets}#geq 9");
-  ReplaceAll(name, "1b", ", N_{b}=1");
-  ReplaceAll(name, "2b", ", N_{b}=2");
-  ReplaceAll(name, "3b", ", N_{b}#geq 3");
-  ReplaceAll(name, "allnb", "");
+  ReplaceAll(name, "lowmet", "200<p_{T}^{miss}#leq 350");
+  ReplaceAll(name, "medmet", "350<p_{T}^{miss}#leq 500");
+  ReplaceAll(name, "highmet", "p_{T}^{miss}>550");
+  ReplaceAll(name, "_lownj", ", 6#leq N_{jets}#leq 8");
+  ReplaceAll(name, "_highnj", ", N_{jets}#geq 9");
+  ReplaceAll(name, "_1b", ", N_{b}=1");
+  ReplaceAll(name, "_2b", ", N_{b}=2");
+  ReplaceAll(name, "_3b", ", N_{b}#geq 3");
+  ReplaceAll(name, "_allnb", "");
   return name;
 }
 
