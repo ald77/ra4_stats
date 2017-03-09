@@ -1278,8 +1278,6 @@ void MakeCovarianceMatrix(RooWorkspace &w,
       h_corr.SetBinContent(x+1,y+1,covar.at(x).at(y)/sqrt(covar.at(x).at(x)*covar.at(y).at(y)));
     }
   }
-  h_covar.LabelsOption("vd","X");
-  h_corr.LabelsOption("vd","X");
   h_corr.SetMinimum(-1.);
   h_corr.SetMaximum(1.);
 
@@ -1288,8 +1286,8 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   int colors[bands];
   double stops[num] = {0., 0.5, 1.};
   double red[num] = {1., 1., 0.};
-  double green[num] = {0., 1., 1.};
-  double blue[num] = {0., 1., 0.};
+  double green[num] = {0., 1., 0.};
+  double blue[num] = {0., 1., 1.};
   int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
   for(int ib = 0; ib < bands; ++ib){
     colors[ib] = fi+ib;
@@ -1300,6 +1298,8 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   TCanvas c("", "", 1024, 1024);
   c.SetMargin(0.2, 0.05, 0.2, 0.05);
   gStyle->SetPaintTextFormat("6.1f");
+  h_covar.LabelsOption("v","x");
+  h_corr.LabelsOption("v","x");
   h_covar.Draw("axis");
   h_corr.Draw("col same");
   h_covar.Draw("text same");
