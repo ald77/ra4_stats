@@ -17,6 +17,7 @@
 #include "TLegend.h"
 #include "TFile.h"
 #include "TLatex.h"
+#include "TLine.h"
 
 #include "utilities.hpp"
 #include "styles.hpp"
@@ -128,6 +129,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   g.SetNpy(GetNumBins(vmy, 12.5));
 
   g.GetHistogram()->SetTitle(title.c_str());
+  g.GetHistogram()->SetTickLength(0., "Z");
 
   TCanvas c;
   c.cd();
@@ -143,18 +145,38 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
 
   g.Draw("colz");
 
-  for(double z = 0.; z < the_max; z+=1.){
-    int style = z <= 0. ? 1 : 2;
-    double width = z <= 0. ? 2. : 1.;
+  vector<TLine> lines;
+  for(double z = 0.; z < the_max; z+=0.5){
+    int style = min(5, static_cast<int>(2.*fabs(z))+1);
+    double width = max(1., 3.-fabs(z));
     DrawContours(g, 1, style, width, 0, z);
+    double x1 = 1.-c.GetRightMargin()+0.0047;
+    double x2 = 1.-c.GetRightMargin()+0.05;
+    double ybot = c.GetBottomMargin();
+    double ytop = 1.-c.GetTopMargin();
+    double zpos = ybot+(ytop-ybot)*(the_max+z)/(2.*the_max);
+    lines.emplace_back(x1, zpos, x2, zpos);
+    lines.back().SetLineColor(1);
+    lines.back().SetLineStyle(style);
+    lines.back().SetLineWidth(width);
+    lines.back().SetNDC(true);
     if(z != 0.){
       DrawContours(g, 1, style, width, 0, -z);
+      double zneg = ybot+(ytop-ybot)*(the_max-z)/(2.*the_max);
+      lines.emplace_back(x1, zneg, x2, zneg);
+      lines.back().SetLineColor(1);
+      lines.back().SetLineStyle(style);
+      lines.back().SetLineWidth(width);
+      lines.back().SetNDC(true);
     }
+  }
+  for(auto &l: lines){
+    l.Draw("same");
   }
   
   ltitle.Draw("same");
   rtitle.Draw("same");
-  
+
   c.Print((model_+"_sigobs.pdf").c_str());
 
   TH2D h = *g.GetHistogram();
