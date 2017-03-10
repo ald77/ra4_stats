@@ -341,6 +341,9 @@ void GetParticleNames(string &xparticle, string &yparticle){
   if(model_=="T1tttt"){
     xparticle = "gluino";
     yparticle = "LSP";
+  }else if(model_=="T5tttt"){
+    xparticle = "gluino";
+    yparticle = "LSP";
   }else if(model_=="T2tt"){
     xparticle = "gluino";
     yparticle = "LSP";

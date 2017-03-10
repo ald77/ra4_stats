@@ -1260,10 +1260,10 @@ void MakeCovarianceMatrix(RooWorkspace &w,
 	      covar.size(), -0.5, covar.size()-0.5,
 	      covar.size(), -0.5, covar.size()-0.5);
   h_covar.SetLabelSize(0.015, "xy");
-  h_covar.SetMarkerSize(0.3);
+  h_covar.SetMarkerSize(12.5/covar.size());
   h_covar.SetTickLength(0., "xy");
   h_corr.SetLabelSize(0.015, "xy");
-  h_corr.SetMarkerSize(0.3);
+  h_corr.SetMarkerSize(12.5/covar.size());
   h_corr.SetTickLength(0., "xy");
   for(size_t x = 0; x < yields.size(); ++x){
     string name = yields.at(x)->GetName();
