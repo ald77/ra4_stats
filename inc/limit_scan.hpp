@@ -7,6 +7,7 @@
 #include "TGraph2D.h"
 #include "TGraph.h"
 #include "TH2D.h"
+#include "TLatex.h"
 
 class TLegend;
 
@@ -44,6 +45,7 @@ void MakeLimitPlot(std::vector<double> vmx,
 
 int GetNumBins(const std::vector<double> &pts, double width);
 void GetParticleNames(std::string &xparticle, std::string &yparticle);
+TLatex GetModelLabel(double x, double y);
 
 void Style(TGraph *c, int color, int style);
 		

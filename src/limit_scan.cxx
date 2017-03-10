@@ -142,6 +142,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   rtitle.SetNDC();
   ltitle.SetTextAlign(12);
   rtitle.SetTextAlign(32);
+  TLatex model = GetModelLabel(c.GetLeftMargin()+0.03, 1.-c.GetTopMargin()-0.03);
 
   g.Draw("colz");
 
@@ -174,6 +175,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
     l.Draw("same");
   }
   
+  model.Draw("same");
   ltitle.Draw("same");
   rtitle.Draw("same");
 
@@ -220,6 +222,7 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   rtitle.SetNDC();
   ltitle.SetTextAlign(12);
   rtitle.SetTextAlign(32);
+  TLatex model = GetModelLabel(c.GetLeftMargin()+0.03, 1.-c.GetTopMargin()-0.03);
 
   g.Draw("colz");
 
@@ -229,6 +232,7 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
     DrawContours(g, 1, style, width, 0, z);
   }
   
+  model.Draw("same");
   ltitle.Draw("same");
   rtitle.Draw("same");
   
@@ -339,22 +343,41 @@ int GetNumBins(const vector<double> &pts, double width){
 
 void GetParticleNames(string &xparticle, string &yparticle){
   if(model_=="T1tttt"){
-    xparticle = "gluino";
-    yparticle = "LSP";
+    xparticle = "#tilde{g}";
+    yparticle = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   }else if(model_=="T5tttt"){
-    xparticle = "gluino";
-    yparticle = "LSP";
+    xparticle = "#tilde{g}";
+    yparticle = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   }else if(model_=="T2tt"){
-    xparticle = "gluino";
-    yparticle = "LSP";
+    xparticle = "#tilde{g}";
+    yparticle = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   }else if(model_=="T6ttWW"){
     xparticle = "sbottom";
     yparticle = "chargino";
   }else{
     DBG(("Unknown model: "+model_));
-    xparticle = "gluino";
-    yparticle = "LSP";
+    xparticle = "#tilde{g}";
+    yparticle = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   }
+}
+
+TLatex GetModelLabel(double x, double y){
+  string lsp = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
+  string label = "";
+  if(model_=="T1tttt"){
+    label = "pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow t#kern[0.4]{#bar{t}}#kern[0.4]{"+lsp+"}";
+  }else if(model_=="T5tttt"){
+    label = "#splitline{pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}+#tilde{t}_{1}#kern[0.3]{#tilde{t}}_{1}, #tilde{g} #rightarrow #tilde{t}_{1}t,}{#tilde{t}_{1} #rightarrow #bar{t}#kern[0.4]{"
+      +lsp+"}   (m#kern[0.3]{_{#lower[-0.12]{#tilde{t}_{1}}}} - m#kern[0.12]{_{"+lsp+"}} = 175 GeV)}";
+  }else{
+    DBG(("Unknown model: "+model_));
+    label = "";
+  }
+  TLatex l(x, y, label.c_str());
+  l.SetNDC();
+  l.SetTextAlign(13);
+  l.SetTextSize(0.025);
+  return l;
 }
 
 void Style(TGraph *g, int color, int style, float width){
