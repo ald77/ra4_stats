@@ -1416,7 +1416,7 @@ string PrettyBinName(string name){
   ReplaceAll(name, "r4_", "R4: ");
   ReplaceAll(name, "lowmet", "200<p_{T}^{miss}#leq 350");
   ReplaceAll(name, "medmet", "350<p_{T}^{miss}#leq 500");
-  ReplaceAll(name, "highmet", "p_{T}^{miss}>550");
+  ReplaceAll(name, "highmet", "p_{T}^{miss}>500");
   ReplaceAll(name, "_lownj", ", 6#leq N_{jets}#leq 8");
   ReplaceAll(name, "_highnj", ", N_{jets}#geq 9");
   ReplaceAll(name, "_1b", ", N_{b}=1");
