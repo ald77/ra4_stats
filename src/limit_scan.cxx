@@ -117,7 +117,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
 
   TGraph2D g("", title.c_str(), vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
 
-  double the_max = 0.;
+  double the_max = 3.;
   for(int i = 0; i < g.GetN(); ++i){
     double z = fabs(g.GetZ()[i]);
     if(z>the_max) the_max = z;
@@ -531,9 +531,9 @@ void SetupSignedColors(){
   const int bands = 255;
   int colors[bands];
   double stops[num] = {0.0, 0.5, 1.0};
-  double red[num]   = {1.0, 1.0, 0.0};
+  double red[num]   = {0.0, 1.0, 1.0};
   double green[num] = {0.0, 1.0, 0.0};
-  double blue[num]  = {0.0, 1.0, 1.0};
+  double blue[num]  = {1.0, 1.0, 0.0};
   int fi = TColor::CreateGradientColorTable(num,stops,red,green,blue,bands);
   for(int i = 0; i < bands; ++i){
     colors[i] = fi+i;
