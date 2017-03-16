@@ -367,8 +367,8 @@ TLatex GetModelLabel(double x, double y){
   if(model_=="T1tttt"){
     label = "pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow t#kern[0.4]{#bar{t}}#kern[0.4]{"+lsp+"}";
   }else if(model_=="T5tttt"){
-    label = "#splitline{pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}+#tilde{t}_{1}#kern[0.3]{#tilde{t}}_{1}, #tilde{g} #rightarrow #tilde{t}_{1}t,}{#tilde{t}_{1} #rightarrow #bar{t}#kern[0.4]{"
-      +lsp+"}   (m#kern[0.3]{_{#lower[-0.12]{#tilde{t}_{1}}}} - m#kern[0.12]{_{"+lsp+"}} = 175 GeV)}";
+    label = "#splitline{pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow #tilde{t}_{1}t, #tilde{t}_{1} #rightarrow #bar{t}#kern[0.4]{"
+      +lsp+"}}{(m#kern[0.3]{_{#lower[-0.12]{#tilde{t}_{1}}}} - m#kern[0.12]{_{"+lsp+"}} = 175 GeV)}";
   }else{
     DBG(("Unknown model: "+model_));
     label = "";
@@ -376,7 +376,7 @@ TLatex GetModelLabel(double x, double y){
   TLatex l(x, y, label.c_str());
   l.SetNDC();
   l.SetTextAlign(13);
-  l.SetTextSize(0.025);
+  l.SetTextSize(0.032);
   return l;
 }
 
