@@ -258,10 +258,11 @@ void PrintTable(RooWorkspace &w,
       if(full_err >= stat_err){
 	double ratio = stat_err/full_err;
 	sys_err = full_err*sqrt(1.-ratio*ratio);
+	if(false) DBG(sys_err);
       }else{
 	DBG("(systematic error)^2<0 for " << bin_name);
       }
-      out << "$" << kappa << "\\pm" << stat_err << "\\pm" << sys_err << "$ & ";
+      out << "$" << kappa << "\\pm" << full_err << "$ & ";
     }else{
       out << " & ";
     }
@@ -1286,9 +1287,9 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   const int bands = 255;
   int colors[bands];
   double stops[num] = {0.0, 0.5, 1.0};
-  double red[num]   = {1.0, 1.0, 0.5};
-  double green[num] = {0.0, 1.0, 0.5};
-  double blue[num]  = {0.0, 1.0, 1.0};
+  double red[num]   = {0.0, 1.0, 1.0};
+  double green[num] = {0.0, 1.0, 0.0};
+  double blue[num]  = {1.0, 1.0, 0.0};
   int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
   for(int ib = 0; ib < bands; ++ib){
     colors[ib] = fi+ib;
