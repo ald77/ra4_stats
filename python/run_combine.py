@@ -17,15 +17,16 @@ import utils
 
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
-def run_obs_signif(rfile, overwrite, log_path):
-    if not overwrite and rfile.Get("sig_obs"):
-        print(" Kept observed significance: {:8.3f}".format(rfile.Get("sig_obs")[0]))
-        return
+def run_obs_signif(output_path, overwrite, log_path):
+    with utils.ROOTFile(output_path, "read") as rfile:
+        if not overwrite and rfile.Get("sig_obs"):
+            print(" Kept observed significance: {:8.3f}".format(rfile.Get("sig_obs")[0]))
+            return
 
     cwd = os.getcwd()
     work_dir = tempfile.mkdtemp()
-    link_path = os.path.join(work_dir, os.path.basename(rfile.GetName()))
-    os.symlink(rfile.GetName(), link_path)
+    link_path = os.path.join(work_dir, os.path.basename(output_path))
+    os.symlink(output_path, link_path)
 
     os.chdir(work_dir)
     command = ["combine","-M","ProfileLikelihood","--significance","--uncapped=1","--rMin=-10.","-d",link_path]
@@ -35,7 +36,7 @@ def run_obs_signif(rfile, overwrite, log_path):
 
     result_path = os.path.join(work_dir, "higgsCombineTest.ProfileLikelihood.mH120.root")
     signif = None
-    with utils.ROOTFile(result_path, "read") as result:
+    with utils.ROOTFile(result_path, "read") as result, utils.ROOTFile(output_path, "update") as rfile:
         tree = result.Get("limit")
         tree.GetEntry(0)
         signif = tree.limit
@@ -46,15 +47,16 @@ def run_obs_signif(rfile, overwrite, log_path):
     shutil.rmtree(work_dir)
     print("Saved observed significance: {:8.3f}".format(signif))
 
-def run_exp_signif(rfile, overwrite, log_path):
-    if not overwrite and rfile.Get("sig_exp"):
-        print(" Kept expected significance: {:8.3f}".format(rfile.Get("sig_exp")[0]))
-        return
+def run_exp_signif(output_path, overwrite, log_path):
+    with utils.ROOTFile(output_path, "read") as rfile:
+        if not overwrite and rfile.Get("sig_exp"):
+            print(" Kept expected significance: {:8.3f}".format(rfile.Get("sig_exp")[0]))
+            return
 
     cwd = os.getcwd()
     work_dir = tempfile.mkdtemp()
-    link_path = os.path.join(work_dir, os.path.basename(rfile.GetName()))
-    os.symlink(rfile.GetName(), link_path)
+    link_path = os.path.join(work_dir, os.path.basename(output_path))
+    os.symlink(output_path, link_path)
 
     os.chdir(work_dir)
     command = ["combine","-M","ProfileLikelihood","--significance","--uncapped=1","--rMin=-10.","--expectSignal=1","--toysFreq","-t","-1","-d",link_path]
@@ -64,7 +66,7 @@ def run_exp_signif(rfile, overwrite, log_path):
 
     result_path = os.path.join(work_dir, "higgsCombineTest.ProfileLikelihood.mH120.root")
     signif = None
-    with utils.ROOTFile(result_path, "read") as result:
+    with utils.ROOTFile(result_path, "read") as result, utils.ROOTFile(output_path, "update") as rfile:
         tree = result.Get("limit")
         tree.GetEntry(0)
         signif = tree.limit
@@ -75,18 +77,19 @@ def run_exp_signif(rfile, overwrite, log_path):
     shutil.rmtree(work_dir)
     print("Saved expected significance: {:8.3f}".format(signif))
 
-def run_limit(rfile, overwrite, log_path):
-    if not overwrite and rfile.Get("lim_obs") and rfile.Get("lim_exp16") and rfile.Get("lim_exp50") and rfile.Get("lim_exp84"):
-        print(" Kept observed limit:        {:8.3f}".format(rfile.Get("lim_obs")[0]))
-        print(" Kept expected limit (16%):  {:8.3f}".format(rfile.Get("lim_exp16")[0]))
-        print(" Kept expected limit (50%):  {:8.3f}".format(rfile.Get("lim_exp50")[0]))
-        print(" Kept expected limit (84%):  {:8.3f}".format(rfile.Get("lim_exp84")[0]))
-        return
+def run_limit(output_path, overwrite, log_path):
+    with utils.ROOTFile(output_path, "read") as rfile:
+        if not overwrite and rfile.Get("lim_obs") and rfile.Get("lim_exp16") and rfile.Get("lim_exp50") and rfile.Get("lim_exp84"):
+            print(" Kept observed limit:        {:8.3f}".format(rfile.Get("lim_obs")[0]))
+            print(" Kept expected limit (16%):  {:8.3f}".format(rfile.Get("lim_exp16")[0]))
+            print(" Kept expected limit (50%):  {:8.3f}".format(rfile.Get("lim_exp50")[0]))
+            print(" Kept expected limit (84%):  {:8.3f}".format(rfile.Get("lim_exp84")[0]))
+            return
 
     cwd = os.getcwd()
     work_dir = tempfile.mkdtemp()
-    link_path = os.path.join(work_dir, os.path.basename(rfile.GetName()))
-    os.symlink(rfile.GetName(), link_path)
+    link_path = os.path.join(work_dir, os.path.basename(output_path))
+    os.symlink(output_path, link_path)
 
     os.chdir(work_dir)
     command = ["combine","-M","Asymptotic","-d",link_path]
@@ -99,7 +102,7 @@ def run_limit(rfile, overwrite, log_path):
     exp16 = None
     exp50 = None
     exp84 = None
-    with utils.ROOTFile(result_path, "read") as result:
+    with utils.ROOTFile(result_path, "read") as result, utils.ROOTFile(output_path, "update") as rfile:
         tree = result.Get("limit")
         for entry in tree:
             if entry.quantileExpected < 0.:
@@ -129,15 +132,16 @@ def run_limit(rfile, overwrite, log_path):
     print("Saved expected limit (50%):  {:8.3f}".format(exp50))
     print("Saved expected limit (84%):  {:8.3f}".format(exp84))
 
-def run_fit(rfile, overwrite, log_path):
-    if not overwrite and rfile.Get("fit_b") and rfile.Get("fit_s"):
-        print(" Kept fit results")
-        return
+def run_fit(output_path, overwrite, log_path):
+    with utils.ROOTFile(output_path, "read") as rfile:
+        if not overwrite and rfile.Get("fit_b") and rfile.Get("fit_s"):
+            print(" Kept fit results")
+            return
 
     cwd = os.getcwd()
     work_dir = tempfile.mkdtemp()
-    link_path = os.path.join(work_dir, os.path.basename(rfile.GetName()))
-    os.symlink(rfile.GetName(), link_path)
+    link_path = os.path.join(work_dir, os.path.basename(output_path))
+    os.symlink(output_path, link_path)
 
     os.chdir(work_dir)
     command = ["combine","-M","MaxLikelihoodFit","--forceRecreateNLL","--saveWorkspace","--saveWithUncertainties","--minos=all","-w","w","--dataset","data_obs","-d",link_path]
@@ -146,7 +150,7 @@ def run_fit(rfile, overwrite, log_path):
     os.chdir(cwd)
 
     result_path = os.path.join(work_dir, "mlfit.root")
-    with utils.ROOTFile(result_path, "read") as result:
+    with utils.ROOTFile(result_path, "read") as result, utils.ROOTFile(output_path, "update") as rfile:
         fit_b = result.Get("fit_b")
         rfile.cd()
         fit_b.Write("fit_b",ROOT.TObject.kWriteDelete)
@@ -156,56 +160,61 @@ def run_fit(rfile, overwrite, log_path):
     shutil.rmtree(work_dir)
     print("Saved fit results")
 
-def fix_vars(rfile):
-    if not rfile.Get("fit_b"):
-        return
+def fix_vars(output_path):
+    with utils.ROOTFile(output_path, "read") as rfile:
+        if not rfile.Get("fit_b"):
+            return
 
-    w = rfile.Get("w")
-    f = rfile.Get("fit_b")
-    if not rfile.Get("w_orig"):
-        w.Write("w_orig")
+    with utils.ROOTFile(output_path, "update") as rfile:
+        w = rfile.Get("w")
+        f = rfile.Get("fit_b")
+        if not rfile.Get("w_orig"):
+            w.Write("w_orig")
 
-    pars = f.floatParsFinal()
-    for i in range(pars.getSize()):
-        p = pars.at(i)
-        v = w.var(p.GetName())
-        v.setVal(p.getVal())
-        v.setError(p.getError())
-    w.Write("w", ROOT.TObject.kWriteDelete)
+        pars = f.floatParsFinal()
+        for i in range(pars.getSize()):
+            p = pars.at(i)
+            v = w.var(p.GetName())
+            v.setVal(p.getVal())
+            v.setError(p.getError())
+        w.Write("w", ROOT.TObject.kWriteDelete)
     print("Set variables to background-only best fit values")
 
-def goodness_of_fit(rfile, overwrite, ndof):
-    pval = rfile.Get("pval")
-    chi_sq = rfile.Get("chi2")
-    saved_ndof = rfile.Get("ndof")
-    if not overwrite and (pval or chi_sq or saved_ndof):
-        if pval:
-            print(" Kept p-value:               {:8.3f}".format(pval[0]))
-        if chi_sq:
-            print(" Kept chi^2:                 {:8.3f}".format(chi_sq[0]))
-        if saved_ndof:
-            print(" Kept N.D.o.F.:              {:4d}".format(int(saved_ndof[0])))
-        return
-
-    if not rfile.Get("w_orig"):
-        print('Skipping goodness of fit. Run with "--full_fit --overwrite" first to enable.')
-        return
-
-    w = rfile.Get("w")
-    pdf = w.pdf("model_b")
-    fit_nll = -pdf.getLogVal()
-
+def goodness_of_fit(output_path, overwrite, ndof):
     sat_nll = 0.
-    variables = w.allVars()
-    iterator = variables.createIterator()
-    variable = iterator.Next()
-    while variable:
-        name = variable.GetName()
-        if "nobs_BLK_" in name or "nobsmc_BLK_" in name:
-            val = variable.getVal()
-            if val > 0:
-                sat_nll -= val*math.log(val) - val - math.lgamma(val+1.)
+    fit_nll = 0.
+    with utils.ROOTFile(output_path, "read") as rfile:
+        pval = rfile.Get("pval")
+        chi_sq = rfile.Get("chi2")
+        saved_ndof = rfile.Get("ndof")
+        if not overwrite and (pval or chi_sq or saved_ndof):
+            if pval:
+                print(" Kept p-value:               {:8.3f}".format(pval[0]))
+            if chi_sq:
+                print(" Kept chi^2:                 {:8.3f}".format(chi_sq[0]))
+            if saved_ndof:
+                print(" Kept N.D.o.F.:              {:4d}".format(int(saved_ndof[0])))
+            return
+
+        if not rfile.Get("w_orig"):
+            print('Skipping goodness of fit. Run with "--full_fit --overwrite" first to enable.')
+            return
+
+        w = rfile.Get("w")
+        pdf = w.pdf("model_b")
+        fit_nll = -pdf.getLogVal()
+
+        sat_nll = 0.
+        variables = w.allVars()
+        iterator = variables.createIterator()
         variable = iterator.Next()
+        while variable:
+            name = variable.GetName()
+            if "nobs_BLK_" in name or "nobsmc_BLK_" in name:
+                val = variable.getVal()
+                if val > 0:
+                    sat_nll -= val*math.log(val) - val - math.lgamma(val+1.)
+            variable = iterator.Next()
 
     chi_sq = 2.*(fit_nll-sat_nll)
     pval = scipy.stats.chi2.sf(chi_sq,ndof)
@@ -215,9 +224,12 @@ def goodness_of_fit(rfile, overwrite, ndof):
     chi_sq_vec[0] = chi_sq
     ndof_vec[0] = float(ndof)
     pval_vec[0] = pval
-    chi_sq_vec.Write("chi2",ROOT.TObject.kWriteDelete)
-    ndof_vec.Write("ndof",ROOT.TObject.kWriteDelete)
-    pval_vec.Write("pval",ROOT.TObject.kWriteDelete)
+
+    with utils.ROOTFile(output_path, "update") as rfile:
+        rfile.cd()
+        chi_sq_vec.Write("chi2",ROOT.TObject.kWriteDelete)
+        ndof_vec.Write("ndof",ROOT.TObject.kWriteDelete)
+        pval_vec.Write("pval",ROOT.TObject.kWriteDelete)
     
     print("Saved p-value:               {:8.3f}".format(pval))
     print("Saved chi^2:                 {:8.3f}".format(chi_sq))
@@ -236,16 +248,15 @@ def run_combine(workspace_path, output_path, do_full_fit, overwrite, log_path, n
         output_path = utils.full_path(output_path)
         shutil.copy2(workspace_path, output_path)
 
-    with utils.ROOTFile(output_path, "update") as rfile:
-        utils.cmsenv("~/cmssw/CMSSW_7_4_14/src")
-        if do_full_fit:
-            run_fit(rfile, overwrite, log_path)
-            if overwrite:
-                fix_vars(rfile)
-        goodness_of_fit(rfile, overwrite, ndof)
-        run_obs_signif(rfile, overwrite, log_path)
-        run_exp_signif(rfile, overwrite, log_path)
-        run_limit(rfile, overwrite, log_path)
+    utils.cmsenv("~/cmssw/CMSSW_7_4_14/src")
+    if do_full_fit:
+        run_fit(output_path, overwrite, log_path)
+        if overwrite:
+            fix_vars(output_path)
+    goodness_of_fit(output_path, overwrite, ndof)
+    run_obs_signif(output_path, overwrite, log_path)
+    run_exp_signif(output_path, overwrite, log_path)
+    run_limit(output_path, overwrite, log_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Runs combine to find significance, limits, and best fit parameter values",
