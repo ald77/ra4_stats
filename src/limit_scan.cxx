@@ -135,7 +135,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   c.cd();
 
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
-	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}");
+	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}");
   TLatex rtitle(1.-c.GetRightMargin(), 1.-0.5*c.GetTopMargin(),
 	       "#scale[0.8]{35.9 fb^{-1} (13 TeV)}");
   ltitle.SetNDC();
@@ -215,7 +215,7 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   c.cd();
 
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
-	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}");
+	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}");
   TLatex rtitle(1.-c.GetRightMargin(), 1.-0.5*c.GetTopMargin(),
 	       "#scale[0.8]{35.9 fb^{-1} (13 TeV)}");
   ltitle.SetNDC();
@@ -286,7 +286,7 @@ void MakeLimitPlot(vector<double> vmx,
   c.cd();
 
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
-                "#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}");
+                "#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}");
   TLatex rtitle(1.-c.GetRightMargin(), 1.-0.5*c.GetTopMargin(),
                 "#scale[0.8]{35.9 fb^{-1} (13 TeV)}");
   ltitle.SetNDC();
