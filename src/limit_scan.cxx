@@ -113,7 +113,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
 
   string xparticle, yparticle;
   GetParticleNames(xparticle, yparticle);
-  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"};Observed Significance";
+  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV];Observed Significance";
 
   TGraph2D g("", title.c_str(), vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
 
@@ -180,6 +180,7 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   rtitle.Draw("same");
 
   c.Print((model_+"_sigobs.pdf").c_str());
+  c.Print((model_+"_sigobs.root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Observed Significance");
@@ -193,7 +194,7 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
 
   string xparticle, yparticle;
   GetParticleNames(xparticle, yparticle);
-  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"}; Expected Significance";
+  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV]; Expected Significance";
 
   TGraph2D g("", title.c_str(), vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
 
@@ -237,6 +238,7 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   rtitle.Draw("same");
   
   c.Print((model_+"_sigexp.pdf").c_str());
+  c.Print((model_+"_sigexp.root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Expected Significance");
@@ -258,7 +260,7 @@ void MakeLimitPlot(vector<double> vmx,
 
   string xparticle, yparticle;
   GetParticleNames(xparticle, yparticle);
-  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"};95% CL upper limit on cross section [pb]";
+  string title = ";m_{"+xparticle+"} [GeV];m_{"+yparticle+"} [GeV];95% CL upper limit on cross section [pb]";
   
   TGraph2D glim("", title.c_str(), vlim.size(), &vmx.at(0), &vmy.at(0), &vlim.at(0));
   TGraph2D gobs("", "Observed Limit", vobs.size(), &vmx.at(0), &vmy.at(0), &vobs.at(0));
