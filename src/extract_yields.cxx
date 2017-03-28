@@ -671,7 +671,7 @@ void MakeYieldPlot(RooWorkspace &w,
 
   SetBounds(obs, signal, histos);
 
-  TCanvas c;
+  TCanvas c("can","");
   c.cd();
   TPad bot_pad("bot_pad", "bot_pad", 0., 0., 1., 0.4);
   bot_pad.SetFillColor(0); bot_pad.SetFillStyle(4000);
@@ -1160,7 +1160,7 @@ void MakeCorrectionPlot(RooWorkspace &w,
   vector<string> bin_names = GetBinNames(w);
   vector<string> prc_names = GetProcessNames(w);
 
-  TCanvas c;
+  TCanvas c("can","");
   c.cd();
 
   TH1D h("", ";;#lambda", bin_names.size(), 0.5, bin_names.size()+0.5);
@@ -1297,7 +1297,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   gStyle->SetNumberContours(bands);
   gStyle->SetPalette(bands, colors);
 
-  TCanvas c("", "", 1024, 1024);
+  TCanvas c("can", "", 1024, 1024);
   c.SetMargin(0.2, 0.05, 0.2, 0.05);
   gStyle->SetPaintTextFormat("6.1f");
   h_covar.LabelsOption("v","x");
@@ -1308,7 +1308,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
 
   
   TLatex ltitle(c.GetLeftMargin(), 1.-0.5*c.GetTopMargin(),
-	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}");
+	      "#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}");
   TLatex rtitle(1.-c.GetRightMargin(), 1.-0.5*c.GetTopMargin(),
 	       "#scale[0.8]{35.9 fb^{-1} (13 TeV)}");
   ltitle.SetNDC();
@@ -1319,6 +1319,18 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   ltitle.Draw("same");
   rtitle.Draw("same");
   c.Print(covar_file_name.c_str());
+
+  TString fitname = "Global";
+  if(Contains(covar_file_name, "nor4")) {
+    fitname = "Predictive";
+  }
+  TString pname = covar_file_name; pname.ReplaceAll(".pdf", ".root");
+  TFile file(pname, "recreate");
+  file.cd();
+  h_covar.Write("CovarianceMatrix_"+fitname+"Fit");
+  file.Close();
+  cout<<"Saved correlation matrix in "<<pname<<endl<<endl;
+
   gStyle->SetPaintTextFormat("6.2f");
   c.SetLogz(false);
   h_corr.Draw("col");
@@ -1327,6 +1339,13 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   ltitle.Draw("same");
   rtitle.Draw("same");
   c.Print(covar_file_name.c_str());
+
+  pname = covar_file_name; pname.ReplaceAll(".pdf", ".root");
+  TFile fileCorr(pname, "recreate");
+  fileCorr.cd();
+  h_corr.Write("CorrelationMatrix_"+fitname+"Fit");
+  fileCorr.Close();
+  cout<<"Saved correlation matrix in "<<pname<<endl<<endl;
 }
 
 double GetError(const RooAbsReal &var,
