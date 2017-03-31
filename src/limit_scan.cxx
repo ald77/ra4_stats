@@ -324,15 +324,17 @@ void MakeLimitPlot(vector<double> vmx,
   c.Print((filebase+".pdf").c_str());
   
   TFile file((filebase+".root").c_str(), "recreate");
-  glim.GetHistogram()->Write("hXsec_exp_corr");
-  cobs.Write("graph_smoothed_Obs");
-  cobsup.Write("graph_smoothed_ObsP");
-  cobsdown.Write("graph_smoothed_ObsM");
-  cexp.Write("graph_smoothed_Exp");
-  cup.Write("graph_smoothed_ExpP");
-  cdown.Write("graph_smoothed_ExpM");
-  hsigobs.Write("hsig_obs_corr");
-  hsigexp.Write("hsig_exp_corr");
+  glim.GetHistogram()->Write((model_+"ObservedExcludedXsec").c_str());
+  cobs.Write((model_+"ObservedLimit").c_str());
+  cobsup.Write((model_+"ObservedLimitUp").c_str());
+  cobsdown.Write((model_+"ObservedLimitDown").c_str());
+  cexp.Write((model_+"ExpectedLimit").c_str());
+  cup.Write((model_+"ExpectedLimitUp").c_str());
+  cdown.Write((model_+"ExpectedLimitDown").c_str());
+  if(false){ // Significances not saved together with limits as per recommendations
+    hsigobs.Write("ObservedSignificance");
+    hsigexp.Write("ExpectedSignificance");
+  }
   file.Close();
   cout << "\nSaved limit curves in " << filebase << ".root\n" << endl;
 }
@@ -454,6 +456,7 @@ TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
     g->Draw("L same");
   }
 
+  graph.SetTitle(g2.GetTitle());
   return graph;
 }
 
