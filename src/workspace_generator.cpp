@@ -48,6 +48,7 @@ WorkspaceGenerator::WorkspaceGenerator(const Cut &baseline,
   w_("w"),
   poi_(),
   observables_(),
+  glob_observables_(),
   nuisances_(),
   systematics_(),
   free_systematics_(),
@@ -311,7 +312,7 @@ void WorkspaceGenerator::UpdateWorkspace(){
     AddDebug(block);
   }
 
-  AddDummyNuisance();
+  // AddDummyNuisance();
   AddFullPdf();
   AddParameterSets();
   AddModels();
@@ -392,23 +393,23 @@ void WorkspaceGenerator::ReadSystematicsFile(){
           for(const auto &bin: vbin){
             if(bin.Name() != clean_line) continue;
             for(const auto &prc: process_list){
-	      float syst(atof(line.at(1).c_str()));
+              float syst(atof(line.at(1).c_str()));
               if(isnan(syst)){
-		DBG("Systematic " << this_systematic.Name() << " is NaN for bin "
-		    << bin.Name() << ", process " << prc.Name());
-		syst = 0.;
-	      }
+                DBG("Systematic " << this_systematic.Name() << " is NaN for bin "
+                  << bin.Name() << ", process " << prc.Name());
+                syst = 0.;
+              }
               if(isinf(syst)){
-		DBG("Systematic " << this_systematic.Name() << " is infinite for bin "
-		    << bin.Name() << ", process " << prc.Name());
-		if(syst>0.){
-		  syst = 1.;
-		}else{
-		  syst = -1.;
-		}
-	      }
+                DBG("Systematic " << this_systematic.Name() << " is infinite for bin "
+                  << bin.Name() << ", process " << prc.Name());
+                if(syst>0.){
+                  syst = 1.;
+                }else{
+                  syst = -1.;
+                }
+              }
               if(syst>=0) this_systematic.Strength(bin, prc) = log(1+syst);
-	      else this_systematic.Strength(bin, prc) = -log(1+fabs(syst));
+              else this_systematic.Strength(bin, prc) = -log(1+fabs(syst));
               found = true;
             }
 
@@ -577,7 +578,13 @@ void WorkspaceGenerator::AddSystematicsGenerators(){
 void WorkspaceGenerator::AddSystematicGenerator(const string &name){
   if(print_level_ >= PrintLevel::everything) DBG(name);
   if(systematics_.find(name) != systematics_.end()) return;
-  w_.factory(("RooGaussian::constraint_"+name+"("+name+"[0.,-10.,10.],0.,1.)").c_str());
+  ostringstream oss;
+  oss.str("");
+  oss << name << "_0" << flush;
+  Append(glob_observables_, oss.str());
+  oss << "[0.]" << flush;
+  w_.factory(oss.str().c_str());
+  w_.factory(("RooGaussian::constraint_"+name+"("+name+"[0.,-10.,10.],"+name+"_0,1.)").c_str());
   Append(nuisances_, name);
   Append(systematics_, name);
 }
@@ -592,11 +599,11 @@ void WorkspaceGenerator::AddData(const Block &block){
           gps += GetYield(bin, bkg);
         }
         // Injecting signal
-	if(inject_other_signal_){
-	  gps += sig_strength_*GetYield(bin, injection_);
-	}else{
-	  gps += sig_strength_*GetYield(bin, signal_);
-	}
+        if(inject_other_signal_){
+          gps += sig_strength_*GetYield(bin, injection_);
+        }else{
+          gps += sig_strength_*GetYield(bin, signal_);
+        }
       }else{
         gps = GetYield(bin, data_);
       }
@@ -606,7 +613,7 @@ void WorkspaceGenerator::AddData(const Block &block){
           << "_BIN_" << bin.Name() << flush;
       if(use_r4_ || !Contains(bin.Name(), "4")){
         Append(observables_, oss.str());
-      }
+      } //attn
       oss << "[" << gps.Yield() << "]" << flush;
       w_.factory(oss.str().c_str());
     }
@@ -636,7 +643,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
   ryss << "sum::rynorm_BLK_" << block.Name() << "(1.,";
   ostringstream oss;
   oss << "norm_BLK_" << block.Name() << flush;
-  Append(nuisances_, oss.str());
+  // Append(nuisances_, oss.str());
   oss << "[" << max(1., 0.8*by.Total().Yield()) << ",0.,"
       << max(5.*by.Total().Yield(), 20.) << "]" << flush;
   w_.factory(oss.str().c_str());
@@ -645,7 +652,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
     oss.str("");
     oss << "ry" << (irow+1) << (by.MaxRow()+1) << "_BLK_" << block.Name() << flush;
     ryss << "," << oss.str();
-    Append(nuisances_, oss.str());
+    // Append(nuisances_, oss.str());
     oss << "[" << by.RowSums().at(irow).Yield()/by.RowSums().at(by.MaxRow()).Yield()
         << ",0.,10.]" << flush;
     w_.factory(oss.str().c_str());
@@ -657,7 +664,7 @@ void WorkspaceGenerator::AddABCDParameters(const Block &block){
     oss.str("");
     oss << "rx" << (icol+1) << (by.MaxCol()+1) << "_BLK_" << block.Name() << flush;
     rxss << "," << oss.str();
-    Append(nuisances_, oss.str());
+    // Append(nuisances_, oss.str()); /
     oss << "[" << by.ColSums().at(icol).Yield()/by.ColSums().at(by.MaxCol()).Yield()
         << ",0.,10.]" << flush;
     w_.factory(oss.str().c_str());
@@ -744,11 +751,11 @@ void WorkspaceGenerator::AddMCYields(const Block & block){
       Append(all_prcs, signal_);
       for(const auto &bkg: all_prcs){
         GammaParams gp = GetYield(bin, bkg);
-	if(Contains(bkg.Name(), "sig")) gp *= sig_xsec_f_;
+        if(Contains(bkg.Name(), "sig")) gp *= sig_xsec_f_;
         string bbp_name = bb_name + "_PRC_"+bkg.Name();
         oss.str("");
         oss << "nobsmc_" << bbp_name << flush;
-        if(!gaus_approx_) Append(observables_, oss.str());
+        Append(glob_observables_, oss.str());
         oss << "[" << gp.NEffective() << "]" << flush;
         w_.factory(oss.str().c_str());
         oss.str("");
@@ -781,7 +788,7 @@ void WorkspaceGenerator::AddMCPdfs(const Block &block){
       Append(all_prcs, signal_);
       for(const auto &bkg: all_prcs){
         string bbp_name = "BLK_"+block.Name()+"_BIN_"+bin.Name()+"_PRC_"+bkg.Name();
-	AddPoisson("pdf_mc_"+bbp_name, "nobsmc_"+bbp_name, "nmc_"+bbp_name, gaus_approx_);
+        AddPoisson("pdf_mc_"+bbp_name, "nobsmc_"+bbp_name, "nmc_"+bbp_name, gaus_approx_);
         if(first) first = false;
         else factory_string += ",";
         factory_string += "pdf_mc_"+bbp_name;
@@ -966,8 +973,8 @@ void WorkspaceGenerator::AddPdfs(const Block &block){
       if(use_r4_ || !Contains(bb_name, "4")){
         null_list += null_name;
         alt_list += alt_name;
-	AddPoisson("pdf_null"+bb_name, "nobs"+bb_name, "nbkg"+bb_name, false);
-	AddPoisson("pdf_alt"+bb_name, "nobs"+bb_name, "nexp"+bb_name, false);
+        AddPoisson("pdf_null"+bb_name, "nobs"+bb_name, "nbkg"+bb_name, false);
+        AddPoisson("pdf_alt"+bb_name, "nobs"+bb_name, "nexp"+bb_name, false);
         is_first = false;
       }
     }
@@ -998,11 +1005,13 @@ void WorkspaceGenerator::AddDummyNuisance(){
 
 void WorkspaceGenerator::AddFullPdf(){
   if(print_level_ >= PrintLevel::everything) DBG("");
-  string null_list = "pdf_dummy_nuisance";
-  string alt_list = "pdf_dummy_nuisance";
+  string null_list = "";//"pdf_dummy_nuisance";
+  string alt_list = "";//"pdf_dummy_nuisance";
+  bool is_first = true;
   for(const auto &block: blocks_){
-    null_list += (",pdf_null_BLK_"+block.Name());
-    alt_list += (",pdf_alt_BLK_"+block.Name());
+    null_list += (is_first ? "pdf_null_BLK_" : ",pdf_null_BLK_") +block.Name();
+    alt_list += (is_first ? "pdf_alt_BLK_" : ",pdf_alt_BLK_" ) +block.Name();
+    is_first = false;
   }
   if(do_systematics_ || do_dilepton_){
     for(const auto &syst: systematics_){
@@ -1023,7 +1032,7 @@ void WorkspaceGenerator::AddParameterSets(){
   DefineParameterSet("POI", poi_);
   DefineParameterSet("nuisances", nuisances_);
   DefineParameterSet("observables", observables_);
-  DefineParameterSet("globalObservables", set<string>());
+  DefineParameterSet("globalObservables", glob_observables_);
   auto xxx = w_.set("observables");
   RooDataSet data_obs{"data_obs", "data_obs", *xxx};
   data_obs.add(*w_.set("observables"));
@@ -1038,8 +1047,8 @@ void WorkspaceGenerator::DefineParameterSet(const string &set_name,
   }else{
     w_.defineSet(set_name.c_str(), var_names.cbegin()->c_str());
     for(auto name = ++var_names.cbegin();
-	name != var_names.cend();
-	++name){
+      name != var_names.cend();
+      ++name){
       w_.extendSet(set_name.c_str(), name->c_str());
     }
   }
@@ -1066,9 +1075,9 @@ void WorkspaceGenerator::AddModels(){
 }
 
 void WorkspaceGenerator::AddPoisson(const string &pdf_name,
-				    const string &n_name,
-				    const string &mu_name,
-				    bool allow_approx){
+                                    const string &n_name,
+                                    const string &mu_name,
+                                    bool allow_approx){
   RooAbsReal *v_mu = w_.var(mu_name.c_str());
   if(!v_mu) v_mu = w_.function(mu_name.c_str());
   if(!v_mu) v_mu = w_.var(n_name.c_str());

@@ -39,6 +39,7 @@
 !txt/*/*txt
 *.#*
 .nfs000000000*
+sftp-config.json
 
 # LaTeX
 *.tex

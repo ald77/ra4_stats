@@ -426,7 +426,9 @@ TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
         
 	vx.push_back(x);
 	vy.push_back(y);
-	if(x-y>glu_lsp+85){
+	int thresh = glu_lsp+30;
+	if (model_=="T5tttt") thresh = glu_lsp+85;
+	if(x-y>thresh){
           vz.push_back(z);
 	}else{
           vz.push_back(g2.Interpolate(x,y));

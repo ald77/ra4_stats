@@ -85,7 +85,7 @@ private:
   double sig_strength_, sig_xsec_f_;
   double rmax_;
   RooWorkspace w_;
-  std::set<std::string>  poi_, observables_, nuisances_, systematics_;
+  std::set<std::string>  poi_, observables_, glob_observables_, nuisances_, systematics_;
   std::set<FreeSystematic> free_systematics_;
   double luminosity_;
   PrintLevel print_level_;
